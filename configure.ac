@@ -33,9 +33,6 @@ AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([getpass memmove memset strcasecmp strchr strncasecmp strrchr strspn strstr])
 
-#AC_SUBST([AM_CXXFLAGS])
-#AC_SUBST([AM_LDFLAGS])
-
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_OUTPUT
