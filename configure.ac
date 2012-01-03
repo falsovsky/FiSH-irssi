@@ -5,8 +5,11 @@ AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_RANLIB
 
-LT_INIT([disable-static])
+AM_INIT_AUTOMAKE([1.9])
+
+AC_LANG([C])
 
 # Checks for libraries.
 AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
@@ -21,6 +24,9 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([getpass memmove memset strcasecmp strchr strncasecmp strrchr strspn strstr])
+
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([AM_LDFLAGS])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
