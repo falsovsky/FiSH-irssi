@@ -1,0 +1,2 @@
+#undef FiSH_DECRYPT_ZNC_LOGS
+#undef FiSH_USE_IRSSI_RECODE
