@@ -1,18 +1,18 @@
 #include <string.h>
 
 /*
-    Public Base64 conversion tables
-*/
+   Public Base64 conversion tables
+   */
 const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char b64buf[256];
 
 
 /*
-    void initb64();
-    Initializes the base64->base16 conversion tab.
-    Call this function once when your program starts.
-    and always after your B64 table has been changed.
-*/
+   void initb64();
+   Initializes the base64->base16 conversion tab.
+   Call this function once when your program starts.
+   and always after your B64 table has been changed.
+   */
 void initb64(){
     unsigned int i;
     for (i=0; i<256; i++) b64buf[i]=0x00;
@@ -23,7 +23,7 @@ void initb64(){
    int b64toh(lpBase64String, lpDestinationBuffer);
    Converts base64 string b to hexnumber d.
    Returns size of hexnumber in bytes.
-*/
+   */
 int b64toh(const char *b, char *d){
     unsigned int i,k,l;
 
@@ -64,7 +64,7 @@ int b64toh(const char *b, char *d){
    int htob64(lpHexNumber, lpDestinationBuffer);
    Converts hexnumber h (with length l bytes) to base64 string d.
    Returns length of base64 string.
-*/
+   */
 int htob64(const char *h, char *d, unsigned int l){
     unsigned int i,j,k;
     unsigned char m,t;

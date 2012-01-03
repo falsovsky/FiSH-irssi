@@ -127,7 +127,7 @@ void sha_done(sha_state * md, unsigned char *hash)
     md->buf[md->curlen++] = 0x80;
 
     /* if the length is currenlly above 56 bytes we append zeros then compress.
-    Then we can fall back to padding zeros and length encoding like normal. */
+       Then we can fall back to padding zeros and length encoding like normal. */
 
     if (md->curlen >= 56) {
         for (; md->curlen < 64;)

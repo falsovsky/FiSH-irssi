@@ -17,7 +17,6 @@
 #include <irc/core/irc-commands.h>
 #include <irc/core/irc-servers.h>
 
-
 void irssi_redraw(void);
 
 QUERY_REC *irc_query_create(const char *server_tag, const char *nick, int automatic);
