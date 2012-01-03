@@ -16,7 +16,7 @@ Makefile.in
 
 /src/config.h
 /config.log
-
+stamp-h1
 .deps
 
 # Compiled Object files
