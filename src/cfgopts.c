@@ -13,11 +13,11 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     if(file==NULL) goto file_error;
 
     buffer[0]='\0';
-    sprintf(INIsection, "[%s]", section);
+    sprintf((char *)INIsection, "[%s]", section);
 
     do
     {
-        fptr=fgets(line, sizeof(line)-2, file);
+        fptr=fgets((char *)line, sizeof(line)-2, file);
     }
     while(strncasecmp(line, INIsection, strlen(INIsection)) && !feof(file));
 

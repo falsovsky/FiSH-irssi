@@ -175,7 +175,7 @@ int sha_file(unsigned char *filename, unsigned char *hash)
     sha_state md;
 
     sha_init(&md);
-    in = fopen(filename, "rb");
+    in = fopen((char *)filename, "rb");
     if (!in)
         return 0;
     do {

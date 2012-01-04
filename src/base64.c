@@ -16,7 +16,7 @@ char b64buf[256];
 void initb64(){
     unsigned int i;
     for (i=0; i<256; i++) b64buf[i]=0x00;
-    for (i=0; i<64; i++) b64buf[(B64ABC[i])]=i;
+    for (i=0; i<64; i++) b64buf[(int)(B64ABC[i])]=i;
 }
 
 /*
@@ -30,7 +30,7 @@ int b64toh(const char *b, char *d){
     l=strlen(b);
     if (l<2) return 0;
     for (i=l-1;i>-1;i--){
-        if (b64buf[(b[i])]==0) l--;
+        if (b64buf[(int)(b[i])]==0) l--;
         else break;
     }
 
@@ -38,22 +38,22 @@ int b64toh(const char *b, char *d){
     i=0, k=0;
     while (1) {
         i++;
-        if (k+1<l) d[i-1]=((b64buf[(b[k])])<<2);
+        if (k+1<l) d[i-1]=((b64buf[(int)(b[k])])<<2);
         else break;
         k++;
-        if (k<l) d[i-1]|=((b64buf[(b[k])])>>4);
+        if (k<l) d[i-1]|=((b64buf[(int)(b[k])])>>4);
         else break;
         i++;
-        if (k+1<l) d[i-1]=((b64buf[(b[k])])<<4);
+        if (k+1<l) d[i-1]=((b64buf[(int)(b[k])])<<4);
         else break;
         k++;
-        if (k<l) d[i-1]|=((b64buf[(b[k])])>>2);
+        if (k<l) d[i-1]|=((b64buf[(int)(b[k])])>>2);
         else break;
         i++;
-        if (k+1<l) d[i-1]=((b64buf[(b[k])])<<6);
+        if (k+1<l) d[i-1]=((b64buf[(int)(b[k])])<<6);
         else break;
         k++;
-        if (k<l) d[i-1]|=(b64buf[(b[k])]);
+        if (k<l) d[i-1]|=(b64buf[(int)(b[k])]);
         else break;
         k++;
     }
