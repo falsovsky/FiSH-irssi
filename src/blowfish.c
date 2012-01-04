@@ -149,9 +149,9 @@ int encrypt_string(const char *key, const char *str, char *dest, int len)
     strncpy(s, str, len);
     memset(s+len, 0, 9);
 
-    blowfish_init(key, strlen(key), bf_P, bf_S);
+    blowfish_init((u_8bit_t *)key, strlen(key), bf_P, bf_S);
 
-    p = s;
+    p = (unsigned char *)s;
     d = dest;
 
     while (*p)
@@ -200,7 +200,7 @@ int decrypt_string(const char *key, const char *str, char *dest, int len)
     strncpy(s, str, len);
     memset(s+len, 0, 12);
 
-    blowfish_init((unsigned char *) key, strlen(key), bf_P, bf_S);
+    blowfish_init((u_8bit_t *) key, strlen(key), bf_P, bf_S);
 
     p = s;
     d = dest;
@@ -221,7 +221,7 @@ int decrypt_string(const char *key, const char *str, char *dest, int len)
     return 1;
 }
 
-int encrypt_key(const char *key, char *encryptedKey)
+void encrypt_key(const char *key, char *encryptedKey)
 {
     int i;
     strcpy(encryptedKey, "+OK ");
