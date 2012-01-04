@@ -18,6 +18,13 @@ Makefile.in
 /config.log
 stamp-h1
 .deps
+.libs
+
+config.guess
+config.sub
+libtool
+ltmain.sh
+*.*~
 
 # Compiled Object files
 *.slo

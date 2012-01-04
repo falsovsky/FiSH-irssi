@@ -1,4 +1,4 @@
-#define HAVE_CONFIG_H
+//#define HAVE_CONFIG_H
 
 #define MODULE_NAME "fish"
 

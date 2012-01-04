@@ -1,2 +1,5 @@
+/* ZNC log support */
 #undef FiSH_DECRYPT_ZNC_LOGS
-#undef FiSH_USE_IRSSI_RECODE
+
+/* irssi recode support */
+#define FiSH_USE_IRSSI_RECODE
