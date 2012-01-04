@@ -19,16 +19,16 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     {
         fptr=fgets((char *)line, sizeof(line)-2, file);
     }
-    while(strncasecmp(line, INIsection, strlen(INIsection)) && !feof(file));
+    while(strncasecmp((char *)line, (char *)INIsection, strlen((char *)INIsection)) && !feof(file));
 
     do
     {
-        fptr=fgets(line, sizeof(line)-2, file);
+        fptr=fgets((char *)line, sizeof(line)-2, file);
         if(fptr==NULL) break;
 
         if(*line=='#' || *line==';' || *line=='/' || *line=='[') continue;    // skip comments
 
-        key_tok=strtok(line, "=\n\r");   // get first token (key)
+        key_tok=strtok((char *)line, "=\n\r");   // get first token (key)
         if(key_tok)
         {
             value_tok=strtok(NULL, "=\n\r"); // get actual value information
@@ -64,7 +64,7 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
     char *fptr, *tok;
     unsigned char INIsection[strlen(section)+4];
 
-    sprintf(INIsection, "[%s]", section);
+    sprintf((char *)INIsection, "[%s]", section);
 
     infile=fopen(filepath, "r");
     if(infile==NULL)
@@ -90,11 +90,11 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
 
     do
     {
-        fptr=fgets(line, sizeof(line)-2, infile);
+        fptr=fgets((char *)line, sizeof(line)-2, infile);
         if(fptr)
         {
             if(fprintf(outfile, "%s", line) < 0) goto fprint_error;
-            section_not_found=strncasecmp(line, INIsection, strlen(INIsection));
+            section_not_found=strncasecmp((char *)line, (char *)INIsection, strlen((char *)INIsection));
         }
     }
     while(section_not_found && !feof(infile));
@@ -114,7 +114,7 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
     {
         do
         {
-            fptr=fgets(line, sizeof(line)-2, infile);
+            fptr=fgets((char *)line, sizeof(line)-2, infile);
             if(fptr==NULL)
             {	// eof reached, lets write it
                 if(*value)
@@ -139,7 +139,7 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
                 if(fprintf(outfile, "%s", line) < 0) goto fprint_error;
                 do
                 {	// write the rest of the file
-                    fptr=fgets(line, sizeof(line)-2, infile);
+                    fptr=fgets((char *)line, sizeof(line)-2, infile);
                     if(fptr)
                     {
                         if(fprintf(outfile, "%s", line) < 0) goto fprint_error;
@@ -149,8 +149,8 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
                 break;
             }
 
-            strcpy(line_bak, line);
-            tok=strtok(line, "=\n\r");  // get first token
+            strcpy((char *)line_bak, (char *)line);
+            tok=strtok((char *)line, "=\n\r");  // get first token
             if(tok)
             {
                 if(!strcasecmp(tok, key)) // got a match?
@@ -161,7 +161,7 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
                     }
                     do
                     {	// write the rest of the file
-                        fptr=fgets(line,sizeof(line)-2, infile);
+                        fptr=fgets((char *)line,sizeof(line)-2, infile);
                         if(fptr)
                         {
                             if(fprintf(outfile, "%s", line) < 0) goto fprint_error;
