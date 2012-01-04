@@ -1,0 +1,16 @@
+FiSH module for irssi
+
+Based on official from http://fish.secure.la/ (DEAD?)
+
+Changed to use GMP by Dcoder
+Basic autoconf/automake support by falso
+
+To build:
+# ./regen.sh
+# ./configure --with-irssi-prefix=/usr/include/irssi
+# make
+
+...
+
+BUGS:
+Unicode drama
