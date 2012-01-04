@@ -5,8 +5,7 @@ IRSSI_CFLAGS += -I/usr/include/irssi/
 
 AM_CFLAGS = -Wall $(IRSSI_CFLAGS) @GLIB_CFLAGS@
 
-#lib_LIBRARIES = libfish.a
-lib_LTLIBRARIES = libfish.la
+pkglib_LTLIBRARIES = libfish.la
 libfish_la_SOURCES = SHA-256.c \
 				 base64.c \
 				 blowfish.c \
@@ -14,5 +13,5 @@ libfish_la_SOURCES = SHA-256.c \
 				 DH1080.c \
 				 FiSH.c \
 				 randport.c
-libfish_la_LDFLAGS = -module -avoid-version
+libfish_la_LDFLAGS = -module -avoid-version -shared
 libfish_la_CFLAGS = $(AM_CFLAGS)
