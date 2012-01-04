@@ -7,6 +7,13 @@
 
 #include "module.h"
 
+// irssi defines this, dont know why
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+
 #include "config.h"
 
 #define CONTACT_SIZE 100	// size of buffer for contactName (nick or #channel)
