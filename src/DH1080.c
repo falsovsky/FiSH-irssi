@@ -48,10 +48,10 @@ BOOL DH1080_Init()
     }
     fclose(hRnd);
 
-    sha_file(iniPath, iniHash);
-    memXOR(raw_buf+128, iniHash, 32);
-    sha_file((unsigned char *)get_irssi_config(), iniHash);
-    memXOR(raw_buf+128, iniHash, 32);
+    sha_file(iniPath, (char *)iniHash);
+    memXOR((char *)raw_buf+128, (char *)iniHash, 32);
+    sha_file((char *)get_irssi_config(), (char *)iniHash);
+    memXOR((char *)raw_buf+128, (char *)iniHash, 32);
     ZeroMemory(iniHash, sizeof(iniHash));
     // first 128 byte in raw_buf: output from /dev/urandom
     // last 32 byte in raw_buf: SHA-256 digest from blow.ini and irssi.conf
@@ -98,14 +98,14 @@ BOOL DH_verifyPubKey(mpz_t b_pubkey)
 //         pub_key  = Your public key
 int DH1080_gen(char *priv_key, char *pub_key)
 {
-    unsigned char raw_buf[256], iniHash[33];
-    unsigned long seed;
+    unsigned char raw_buf[256]; //, iniHash[33];
+    //unsigned long seed;
     int iRet, i;
     size_t len;
 
     mpz_t b_privkey, b_pubkey, b_base;
     unsigned char temp[DH1080_PRIME_BYTES];
-    FILE *hRnd;
+    //FILE *hRnd;
 
     priv_key[0]='0';
     priv_key[1]='\0';
@@ -130,10 +130,10 @@ int DH1080_gen(char *priv_key, char *pub_key)
     {
         mpz_export(raw_buf, &len, 1, 1, 0, 0, b_privkey);
         mpz_clear(b_privkey);
-        htob64(raw_buf, priv_key, len);
+        htob64((char *)raw_buf, priv_key, len);
 
         mpz_export(raw_buf, &len, 1, 1, 0, 0, b_pubkey);
-        htob64(raw_buf, pub_key, len);
+        htob64((char *)raw_buf, pub_key, len);
 
         iRet=1;
     }
@@ -153,7 +153,8 @@ int DH1080_gen(char *priv_key, char *pub_key)
 //         HisPubKey = the secret key
 int DH1080_comp(char *MyPrivKey, char *HisPubKey)
 {
-    int i=0, iRet;
+    //int i=0;
+    int iRet;
     unsigned char SHA256digest[35], base64_tmp[160];
     mpz_t b_myPrivkey, b_HisPubkey, b_theKey;
     size_t len;
@@ -169,14 +170,14 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
     mpz_init(b_HisPubkey);
     mpz_init(b_theKey);
 
-    len=b64toh(HisPubKey, base64_tmp);
+    len=b64toh(HisPubKey, (char *)base64_tmp);
     mpz_import(b_HisPubkey, len, 1, 1, 0, 0, base64_tmp);
 
     if(DH_verifyPubKey(b_HisPubkey))
     {
         mpz_init(b_myPrivkey);
 
-        len=b64toh(MyPrivKey, base64_tmp);
+        len=b64toh(MyPrivKey, (char *)base64_tmp);
         mpz_import(b_myPrivkey, len, 1, 1, 0, 0, base64_tmp);
         memset(MyPrivKey, 0x20, strlen(MyPrivKey));
 
@@ -184,8 +185,8 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
         mpz_clear(b_myPrivkey);
 
         mpz_export(base64_tmp, &len, 1, 1, 0, 0, b_theKey);
-        SHA256_memory(base64_tmp, len, SHA256digest);
-        htob64(SHA256digest, HisPubKey, 32);
+        SHA256_memory((char *)base64_tmp, len, (char *)SHA256digest);
+        htob64((char *)SHA256digest, HisPubKey, 32);
 
         iRet=1;
     }
