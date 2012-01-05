@@ -13,17 +13,19 @@ Basic autoconf/automake support by falso
 
 ## Build instructions
 First download the irssi source code and extract it for example in your home, lets say: **/home/jacinto/irssi-0.8.15**
-> # ./regen.sh
->
-> # ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15
-> 
-> # make
-> 
-> # sudo cp src/.libs/libfish.so /usr/lib/irssi/modules
+```
+# ./regen.sh
 
+# ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15
+
+# make
+
+# sudo cp src/.libs/libfish.so /usr/lib/irssi/modules
+```
 ## To run
 Inside irssi you just need to run
-> /load fish
-
+```
+/load fish
+```
 ## BUGS
 * Some crashes when the terminal is set to UTF-8 and irssi recode is enabled
