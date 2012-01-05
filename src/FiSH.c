@@ -67,7 +67,7 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
 
     // Verify base64 string
     msg_len=strlen(msg_ptr);
-    if((strspn(msg_ptr, B64) != msg_len) || (msg_len < 12)) return 0;
+    if((strspn(msg_ptr, B64) != (size_t)msg_len) || (msg_len < 12)) return 0;
 
     if(LoadKeyForContact(target, theKey)==FALSE) return 0;
 
@@ -503,7 +503,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
     if(!unsetiniFlag)
     {
         pw_len=strlen(iniPW);
-        if(pw_len < 1 || pw_len > sizeof(new_iniKey))
+        if(pw_len < 1 || (size_t)pw_len > sizeof(new_iniKey))
         {
             printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
                     "\002FiSH:\002 No parameters. Usage: /setinipw <sekure_blow.ini_password>");

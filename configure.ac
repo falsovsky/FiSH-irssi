@@ -4,18 +4,11 @@ AC_CONFIG_SRCDIR([src/FiSH.c])
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_PROG_CC
-#AC_PROG_RANLIB
 LT_INIT
 
 AM_INIT_AUTOMAKE([1.9])
 
-AC_LANG([C])
-
-#AC_PROG_LIBTOOL
-
-#AC_DEFINE([FiSH_USE_IRSSI_RECODE], [1], [irssi unicode support])
-#AC_DEFINE([FiSH_DECRYPT_ZNC_LOGS], [0], [ZNC log support])
-
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_ARG_ENABLE([irssi-recode], 
               AS_HELP_STRING([--disable-irssi-recode],[disable irssi unicode recode]),
@@ -29,11 +22,13 @@ AC_ARG_ENABLE([znc-logs],
 
 AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
                                   [GNU MP not found, see http://swox.com/gmp])])
-AC_ARG_WITH(irssi-prefix,
-            AC_HELP_STRING([--with-irssi-prefix],[path for irssi source code]), 
+AC_ARG_WITH([irssi-source],
+            AC_HELP_STRING([--with-irssi-source],[path for irssi source code]), 
             [IRSSI_PATH=${withval}
              AC_SUBST(IRSSI_PATH)],
-             [AC_MSG_ERROR(Please define irssi source path. eg: --with-irssi-prefix=/usr/include/irssi)])
+             [AC_MSG_ERROR([To build FiSH you will need the irssi source code, please download it and extract it on a desired location.
+Then re-run this configure script with --with-irssi-source=/path/to/irssi/source.
+eg: ./configure --with-irssi-source=/home/falso/src/irssi-0.8.15])])
 
 PKG_CHECK_EXISTS([glib-2.0], [
                   GLIB_CFLAGS=`pkg-config glib-2.0 --cflags`
