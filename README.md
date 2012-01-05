@@ -1,7 +1,7 @@
 # FiSH module for irssi
 
-Based on official from http://fish.secure.la/ (DEAD?)
-Changed to use GMP by Dcoder
+Based on official from http://fish.secure.la/ (DEAD?)  
+Changed to use GMP by Dcoder  
 Basic autoconf/automake support by falso
 
 ## Requirements
@@ -12,19 +12,20 @@ Basic autoconf/automake support by falso
 
 ## Build instructions
 
-First download the irssi source code and extract it, for example **/home/jacinto/irssi-0.8.15**.
-Now enter the FiSH-irssi directory and...
-    # ./regen.sh
-    # ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15
-    # make
-    # sudo cp src/.libs/libfish.so /usr/lib/irssi/modules
-
+First download the irssi source code and extract it, for example **/home/jacinto/irssi-0.8.15**.  
+Now enter the FiSH-irssi directory and run the following combo.
+<pre>
+# ./regen.sh
+# ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15
+# make
+# sudo cp src/.libs/libfish.so /usr/lib/irssi/modules
+</pre>
 ## To run
 
 If you installed the module in the default directory, you just need to run the following command inside irssi to load it:
-    /load fish
+<pre>/load fish</pre>
 If not, just include the path while loading:
-    /load /home/jacinto/libfish.so
+<pre>/load /home/jacinto/libfish.so</pre>
 
 ## BUGS
 * Some crashes when the terminal is set to UTF-8 and irssi recode is enabled
