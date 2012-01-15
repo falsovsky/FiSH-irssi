@@ -1,5 +1,5 @@
 all-local:
-	@echo 'Now run sudo cp src/.libs/libfish.so /usr/lib/irssi/modules to install the plugin'
+	@echo 'Now copy src/.libs/libfish.so to /usr/lib/irssi/modules or equivalent to install the plugin'
 
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src
