@@ -27,5 +27,11 @@ If you installed the module in the default directory, you just need to run the f
 If not, just include the path while loading:
 <pre>/load /home/jacinto/libfish.so</pre>
 
+## Tested on
+* Linux/x86
+* OpenBSD/x86
+* OpenBSD/macppc
+* FreeBSD/x86
+
 ## BUGS
 * Some crashes when the terminal is set to UTF-8 and irssi recode is enabled
