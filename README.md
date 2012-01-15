@@ -9,6 +9,8 @@ Basic autoconf/automake support by falso
 * GNU MP - http://gmplib.org/
 * Glib 2.x - http://www.gtk.org/
 * irssi source code - http://irssi.org/
+* autoconf >= 2.59 - http://www.gnu.org/software/autoconf/
+* automake >= 1.9.6 - http://www.gnu.org/software/automake/
 
 ## Build instructions
 
