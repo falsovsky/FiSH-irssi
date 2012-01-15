@@ -1,4 +1,4 @@
-AC_PREREQ([2.64])
+AC_PREREQ([2.59])
 AC_INIT([libfish], [1.0], [falsovsky@gmail.com], [FiSH irssi module])
 AC_CONFIG_SRCDIR([src/FiSH.c])
 AC_CONFIG_HEADERS([src/config.h])
