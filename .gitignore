@@ -13,7 +13,8 @@ Makefile.in
 /install-sh
 /missing
 /config.status
-
+COPYING
+INSTALL
 m4
 /src/config.h
 /config.log
