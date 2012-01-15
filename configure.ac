@@ -44,7 +44,7 @@ AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
                                   [GNU MP not found, see http://swox.com/gmp])])
 
 AC_ARG_WITH([irssi-source],
-            AC_HELP_STRING([--with-irssi-source=DIR],[path for irssi source code]), 
+            AC_HELP_STRING([--with-irssi-source=DIR],[irssi source directory]), 
             [IRSSI_PATH=${withval}
              AC_SUBST(IRSSI_PATH)],
              [AC_MSG_ERROR([To build FiSH you will need the irssi source code, please download it and extract it on a desired location.
