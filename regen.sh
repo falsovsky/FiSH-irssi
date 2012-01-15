@@ -10,8 +10,12 @@ if [ $OS = "OpenBSD" ]; then
 		echo "export AUTOMAKE_VERSION=1.9"
 		exit 1
 	fi
-	echo "Dont forget to add --with-gmp-include=/usr/local/include --with-gmp-lib=/usr/local/lib to the configure script"
 fi
+
+if [[ $OS = "OpenBSD" || $OS = "FreeBSD" ]]; then
+    echo "Dont forget to add --with-gmp-include=/usr/local/include --with-gmp-lib=/usr/local/lib to the configure script"
+fi
+
 aclocal
 libtoolize --force
 autoconf
