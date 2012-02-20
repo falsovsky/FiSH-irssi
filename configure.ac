@@ -1,5 +1,5 @@
 AC_PREREQ([2.59])
-AC_INIT([libfish], [1.0], [falsovsky@gmail.com], [FiSH irssi module])
+AC_INIT([libfish], [1.1], [falsovsky@gmail.com], [FiSH irssi module])
 AC_CONFIG_SRCDIR([src/FiSH.c])
 AC_CONFIG_HEADERS([src/config.h])
 
@@ -39,6 +39,10 @@ AC_ARG_WITH([gmp],
                AC_MSG_FAILURE([Do not use --with-gmp and --with-gmp-include/--with-gmp-lib options simultaneously.])
             fi
             ])
+
+#PKG_CHECK_MODULES(OPENSSL, [openssl], [], [CHECK_SSL()])
+m4_include([m4/ax_check_openssl.m4])
+PKG_CHECK_MODULES(OPENSSL, [openssl], , [CHECK_SSL()])
 
 AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
                                   [GNU MP not found, see http://swox.com/gmp])])
