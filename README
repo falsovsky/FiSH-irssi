@@ -1,16 +1,17 @@
 # FiSH module for irssi
 
 Based on official from http://fish.secure.la/ (DEAD?)  
-Changed to use GMP by Dcoder  
+Changed to use GMP instead of MIRACL by Dcoder
 Basic autoconf/automake support by falso
 
 ## Requirements
 
-* GNU MP - http://gmplib.org/
-* Glib 2.x - http://www.gtk.org/
-* irssi source code - http://irssi.org/
 * autoconf >= 2.59 - http://www.gnu.org/software/autoconf/
 * automake >= 1.9.6 - http://www.gnu.org/software/automake/
+* GNU MP - http://gmplib.org/
+* Glib 2.x - http://www.gtk.org/
+* OpenSSL - http://www.openssl.org/
+* irssi source code - http://irssi.org/
 
 ## Build instructions
 
@@ -34,6 +35,7 @@ If not, just include the path while loading:
 * OpenBSD/x86
 * OpenBSD/macppc
 * FreeBSD/x86
+* NetBSD/x86
 
 ## BUGS
 * Some crashes when the terminal is set to UTF-8 and irssi recode is enabled
