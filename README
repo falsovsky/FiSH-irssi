@@ -1,8 +1,8 @@
 # FiSH module for irssi
 
 Based on official from http://fish.secure.la/ (DEAD?)  
-Changed to use GMP instead of MIRACL by Dcoder
-Basic autoconf/automake support by falso
+Changed to use GMP instead of MIRACL by Dcoder 
+Basic autoconf/automake support by falso 
 
 ## Requirements
 
