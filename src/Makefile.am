@@ -2,10 +2,10 @@ IRSSI_PATH = @IRSSI_PATH@
 IRSSI_CFLAGS = -I$(IRSSI_PATH) -I$(IRSSI_PATH)/src
 IRSSI_CFLAGS += -I$(IRSSI_PATH)/src/core -I$(IRSSI_PATH)/src/fe-common/core
 
-AM_CFLAGS = -W -g -Wall -Wno-unused-parameter $(IRSSI_CFLAGS) @GLIB_CFLAGS@
+AM_CFLAGS = -W -g -Wall -Wno-unused-parameter $(IRSSI_CFLAGS) @GLIB_CFLAGS@ -lcrypto -lssl
 
 pkglib_LTLIBRARIES = libfish.la
-libfish_la_SOURCES = SHA-256.c \
+libfish_la_SOURCES = SHA256.c \
 				 base64.c \
 				 blowfish.c \
 				 cfgopts.c \
