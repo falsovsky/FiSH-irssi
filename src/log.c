@@ -1,42 +1,76 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include "log.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <time.h>
 
-int LogCreated = 0;
+FILE *fp ;
+static int SESSION_TRACKER; //Keeps track of session
 
-void Log(char* message, char *object, char *format)
+char* print_time()
 {
-    FILE *file;
+    time_t t;
+    char *buf;
+    
+    time(&t);
+    buf = (char*)malloc(strlen(ctime(&t))+ 1);
+    
+    snprintf(buf,strlen(ctime(&t)),"%s ", ctime(&t));
+   
+    return buf;
+}
+void log_print(char* filename, int line, char *fmt,...)
+{
+    va_list         list;
+    char            *p, *r;
+    int             e;
 
-    if (LogCreated == 0) {
-        file = fopen(LOGFILE, "w");
-        LogCreated = 1;
-    }
+    if(SESSION_TRACKER > 0)
+      fp = fopen ("log.txt","a+");
     else
-        file = fopen(LOGFILE, "a");
+      fp = fopen ("log.txt","w");
+    
+    fprintf(fp,"%s ",print_time());
+    va_start( list, fmt );
 
-    if (file == NULL) {
-        if (LogCreated == 1)
-            LogCreated = 0;
-        return;
-    }
-    else
+    for ( p = fmt ; *p ; ++p )
     {
-        fputs(message, file);
-        fputs(" - ", file);
-        fprintf(file, object, format);
-       fputs("\n", file);
-        fclose(file);
+        if ( *p != '%' )//If simple string
+        {
+            fputc( *p,fp );
+        }
+        else
+        {
+            switch ( *++p )
+            {
+                /* string */
+            case 's':
+            {
+                r = va_arg( list, char * );
+
+                fprintf(fp,"%s", r);
+                continue;
+            }
+
+            /* integer */
+            case 'd':
+            {
+                e = va_arg( list, int );
+
+                fprintf(fp,"%d", e);
+                continue;
+            }
+
+            default:
+                fputc( *p, fp );
+            }
+        }
     }
-
-    if (file)
-        fclose(file);
+    va_end( list );
+    fprintf(fp," [%s][line: %d] ",filename,line);
+    fputc( '\n', fp );
+    SESSION_TRACKER++;
+    fclose(fp);
 }
 
-void LogErr(char *message)
-{
-/*
-    Log(message);
-    Log("\n");
-*/
-}
+

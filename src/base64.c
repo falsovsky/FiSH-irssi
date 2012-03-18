@@ -19,7 +19,7 @@ void initb64(){
     for (i=0; i<256; i++) b64buf[i]=0x00;
     for (i=0; i<64; i++) b64buf[(int)(B64ABC[i])]=i;
 #ifdef DEBUG
-    LogErr("initb64 - b64buf", b64buf, "%s");
+    LOG_PRINT("initb64 - b64buf: %s", b64buf);
 #endif
 }
 

@@ -1,5 +1,4 @@
-#define LOGFILE   "/home/jarbas/fish.log"
-
-extern int LogCreated;
-void Log(char* message, char *object, char *format);
-void LogErr(char *message);
+char* print_time();
+void log_print(char* filename, int line, char *fmt,...);
+#define LOG_PRINT(...) log_print(__FILE__, __LINE__, __VA_ARGS__ )
+#define DEBUG 1
