@@ -40,9 +40,8 @@ AC_ARG_WITH([gmp],
             fi
             ])
 
-#PKG_CHECK_MODULES(OPENSSL, [openssl], [], [CHECK_SSL()])
 m4_include([m4/ax_check_openssl.m4])
-PKG_CHECK_MODULES(OPENSSL, [openssl], , [CHECK_SSL()])
+PKG_CHECK_MODULES(OPENSSL, [openssl], [], [CHECK_SSL()])
 
 AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
                                   [GNU MP not found, see http://swox.com/gmp])])
