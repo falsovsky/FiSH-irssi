@@ -16,7 +16,9 @@ AC_PROG_CC
 AC_LANG_C
 
 dnl find and test libtool
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
+AC_SUBST([LIBTOOL_DEPS])
+#AC_PROG_LIBTOOL
 
 dnl irssi-recode define (maybe remove?)
 AC_ARG_ENABLE([irssi-recode], 
