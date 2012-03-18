@@ -17,7 +17,6 @@ COPYING
 INSTALL
 m4/*
 !m4/ax_check_openssl.m4
-!m4/ax_lib_sqlite3.m4
 /src/config.h
 /config.log
 stamp-h1
