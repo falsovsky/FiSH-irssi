@@ -1,6 +1,7 @@
 // FiSH encryption module for irssi, v1.00
 
 #include "FiSH.h"
+#include "logManager.h"
 
 // load base64 blowfish key for contact
 // if theKey is NULL, only a test is made (= IsKeySetForContact)
@@ -851,6 +852,7 @@ void fish_init(void)
     char iniPasswordHash[50], SHA256digest[35], B64digest[50], *iniPass_ptr;
     int i;
 
+    LOGFILE = openLog("log.txt", 'a');
 
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
     strcpy(tempPath, iniPath);
