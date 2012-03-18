@@ -1,7 +1,7 @@
 // FiSH encryption module for irssi, v1.00
 
 #include "FiSH.h"
-#include "logManager.h"
+//#include "logManager.h"
 
 // load base64 blowfish key for contact
 // if theKey is NULL, only a test is made (= IsKeySetForContact)
