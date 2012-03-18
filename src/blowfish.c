@@ -1,4 +1,5 @@
 #include "blowfish.h"
+#include "logManager.h"
 
 const unsigned char B64[]="./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
