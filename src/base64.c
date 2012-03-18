@@ -1,4 +1,5 @@
 #include <string.h>
+#include "log.h"
 
 /*
    Public Base64 conversion tables
@@ -17,6 +18,9 @@ void initb64(){
     unsigned int i;
     for (i=0; i<256; i++) b64buf[i]=0x00;
     for (i=0; i<64; i++) b64buf[(int)(B64ABC[i])]=i;
+#ifdef DEBUG
+    LogErr("initb64 - b64buf", b64buf, "%s");
+#endif
 }
 
 /*
