@@ -7,6 +7,14 @@
 
 #include "module.h"
 
+// Fix some warnings
+#undef UOFF_T_INT
+#undef UOFF_T_LONG
+#undef UOFF_T_LONG_LONG
+#undef PRIuUOFF_T
+#undef SIZEOF_LONG
+#undef SIZEOF_OFF_T
+
 // irssi defines this, dont know why
 #undef PACKAGE_BUGREPORT
 #undef PACKAGE_NAME
