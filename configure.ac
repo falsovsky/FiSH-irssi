@@ -12,13 +12,12 @@ dnl directory for m4 macros
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl find and test the C compiler
-AC_PROG_CC
 AC_LANG_C
+AC_PROG_CC
 
 dnl find and test libtool
-LT_INIT([disable-static])
+AC_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
-#AC_PROG_LIBTOOL
 
 dnl irssi-recode define (maybe remove?)
 AC_ARG_ENABLE([irssi-recode], 

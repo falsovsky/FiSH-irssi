@@ -26,7 +26,7 @@ then
     echo "Dont forget to add --with-gmp-include=/usr/pkg/include --with-gmp-lib=/usr/pkg/lib to the configure script"
 fi
 
-aclocal
+aclocal --force
 libtoolize --force
-autoconf
+autoconf --force
 automake -a
