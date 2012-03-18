@@ -852,8 +852,9 @@ void fish_init(void)
     char iniPasswordHash[50], SHA256digest[35], B64digest[50], *iniPass_ptr;
     int i;
 
-    LOGFILE = openLog("log.txt", 'a');
-
+#ifdef DEBUG
+    LOGFILE = openLog("log.txt", 'w');
+#endif
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
     strcpy(tempPath, iniPath);
     strcpy(strrchr(iniPath, '/'), blow_ini);
@@ -930,6 +931,9 @@ void fish_init(void)
 
 void fish_deinit(void)
 {
+#ifdef DEBUG
+    closeLog(LOGFILE);
+#endif
     signal_remove("server sendmsg", (SIGNAL_FUNC) encrypt_msg);
     signal_remove("message private", (SIGNAL_FUNC) decrypt_msg);
     signal_remove("message public", (SIGNAL_FUNC) decrypt_msg);

@@ -15,4 +15,6 @@ void setLogLevel(int level);
 #define printLogLevel4(logFile, fmt, ...)\
     do { if (logManagerLevel>=4) printLog(logFile, fmt, __VA_ARGS__); } while (0)
 
+#define DEBUG 1
+
 extern FILE *LOGFILE;
