@@ -2,22 +2,22 @@
 #include <stdio.h>
 #include "log.h"
 
-bool LogCreated = false;
+int LogCreated = 0;
 
-void Log (char* message, char *object, char *format)
+void Log(char* message, char *object, char *format)
 {
     FILE *file;
 
-    if (!LogCreated) {
+    if (LogCreated == 0) {
         file = fopen(LOGFILE, "w");
-        LogCreated = true;
+        LogCreated = 1;
     }
     else
         file = fopen(LOGFILE, "a");
 
     if (file == NULL) {
-        if (LogCreated)
-            LogCreated = false;
+        if (LogCreated == 1)
+            LogCreated = 0;
         return;
     }
     else
@@ -25,6 +25,7 @@ void Log (char* message, char *object, char *format)
         fputs(message, file);
         fputs(" - ", file);
         fprintf(file, object, format);
+       fputs("\n", file);
         fclose(file);
     }
 
@@ -32,8 +33,10 @@ void Log (char* message, char *object, char *format)
         fclose(file);
 }
 
-void LogErr (char *message)
+void LogErr(char *message)
 {
+/*
     Log(message);
     Log("\n");
+*/
 }
