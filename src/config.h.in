@@ -1,38 +1,10 @@
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
-/* misc.. */
-#undef HAVE_IPV6
-#undef HAVE_SOCKS_H
-#undef HAVE_STATIC_PERL
-#undef HAVE_GMODULE
-#undef HAVE_GC_H
-#undef HAVE_GC_GC_H
-#undef USE_GC
 
-/* macros/curses checks */
-#undef HAS_CURSES
-#undef USE_SUNOS_CURSES
-#undef USE_BSD_CURSES
-#undef USE_SYSV_CURSES
-#undef USE_NCURSES
-#undef NO_COLOR_CURSES
-#undef SCO_FLAVOR
+/* machine is bigendian */
+#undef ENDIAN_BIG
 
-/* our own curses checks */
-#undef HAVE_NCURSES_USE_DEFAULT_COLORS
-#undef HAVE_CURSES_IDCOK
-#undef HAVE_CURSES_RESIZETERM
-#undef HAVE_CURSES_WRESIZE
-
-/* terminfo/termcap */
-#undef HAVE_TERMINFO
-
-/* What type should be used for uoff_t */
-#undef UOFF_T_INT
-#undef UOFF_T_LONG
-#undef UOFF_T_LONG_LONG
-
-/* printf()-format for uoff_t, eg. "u" or "lu" or "llu" */
-#undef PRIuUOFF_T
+/* machine is littleendian */
+#undef ENDIAN_LITTLE
 
 /* ZNC log support */
 #undef FiSH_DECRYPT_ZNC_LOGS
@@ -42,6 +14,27 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the `fclose' function. */
+#undef HAVE_FCLOSE
+
+/* Define to 1 if you have the `feof' function. */
+#undef HAVE_FEOF
+
+/* Define to 1 if you have the `fgets' function. */
+#undef HAVE_FGETS
+
+/* Define to 1 if you have the `fopen' function. */
+#undef HAVE_FOPEN
+
+/* Define to 1 if you have the `fprintf' function. */
+#undef HAVE_FPRINTF
+
+/* Define to 1 if you have the `fread' function. */
+#undef HAVE_FREAD
+
+/* Define to 1 if you have the `free' function. */
+#undef HAVE_FREE
 
 /* Define to 1 if you have the `getpass' function. */
 #undef HAVE_GETPASS
@@ -65,8 +58,17 @@
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
-/* Define to 1 if you have the <stddef.h> header file. */
-#undef HAVE_STDDEF_H
+/* Define to 1 if you have the `remove' function. */
+#undef HAVE_REMOVE
+
+/* Define to 1 if you have the `rename' function. */
+#undef HAVE_RENAME
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the `sprintf' function. */
+#undef HAVE_SPRINTF
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -77,8 +79,17 @@
 /* Define to 1 if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
+/* Define to 1 if you have the `strcat' function. */
+#undef HAVE_STRCAT
+
 /* Define to 1 if you have the `strchr' function. */
 #undef HAVE_STRCHR
+
+/* Define to 1 if you have the `strcmp' function. */
+#undef HAVE_STRCMP
+
+/* Define to 1 if you have the `strcpy' function. */
+#undef HAVE_STRCPY
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -86,17 +97,26 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strlen' function. */
+#undef HAVE_STRLEN
+
 /* Define to 1 if you have the `strncasecmp' function. */
 #undef HAVE_STRNCASECMP
 
-/* Define to 1 if you have the `strrchr' function. */
-#undef HAVE_STRRCHR
+/* Define to 1 if you have the `strncmp' function. */
+#undef HAVE_STRNCMP
+
+/* Define to 1 if you have the `strncpy' function. */
+#undef HAVE_STRNCPY
 
 /* Define to 1 if you have the `strspn' function. */
 #undef HAVE_STRSPN
 
 /* Define to 1 if you have the `strstr' function. */
 #undef HAVE_STRSTR
+
+/* Define to 1 if you have the `strtok' function. */
+#undef HAVE_STRTOK
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
@@ -132,6 +152,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* printf()-format for uoff_t, eg. "u" or "lu" or "llu" */
+#undef PRIuUOFF_T
+
 /* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
@@ -146,6 +169,15 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* What type should be used for uoff_t */
+#undef UOFF_T_INT
+
+/* What type should be used for uoff_t */
+#undef UOFF_T_LONG
+
+/* What type should be used for uoff_t */
+#undef UOFF_T_LONG_LONG
 
 /* Version number of package */
 #undef VERSION

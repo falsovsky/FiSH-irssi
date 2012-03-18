@@ -1,6 +1,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "config.h.in"
+#include "config.h"
+
 #define MAXKEYBYTES	56		/* 448 bits */
 #define bf_N		16
 #define noErr		 0
@@ -15,7 +18,7 @@ union aword {
     u_32bit_t word;
     u_8bit_t byte[4];
     struct {
-#if defined(WORDS_BIGENDIAN) || defined(__ppc__) || defined(__POWERPC__) || defined(__BIG_ENDIAN__)
+#if defined(ENDIAN_BIG)
         // BIG ENDIAN (PowerPC, Motorola)
         unsigned int byte0:8;
         unsigned int byte1:8;

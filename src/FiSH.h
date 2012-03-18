@@ -1,10 +1,10 @@
-#include "cfgopts.h"
-#include "blowfish.h"
-#include "DH1080.h"
-
 #include <time.h>
 #include <unistd.h>
 
+#include "cfgopts.h"
+#include "blowfish.h"
+#include "DH1080.h"
+#include "config.h.in"
 #include "module.h"
 
 // Fix some warnings
@@ -22,6 +22,7 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
+#include "config.h.in"
 #include "config.h"
 
 #define CONTACT_SIZE 100	// size of buffer for contactName (nick or #channel)
