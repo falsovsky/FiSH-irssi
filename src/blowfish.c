@@ -235,4 +235,8 @@ void encrypt_key(const char *key, char *encryptedKey)
     strcpy(encryptedKey, "+OK ");
     i=strlen(key);
     encrypt_string(iniKey, key, encryptedKey+4, i>80 ? 80 : i);
+#ifdef DEBUG
+    printLog(LOGFILE, "encrypt_key - key: %s", key);
+    printLog(LOGFILE, "encrypt_key - encryptedKey: %s", encryptedKey);
+#endif
 }
