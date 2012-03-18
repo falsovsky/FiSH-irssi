@@ -29,7 +29,7 @@ AC_ARG_ENABLE([irssi-recode],
 dnl znc-logs define (maybe remove?)
 AC_ARG_ENABLE([znc-logs],
     AS_HELP_STRING([--enable-znc-logs],[enable ZNC logs support]),
-    AC_DEFINE([FiSH_DECRYPT_ZNC_LOGS], [1], [ZNC log support]),
+    [AC_DEFINE([FiSH_DECRYPT_ZNC_LOGS], [1], [ZNC log support])],
     []
 )
 
