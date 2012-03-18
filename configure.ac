@@ -16,6 +16,7 @@ AC_LANG_C
 AC_PROG_CC
 
 dnl find and test libtool
+LT_INIT([disable-static])
 AC_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
 
@@ -91,7 +92,15 @@ AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
 dnl load m4 OpenSSL macro
 m4_include([m4/ax_check_openssl.m4])
 dnl check for OpenSSL 
-PKG_CHECK_MODULES(OPENSSL, [openssl], [], [CHECK_SSL()])
+PKG_CHECK_MODULES([OpenSSL], [openssl], [], [CHECK_SSL()])
+
+dnl load m4 sqlite macro
+m4_include([m4/ax_lib_sqlite3.m4])
+dnl check for sqlite
+AX_LIB_SQLITE3()
+if test -z "$SQLITE3_CFLAGS"; then
+        AC_MSG_ERROR([Need a valid sqlite3 library or source, try --with-sqlite3])
+fi
 
 dnl Check if we're a little-endian or a big-endian system
 AC_DEFUN([AC_C_ENDIAN],
