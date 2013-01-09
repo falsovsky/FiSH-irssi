@@ -41,7 +41,11 @@ int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *targ
 
     if(GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return 0;
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    if (server != NULL) {
+        snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    } else {
+        snprintf(buffer, CONTACT_SIZE, "%s", target);
+    }
     //if(LoadKeyForContact(target, theKey)==FALSE) return 0;
     if(LoadKeyForContact(buffer, theKey)==FALSE) return 0;
 
@@ -73,7 +77,11 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     msg_len=strlen(msg_ptr);
     if((strspn(msg_ptr, B64) != (size_t)msg_len) || (msg_len < 12)) return 0;
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    if (server != NULL) {
+        snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    } else {
+        snprintf(buffer, CONTACT_SIZE, "%s", target);
+    }
     //if(LoadKeyForContact(target, theKey)==FALSE) return 0;
     if(LoadKeyForContact(buffer, theKey)==FALSE) return 0;
 
