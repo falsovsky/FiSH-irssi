@@ -35,12 +35,15 @@ BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
 int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *target, char *bf_dest)
 {
     char theKey[KEYBUF_SIZE]="";
+    char buffer[CONTACT_SIZE];
 
     if(IsNULLorEmpty(msg_ptr) || bf_dest==NULL || IsNULLorEmpty(target)) return 0;
 
     if(GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return 0;
 
-    if(LoadKeyForContact(target, theKey)==FALSE) return 0;
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    //if(LoadKeyForContact(target, theKey)==FALSE) return 0;
+    if(LoadKeyForContact(buffer, theKey)==FALSE) return 0;
 
     strcpy(bf_dest, "+OK ");
 
@@ -56,7 +59,7 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="", bf_dest[1000]="";
     char myMark[20]="", markPos[20]="", *recoded;
     int msg_len, i, mark_broken_block=0, action_found=0;
-
+    char buffer[CONTACT_SIZE];
 
     if(IsNULLorEmpty(msg_ptr) || msg_bak==NULL || IsNULLorEmpty(target)) return 0;
 
@@ -70,7 +73,9 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     msg_len=strlen(msg_ptr);
     if((strspn(msg_ptr, B64) != (size_t)msg_len) || (msg_len < 12)) return 0;
 
-    if(LoadKeyForContact(target, theKey)==FALSE) return 0;
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    //if(LoadKeyForContact(target, theKey)==FALSE) return 0;
+    if(LoadKeyForContact(buffer, theKey)==FALSE) return 0;
 
     // usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
     if(msg_len >= (int)(sizeof(bf_dest)*1.5)) msg_ptr[(int)(sizeof(bf_dest)*1.5)-20]='\0';
@@ -201,10 +206,13 @@ void decrypt_msg(SERVER_REC *server, char *msg, const char *nick, const char *ad
 void encrypt_msg(SERVER_REC *server, char *target, char *msg, char *orig_target)
 {
     char bf_dest[800]="", *plainMsg;
-
+    char buffer[CONTACT_SIZE];
 
     if(IsNULLorEmpty(msg) || IsNULLorEmpty(target)) return;
-    if(LoadKeyForContact(target, NULL)==FALSE) return;
+
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    //if(LoadKeyForContact(target, NULL)==FALSE) return;
+    if(LoadKeyForContact(buffer, NULL)==FALSE) return;
 
 
     plainMsg = IsPlainPrefix(msg);
@@ -230,11 +238,15 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
     char contactName[CONTACT_SIZE]="", myMark[20]="", markPos[20]="", formattedMsg[800]="";
     int i;
     char *plainMsg;
+    char buffer[CONTACT_SIZE];
 
 
     if(IsNULLorEmpty(msg) || IsNULLorEmpty(target)) return;
     if(GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return;
-    if(LoadKeyForContact(target, NULL)==FALSE) return;
+
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
+    //if(LoadKeyForContact(target, NULL)==FALSE) return;
+    if(LoadKeyForContact(buffer, NULL)==FALSE) return;
 
 
     plainMsg = IsPlainPrefix(msg);
@@ -628,6 +640,7 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     char contactName[CONTACT_SIZE]="", encryptedKey[150]="";
     const char *target, *key;
     void *free_arg;
+    char buffer[CONTACT_SIZE];
 
 
     if (IsNULLorEmpty(data))
@@ -664,7 +677,9 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     encrypt_key((char *)key, encryptedKey);
 
-    if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, contactName);
+    //if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
+    if(WritePrivateProfileString(buffer, "key", encryptedKey, iniPath) == -1)
     {
         ZeroMemory(encryptedKey, sizeof(encryptedKey));
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
@@ -710,7 +725,7 @@ void cmd_delkey(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 void cmd_key(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 {
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="";
-
+    char buffer[CONTACT_SIZE];
 
     if(IsNULLorEmpty(target))
     {
@@ -724,11 +739,15 @@ void cmd_key(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 
     if(strfcpy(contactName, (char *)target, CONTACT_SIZE)==NULL) return;
 
-    if(LoadKeyForContact(contactName, theKey)==FALSE)
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, contactName);
+    //if(LoadKeyForContact(contactName, theKey)==FALSE)
+    if(LoadKeyForContact(buffer, theKey)==FALSE)
     {
         ZeroMemory(theKey, KEYBUF_SIZE);
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
                 "\002FiSH:\002 Key for %s not found or invalid!", target);
+        printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
+                buffer);
         return;
     }
 
@@ -767,6 +786,7 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 {
     int i;
     char hisPubKey[300], contactName[CONTACT_SIZE]="", encryptedKey[KEYBUF_SIZE]="";
+    char buffer[CONTACT_SIZE];
 
 
     if(ischannel(*target) || ischannel(*nick)) return;	// no KeyXchange for channels...
@@ -801,7 +821,9 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
     encrypt_key(hisPubKey, encryptedKey);
     ZeroMemory(hisPubKey, sizeof(hisPubKey));
 
-    if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
+    snprintf(buffer, CONTACT_SIZE, "%s:%s",server->tag, contactName);
+    //if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
+    if(WritePrivateProfileString(buffer, "key", encryptedKey, iniPath) == -1)
     {
         ZeroMemory(encryptedKey, KEYBUF_SIZE);
         printtext(server, nick,	MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
@@ -816,13 +838,17 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 // perform auto-keyXchange only for known people
 void do_auto_keyx(QUERY_REC *query, int automatic)
 {
+    char buffer[CONTACT_SIZE];
+
     if(keyx_query_created)
         return;	// query was created by FiSH
 
     if(GetBlowIniSwitch("FiSH", "auto_keyxchange", "1") == 0)
         return;
 
-    if(LoadKeyForContact(query->name, NULL))
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", query->server->tag, query->name);
+    //if(LoadKeyForContact(query->name, NULL))
+    if(LoadKeyForContact(buffer, NULL))
         cmd_keyx(query->name, query->server, NULL);
 }
 
@@ -830,13 +856,15 @@ void do_auto_keyx(QUERY_REC *query, int automatic)
 void query_nick_changed(QUERY_REC *query, char *orignick)
 {
     char theKey[KEYBUF_SIZE]="", contactName[CONTACT_SIZE]="";
-
+    char buffer[CONTACT_SIZE];
 
     if(GetBlowIniSwitch("FiSH", "nicktracker", "1") == 0) return;
 
     if(orignick==NULL || strcasecmp(orignick, query->name)==0) return;	// same nick, different case?
 
-    if(LoadKeyForContact(orignick, theKey)==FALSE)
+    snprintf(buffer, CONTACT_SIZE, "%s:%s", query->server->tag, orignick);
+    //if(LoadKeyForContact(orignick, theKey)==FALSE)
+    if(LoadKeyForContact(buffer, theKey)==FALSE)
         return;	// see if there is a key for the old nick
 
     FixIniSection(query->name, contactName);
