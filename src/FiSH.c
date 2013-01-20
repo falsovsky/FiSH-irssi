@@ -512,9 +512,8 @@ void cmd_helpfish(const char *arg, SERVER_REC *server, WI_ITEM_REC *item)
             " /topic+ <your new topic>\n"
             " /notice+ <nick/#channel> <notice message>\n"
             " /me+ <your action message>\n"
-            " /key [<nick/#channel>]\n"
-            " /setkey [<nick/#channel>] <sekure_key>\n"
-            " /delkey <nick/#channel>\n"
+            " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
+            " /delkey [-<server tag>] <nick | #channel>\n"
             " /keyx [<nick>] (DH1080 KeyXchange)\n"
             " /setinipw <sekure_blow.ini_password>\n"
             " /unsetinipw\n");
@@ -652,27 +651,34 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *ite
 
 void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
+    GHashTable *optlist;
     char contactName[CONTACT_SIZE]="", encryptedKey[150]="";
     const char *target, *key;
     void *free_arg;
 
-
     if (IsNULLorEmpty(data))
     {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                "\002FiSH:\002 No parameters. Usage: /setkey [<nick/#channel>] <sekure_key>");
+                "\002FiSH:\002 No parameters. Usage: /setkey [-<server tag>] [<nick | #channel>] <key>");
         return;
     }
 
-    if (!cmd_get_params(data, &free_arg, 2, &target, &key)) return;
+    if (!cmd_get_params(data, &free_arg, 2 | PARAM_FLAG_OPTIONS |
+                        PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST, 
+                        "setkey", &optlist, &target, &key))
+        return;
 
     if (*target=='\0')
     {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                "\002FiSH:\002 No parameters. Usage: /setkey [<nick/#channel>] <sekure_key>");
+                "\002FiSH:\002 No parameters. Usage: /setkey [-<server tag>] [<nick | #channel>] <key>");
         cmd_params_free(free_arg);
         return;
     }
+
+    server = cmd_options_get_server("setkey", optlist, server);
+    if (server == NULL || !server->connected)
+        cmd_param_error(CMDERR_NOT_CONNECTED);
 
     if (*key=='\0') {
         // one paramter given - it's the key
@@ -681,7 +687,7 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
         else
         {
             printtext(NULL, NULL, MSGLEVEL_CRAP,
-                    "\002FiSH:\002 Please define nick/#channel. Usage: /setkey [<nick/#channel>] <sekure_key>");
+                    "\002FiSH:\002 Please define nick/#channel. Usage: /setkey [-<server tag>] [<nick | #channel>] <key>");
             cmd_params_free(free_arg);
             return;
         }
@@ -703,22 +709,33 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     ZeroMemory(encryptedKey, sizeof(encryptedKey));
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s successfully set!", target);
+            "\002FiSH:\002 Key for %s@%s successfully set!", target, server->tag);
 
     cmd_params_free(free_arg);
 }
 
-void cmd_delkey(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
+void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
+    GHashTable *optlist;
+    char *target;
     char contactName[CONTACT_SIZE]="";
+    void *free_arg;
 
+    if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_OPTIONS |
+                        PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST,
+                        "delkey", &optlist, &target))
+        return;
 
     if (IsNULLorEmpty(target))
     {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                "\002FiSH:\002 No parameters. Usage: /delkey <nick/#channel>");
+                "\002FiSH:\002 No parameters. Usage: /delkey [-<server tag>] <nick | #channel>");
         return;
     }
+
+    server = cmd_options_get_server("delkey", optlist, server);
+    if (server == NULL || !server->connected)
+        cmd_param_error(CMDERR_NOT_CONNECTED);
 
     if(GetIniSectionForContact(server, target, contactName)==FALSE) return;
 
@@ -730,7 +747,7 @@ void cmd_delkey(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
     }
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s successfully removed!", target);
+            "\002FiSH:\002 Key for %s@%s successfully removed!", target, server->tag);
 }
 
 void cmd_key(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
