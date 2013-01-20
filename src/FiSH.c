@@ -7,12 +7,10 @@
 // if theKey is NULL, only a test is made (= IsKeySetForContact)
 BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
 {
-    char contactName[CONTACT_SIZE]="", tmpKey[KEYBUF_SIZE]="";
+    char tmpKey[KEYBUF_SIZE]="";
     BOOL bRet=FALSE;
 
-    FixIniSection(contactPtr, contactName);	// replace '[' and ']' with '~' in contact name
-
-    GetPrivateProfileString(contactName, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
+    GetPrivateProfileString(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
     if(strlen(tmpKey) < 16) return FALSE;		// don't process, encrypted key not found in ini
 
     if(strncmp(tmpKey, "+OK ", 4)==0)
@@ -31,23 +29,38 @@ BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
     return bRet;
 }
 
+// construct a ini section key for contact
+BOOL GetIniSectionForContact(const SERVER_REC *server, const char *contactPtr, char *iniSectionKey)
+{
+    ZeroMemory(iniSectionKey, CONTACT_SIZE);
+
+    if(contactPtr==NULL) return FALSE;
+    if(iniSectionKey==NULL) return FALSE;
+
+    if(server!=NULL) {
+        snprintf(iniSectionKey, CONTACT_SIZE, "%s:%s", server->tag, contactPtr);
+    } else {
+        snprintf(iniSectionKey, CONTACT_SIZE, "%s", contactPtr);
+    }
+
+    FixIniSection(NULL, iniSectionKey);     // replace '[' and ']' with '~' in contact name
+
+    return TRUE;
+}
+
 // encrypt a message and store in bf_dest (using key for target)
 int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *target, char *bf_dest)
 {
     char theKey[KEYBUF_SIZE]="";
-    char buffer[CONTACT_SIZE];
+    char contactName[CONTACT_SIZE]="";
 
     if(IsNULLorEmpty(msg_ptr) || bf_dest==NULL || IsNULLorEmpty(target)) return 0;
 
     if(GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return 0;
 
-    if (server != NULL) {
-        snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
-    } else {
-        snprintf(buffer, CONTACT_SIZE, "%s", target);
-    }
-    //if(LoadKeyForContact(target, theKey)==FALSE) return 0;
-    if(LoadKeyForContact(buffer, theKey)==FALSE) return 0;
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return 0;
+
+    if(LoadKeyForContact(contactName, theKey)==FALSE) return 0;
 
     strcpy(bf_dest, "+OK ");
 
@@ -63,7 +76,7 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="", bf_dest[1000]="";
     char myMark[20]="", markPos[20]="", *recoded;
     int msg_len, i, mark_broken_block=0, action_found=0;
-    char buffer[CONTACT_SIZE];
+
 
     if(IsNULLorEmpty(msg_ptr) || msg_bak==NULL || IsNULLorEmpty(target)) return 0;
 
@@ -77,13 +90,9 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     msg_len=strlen(msg_ptr);
     if((strspn(msg_ptr, B64) != (size_t)msg_len) || (msg_len < 12)) return 0;
 
-    if (server != NULL) {
-        snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
-    } else {
-        snprintf(buffer, CONTACT_SIZE, "%s", target);
-    }
-    //if(LoadKeyForContact(target, theKey)==FALSE) return 0;
-    if(LoadKeyForContact(buffer, theKey)==FALSE) return 0;
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return 0;
+
+    if(LoadKeyForContact(contactName, theKey)==FALSE) return 0;
 
     // usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
     if(msg_len >= (int)(sizeof(bf_dest)*1.5)) msg_ptr[(int)(sizeof(bf_dest)*1.5)-20]='\0';
@@ -133,7 +142,6 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     if(mark_broken_block) strcat(bf_dest, myMark);
 
     // append crypt-mark?
-    FixIniSection(target, contactName);	// replace '[' and ']' with '~' in contact name
     if(GetBlowIniSwitch(contactName, "mark_encrypted", "1") != 0)
     {
         GetPrivateProfileString("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
@@ -214,13 +222,14 @@ void decrypt_msg(SERVER_REC *server, char *msg, const char *nick, const char *ad
 void encrypt_msg(SERVER_REC *server, char *target, char *msg, char *orig_target)
 {
     char bf_dest[800]="", *plainMsg;
-    char buffer[CONTACT_SIZE];
+    char contactName[CONTACT_SIZE]="";
+
 
     if(IsNULLorEmpty(msg) || IsNULLorEmpty(target)) return;
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
-    //if(LoadKeyForContact(target, NULL)==FALSE) return;
-    if(LoadKeyForContact(buffer, NULL)==FALSE) return;
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return;
+
+    if(LoadKeyForContact(contactName, NULL)==FALSE) return;
 
 
     plainMsg = IsPlainPrefix(msg);
@@ -246,15 +255,14 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
     char contactName[CONTACT_SIZE]="", myMark[20]="", markPos[20]="", formattedMsg[800]="";
     int i;
     char *plainMsg;
-    char buffer[CONTACT_SIZE];
 
 
     if(IsNULLorEmpty(msg) || IsNULLorEmpty(target)) return;
     if(GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return;
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, target);
-    //if(LoadKeyForContact(target, NULL)==FALSE) return;
-    if(LoadKeyForContact(buffer, NULL)==FALSE) return;
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return;
+
+    if(LoadKeyForContact(contactName, NULL)==FALSE) return;
 
 
     plainMsg = IsPlainPrefix(msg);
@@ -270,7 +278,6 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
 
 
     // append crypt-mark?
-    FixIniSection(target, contactName);	// replace '[' and ']' with '~' in contact name
     if(GetBlowIniSwitch(contactName, "mark_encrypted", "1") != 0)
     {
         GetPrivateProfileString("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
@@ -648,7 +655,6 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     char contactName[CONTACT_SIZE]="", encryptedKey[150]="";
     const char *target, *key;
     void *free_arg;
-    char buffer[CONTACT_SIZE];
 
 
     if (IsNULLorEmpty(data))
@@ -681,13 +687,11 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
         }
     }
 
-    FixIniSection(target, contactName);
-
     encrypt_key((char *)key, encryptedKey);
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, contactName);
-    //if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
-    if(WritePrivateProfileString(buffer, "key", encryptedKey, iniPath) == -1)
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return;
+
+    if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
     {
         ZeroMemory(encryptedKey, sizeof(encryptedKey));
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
@@ -716,8 +720,7 @@ void cmd_delkey(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
         return;
     }
 
-    if(strfcpy(contactName, (char *)target, CONTACT_SIZE)==NULL) return;
-    FixIniSection(NULL, contactName);
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return;
 
     if(WritePrivateProfileString(contactName, "key", "\0", iniPath) == -1)
     {
@@ -733,7 +736,7 @@ void cmd_delkey(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 void cmd_key(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 {
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="";
-    char buffer[CONTACT_SIZE];
+
 
     if(IsNULLorEmpty(target))
     {
@@ -745,17 +748,15 @@ void cmd_key(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
         }
     }
 
-    if(strfcpy(contactName, (char *)target, CONTACT_SIZE)==NULL) return;
+    if(GetIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", server->tag, contactName);
-    //if(LoadKeyForContact(contactName, theKey)==FALSE)
-    if(LoadKeyForContact(buffer, theKey)==FALSE)
+    if(LoadKeyForContact(contactName, theKey)==FALSE)
     {
         ZeroMemory(theKey, KEYBUF_SIZE);
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
                 "\002FiSH:\002 Key for %s not found or invalid!", target);
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                buffer);
+                contactName);
         return;
     }
 
@@ -794,7 +795,6 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 {
     int i;
     char hisPubKey[300], contactName[CONTACT_SIZE]="", encryptedKey[KEYBUF_SIZE]="";
-    char buffer[CONTACT_SIZE];
 
 
     if(ischannel(*target) || ischannel(*nick)) return;	// no KeyXchange for channels...
@@ -824,14 +824,12 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
     if(DH1080_comp(g_myPrivKey, hisPubKey)==0) return;
     signal_stop();
 
-    FixIniSection(nick, contactName);
-
     encrypt_key(hisPubKey, encryptedKey);
     ZeroMemory(hisPubKey, sizeof(hisPubKey));
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s",server->tag, contactName);
-    //if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
-    if(WritePrivateProfileString(buffer, "key", encryptedKey, iniPath) == -1)
+    if(GetIniSectionForContact(server, nick, contactName)==FALSE) return;
+
+    if(WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1)
     {
         ZeroMemory(encryptedKey, KEYBUF_SIZE);
         printtext(server, nick,	MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
@@ -846,7 +844,7 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 // perform auto-keyXchange only for known people
 void do_auto_keyx(QUERY_REC *query, int automatic)
 {
-    char buffer[CONTACT_SIZE];
+    char contactName[CONTACT_SIZE]="";
 
     if(keyx_query_created)
         return;	// query was created by FiSH
@@ -854,9 +852,9 @@ void do_auto_keyx(QUERY_REC *query, int automatic)
     if(GetBlowIniSwitch("FiSH", "auto_keyxchange", "1") == 0)
         return;
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", query->server->tag, query->name);
-    //if(LoadKeyForContact(query->name, NULL))
-    if(LoadKeyForContact(buffer, NULL))
+    if(GetIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
+
+    if(LoadKeyForContact(contactName, NULL))
         cmd_keyx(query->name, query->server, NULL);
 }
 
@@ -864,18 +862,18 @@ void do_auto_keyx(QUERY_REC *query, int automatic)
 void query_nick_changed(QUERY_REC *query, char *orignick)
 {
     char theKey[KEYBUF_SIZE]="", contactName[CONTACT_SIZE]="";
-    char buffer[CONTACT_SIZE];
+
 
     if(GetBlowIniSwitch("FiSH", "nicktracker", "1") == 0) return;
 
     if(orignick==NULL || strcasecmp(orignick, query->name)==0) return;	// same nick, different case?
 
-    snprintf(buffer, CONTACT_SIZE, "%s:%s", query->server->tag, orignick);
-    //if(LoadKeyForContact(orignick, theKey)==FALSE)
-    if(LoadKeyForContact(buffer, theKey)==FALSE)
+    if(GetIniSectionForContact(query->server, orignick, contactName)==FALSE) return;
+
+    if(LoadKeyForContact(contactName, theKey)==FALSE)
         return;	// see if there is a key for the old nick
 
-    FixIniSection(query->name, contactName);
+    if(GetIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
 
     if(WritePrivateProfileString(contactName, "key", theKey, iniPath) == -1)
         printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");

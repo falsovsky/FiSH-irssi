@@ -9,8 +9,10 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     char *fptr, *key_tok, *value_tok;
     unsigned char INIsection[strlen(section)+4];
 
+    if(strchr(section, '[')!=NULL || strchr(section, ']')!=NULL) goto use_default_value; // bad section
+
     file=fopen(filepath, "r");
-    if(file==NULL) goto file_error;
+    if(file==NULL) goto use_default_value;
 
     buffer[0]='\0';
     sprintf((char *)INIsection, "[%s]", section);
@@ -51,7 +53,7 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
         buffer[len-2]='\0';
     }
 
-file_error:
+use_default_value:
     if(len==0) snprintf(buffer, buflen, "%s", default_value);
 
     return strlen(buffer);
