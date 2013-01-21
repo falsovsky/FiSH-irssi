@@ -1,7 +1,6 @@
 // FiSH encryption module for irssi, v1.00
 
 #include "FiSH.h"
-//#include "logManager.h"
 
 // load base64 blowfish key for contact
 // if theKey is NULL, only a test is made (= IsKeySetForContact)
@@ -664,8 +663,8 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     }
 
     if (!cmd_get_params(data, &free_arg, 2 | PARAM_FLAG_OPTIONS |
-                        PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST, 
-                        "setkey", &optlist, &target, &key))
+                PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST, 
+                "setkey", &optlist, &target, &key))
         return;
 
     if (*target=='\0')
@@ -722,8 +721,8 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     void *free_arg;
 
     if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_OPTIONS |
-                        PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST,
-                        "delkey", &optlist, &target))
+                PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST,
+                "delkey", &optlist, &target))
         return;
 
     if (IsNULLorEmpty(target))
@@ -903,9 +902,6 @@ void fish_init(void)
     char iniPasswordHash[50], SHA256digest[35], B64digest[50], *iniPass_ptr;
     int i;
 
-#ifdef DEBUG
-    LOGFILE = openLog("log.txt", 'w');
-#endif
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
     strcpy(tempPath, iniPath);
     strcpy(strrchr(iniPath, '/'), blow_ini);
@@ -982,9 +978,6 @@ void fish_init(void)
 
 void fish_deinit(void)
 {
-#ifdef DEBUG
-    closeLog(LOGFILE);
-#endif
     signal_remove("server sendmsg", (SIGNAL_FUNC) encrypt_msg);
     signal_remove("message private", (SIGNAL_FUNC) decrypt_msg);
     signal_remove("message public", (SIGNAL_FUNC) decrypt_msg);

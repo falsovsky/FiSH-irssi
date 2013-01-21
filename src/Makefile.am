@@ -12,6 +12,5 @@ libfish_la_SOURCES = SHA256.c \
 				 DH1080.c \
 				 FiSH.c \
 				 randport.c
-#				 logManager.c
 libfish_la_LDFLAGS = -module -avoid-version -shared @OPENSSL_LIBS@
 libfish_la_CFLAGS = $(AM_CFLAGS)
