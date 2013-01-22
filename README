@@ -4,7 +4,7 @@
 * Changed to use GMP instead of MIRACL by Dcoder
 * Basic autoconf/automake support by falso
 * Changed the blow.ini reading/writing to Glib's GKeyFile - http://developer.gnome.org/glib/stable/glib-Key-value-file-parser.html
-* Multi-server support (**New! January 2013**)
+* Multi-server support (__New! January 2013__)
 
 You will need to edit your blow.ini manually if you want to continue using it.  
 Just prefix the servertag and a ":" to the target, for example:
