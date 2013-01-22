@@ -50,18 +50,16 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
     config = g_key_file_to_data(key_file, &length, &error);
     if (error == NULL) { // If everything is ok...
         outfile = fopen(filepath, "w");
-        if (outfile == NULL) { // Cant open to write, bail out!
-            g_free(config);
-            return -1;
+        if (outfile != NULL) {
+            fwrite(config, sizeof(gchar), length, outfile);
+            fclose(outfile);
         }
-
-        fwrite(config, sizeof(gchar), length, outfile);
-        fclose(outfile);
-    } else {
-        g_free(config);
-        return -1;
     }
 
     g_free(config);
+    if ((error != NULL) || (outfile == NULL)) {
+        return -1;
+    }
+
     return 1;
 }
