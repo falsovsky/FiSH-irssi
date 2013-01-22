@@ -1,9 +1,27 @@
 # FiSH module for irssi
 
-* Based on official from http://fish.secure.la/ (DEAD?)  
-* Changed to use GMP instead of MIRACL by Dcoder  
-* Basic autoconf/automake support by falso  
-* Multi-server support
+* Based on official from http://fish.secure.la/ (DEAD?)
+* Changed to use GMP instead of MIRACL by Dcoder
+* Basic autoconf/automake support by falso
+* Changed the blow.ini reading/writing to Glib's GKeyFile - http://developer.gnome.org/glib/stable/glib-Key-value-file-parser.html
+* Multi-server support (New! January 2013)
+
+You will need to edit your blow.ini manually if you want to continue using it.  
+Just prefix the servertag and a ":" to the target, for example:
+
+```
+[#l33tchan]  
+key=+OK awrps/takkv.
+```
+
+Needs to be changed to:  
+
+```
+[PTNet:#l33tchan]  
+key=+OK awrps/takkv.
+```
+
+Also, the /setkey and /delkey now allows to define the network.
 
 ```
 /setkey [-<server tag >] [<nick | #channel>] <key>
