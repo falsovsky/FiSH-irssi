@@ -36,21 +36,31 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
     GKeyFile *key_file;
     GError *error;
     FILE *outfile;
+    gsize length;
+    gchar *config = NULL;
 
     key_file = g_key_file_new();
     error = NULL;
-    g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, &error);
 
-    if (error != NULL) {
-        key_file = g_key_file_new();
-    }
+    g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL);
 
     g_key_file_set_string(key_file, section, key, value);
 
-    outfile=fopen(filepath, "w");
-    if (outfile == NULL) return -1;
-    fprintf(outfile, "%s", g_key_file_to_data(key_file, NULL, NULL));
-    fclose(outfile);
+    // Get the content of the config to a string...
+    config = g_key_file_to_data(key_file, &length, &error);
+    if (error == NULL) { // If everything is ok...
+        outfile = fopen(filepath, "w");
+        if (outfile == NULL) { // Cant open to write, bail out!
+            free(config);
+            return -1;
+        }
 
+        fwrite(config, sizeof(gchar), length, outfile);
+        fclose(outfile);
+    } else {
+        return -1;
+    }
+
+    free(config);
     return 1;
 }
