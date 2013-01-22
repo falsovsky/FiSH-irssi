@@ -21,7 +21,7 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
         }
     }
 
-    free(value);
+    g_free(value);
 
     // In case of any error...
     if (error != NULL) {
@@ -51,16 +51,17 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
     if (error == NULL) { // If everything is ok...
         outfile = fopen(filepath, "w");
         if (outfile == NULL) { // Cant open to write, bail out!
-            free(config);
+            g_free(config);
             return -1;
         }
 
         fwrite(config, sizeof(gchar), length, outfile);
         fclose(outfile);
     } else {
+        g_free(config);
         return -1;
     }
 
-    free(config);
+    g_free(config);
     return 1;
 }
