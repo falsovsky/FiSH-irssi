@@ -10,18 +10,14 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     error = NULL;
 
     g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, &error);
-    if (error != NULL) goto default_value;
-
-    if (g_key_file_get_string(key_file, section, key, &error) != NULL) {
-        snprintf(buffer, buflen, "%s",  g_key_file_get_string(key_file, section, key, &error));
-        return strlen(buffer);
+    if (error == NULL) { 
+        if (g_key_file_get_string(key_file, section, key, NULL) != NULL) {
+            snprintf(buffer, buflen, "%s",  g_key_file_get_string(key_file, section, key, NULL));
+            return strlen(buffer);
+        }
     }
 
-    default_value:
-    if (error != NULL) {
-        snprintf(buffer, buflen, "%s", default_value);
-    }
-
+    snprintf(buffer, buflen, "%s", default_value);
     return strlen(buffer);
 }
 
