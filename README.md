@@ -1,11 +1,17 @@
 # FiSH module for irssi
 
-Based on official from http://fish.secure.la/ (DEAD?)  
-Changed to use GMP instead of MIRACL by Dcoder  
-Basic autoconf/automake support by falso  
-Multi-server support
-* /setkey [-<server tag>] [<nick | #channel>] <key>
-* /delkey [-<server tag>] <nick | #channel>
+* Based on official from http://fish.secure.la/ (DEAD?)  
+* Changed to use GMP instead of MIRACL by Dcoder  
+* Basic autoconf/automake support by falso  
+* Multi-server support
+
+```
+/setkey [-<server tag >] [<nick | #channel>] <key>
+```
+
+```
+/delkey [-<server tag>] <nick | #channel>
+```
 
 ## Requirements
 
