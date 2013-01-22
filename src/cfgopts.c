@@ -5,19 +5,29 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
 {
     GKeyFile *key_file;
     GError *error;
+    gchar *value = NULL;
 
     key_file = g_key_file_new();
     error = NULL;
 
     g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, &error);
+
+    // If file was read OK...
     if (error == NULL) { 
-        if (g_key_file_get_string(key_file, section, key, NULL) != NULL) {
-            snprintf(buffer, buflen, "%s",  g_key_file_get_string(key_file, section, key, NULL));
-            return strlen(buffer);
+        // If the record was found...
+        value = g_key_file_get_string(key_file, section, key, &error);
+        if (value != NULL && error == NULL) {
+            strncpy(buffer, g_key_file_get_string(key_file, section, key, NULL), buflen);
         }
     }
 
-    snprintf(buffer, buflen, "%s", default_value);
+    free(value);
+
+    // In case of any error...
+    if (error != NULL) {
+        strncpy(buffer, default_value, buflen);
+    }
+
     return strlen(buffer);
 }
 
