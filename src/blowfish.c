@@ -139,11 +139,6 @@ int encrypt_string(const char *key, const char *str, char *dest, int len)
 
     if ((!key) || (!key[0])) return 0;
 
-#ifdef DEBUG
-    printLog(LOGFILE, "encrypt_string - key: %s", key);
-    printLog(LOGFILE, "encrypt_string - str: %s", str);
-#endif
-
     /* Pad fake string with 8 bytes to make sure there's enough */
     s = (char *) malloc(len + 9);
     strncpy(s, str, len);
@@ -177,9 +172,6 @@ int encrypt_string(const char *key, const char *str, char *dest, int len)
             left = (left >> 6);
         }
     }
-#ifdef DEBUG
-    printLog(LOGFILE, "encrypt_string - dest : %s", dest);
-#endif
     *d = 0;
     memset(s, 0, len + 9);	// blast temporary buffer
     free(s);
@@ -225,8 +217,4 @@ void encrypt_key(const char *key, char *encryptedKey)
     strcpy(encryptedKey, "+OK ");
     i=strlen(key);
     encrypt_string(iniKey, key, encryptedKey+4, i>80 ? 80 : i);
-#ifdef DEBUG
-    printLog(LOGFILE, "encrypt_key - key: %s", key);
-    printLog(LOGFILE, "encrypt_key - encryptedKey: %s", encryptedKey);
-#endif
 }
