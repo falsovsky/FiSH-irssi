@@ -1,6 +1,6 @@
 #include <string.h>
-#include <stdio.h>
 #include <gmp.h>
+#include "SHA256.h"
 #include "rand.h"
 
 // Input:  priv_key = buffer of 200 bytes
@@ -30,9 +30,6 @@ int htob64(char *h, char *d, unsigned int l);
 
 extern char B64ABC[];	// original Base64 alphabet
 extern char B64[];	// Base64 alphabet used by blowcrypt
-
-void SHA256_memory(char *buf, int len, char *hash);
-int sha_file(char *filename, char *hash);
 
 void memXOR(char *s1, const char *s2, int n);
 

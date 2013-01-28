@@ -1,11 +1,8 @@
-#include <time.h>
-#include <unistd.h>
-
+#include "module.h"
 #include "cfgopts.h"
 #include "blowfish.h"
 #include "DH1080.h"
 #include "config.h.in"
-#include "module.h"
 
 // Fix some warnings
 #undef UOFF_T_INT

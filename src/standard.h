@@ -50,9 +50,16 @@ typedef                 int  word;  /* fastest type available */
 #ifndef abs
 # define abs(a)   (((a)>0) ? (a) : -(a))
 #endif
-#define BOOL  int
-#define TRUE  1
-#define FALSE 0
+
+#ifndef BOOL
+# define BOOL  int
+#endif
+#ifndef TRUE
+# define TRUE  1
+#endif
+#ifndef FALSE
+# define FALSE 0
+#endif
 #define SUCCESS 0  /* 1 on VAX */
 
 #endif /* STANDARD */

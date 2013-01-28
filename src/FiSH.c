@@ -1,5 +1,4 @@
 // FiSH encryption module for irssi, v1.00
-
 #include "FiSH.h"
 
 // load base64 blowfish key for contact

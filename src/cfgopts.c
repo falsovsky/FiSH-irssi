@@ -1,5 +1,4 @@
 #include "cfgopts.h"
-#include <glib.h>
 
 int GetPrivateProfileString(const char *section, const char *key, const char *default_value, char *buffer, int buflen, const char *filepath)
 {

@@ -10,9 +10,6 @@
    to base64 for final use with blowfish. */
 
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
 #include "DH1080.h"
 
 // ### new sophie-germain 1080bit prime number ###
@@ -48,9 +45,9 @@ BOOL DH1080_Init()
     }
     fclose(hRnd);
 
-    sha_file(iniPath, (char *)iniHash);
+    SHA256_file(iniPath, (char *)iniHash);
     memXOR((char *)raw_buf+128, (char *)iniHash, 32);
-    sha_file((char *)get_irssi_config(), (char *)iniHash);
+    SHA256_file((char *)get_irssi_config(), (char *)iniHash);
     memXOR((char *)raw_buf+128, (char *)iniHash, 32);
     ZeroMemory(iniHash, sizeof(iniHash));
     // first 128 byte in raw_buf: output from /dev/urandom

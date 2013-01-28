@@ -1,9 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "config.h.in"
-#include "config.h"
-
 #define MAXKEYBYTES	56		/* 448 bits */
 #define bf_N		16
 #define noErr		 0

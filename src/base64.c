@@ -3,8 +3,8 @@
 /*
    Public Base64 conversion tables
    */
-const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-char b64buf[256];
+static const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static char b64buf[256];
 
 
 /*
@@ -93,5 +93,5 @@ int htob64(const char *h, char *d, unsigned int l)
         k++;
     }
     d[k]&=0;
-    return strlen(d);
+    return (int) strlen(d);
 }

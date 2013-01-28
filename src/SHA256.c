@@ -1,19 +1,18 @@
-#include <stdio.h>
-#include <string.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <openssl/sha.h>
+#include "SHA256.h"
 
-// SHA-256 a block of memory
-void SHA256_memory(unsigned char *buf, int len, unsigned char *hash)
+/*
+ * SHA-256 a block of memory
+ */
+void SHA256_memory(char *buf, const int len, const char *hash)
 {
-    SHA256(buf, len, hash);
+    SHA256((const unsigned char *)buf, len, (unsigned char *)hash);
 }
 
 
-// SHA-256 a file, return 1 if ok
-int sha_file(unsigned char *filename, unsigned char *hash)
+/*
+ * SHA-256 a file, return 1 if ok
+ */
+int SHA256_file(const char *filename, const char *hash)
 {
     char buf[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
@@ -33,7 +32,7 @@ int sha_file(unsigned char *filename, unsigned char *hash)
     }
     SHA256_Final((unsigned char*)buf, &sha256);
 
-    SHA256(buf, strlen(buf), hash);
+    SHA256((const unsigned char *)buf, strlen(buf), (unsigned char *)hash);
 
     fclose(file);
     free(buffer);
