@@ -19,7 +19,6 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     }
 
     g_free(value);
-    g_free(key_file);
 
     // In case of any error...
     if (error != NULL) {
@@ -55,7 +54,6 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
     }
 
     g_free(config);
-    g_free(key_file);
 
     if ((error != NULL) || (outfile == NULL)) {
         return -1;
