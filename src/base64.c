@@ -13,7 +13,8 @@ char b64buf[256];
    Call this function once when your program starts.
    and always after your B64 table has been changed.
    */
-void initb64(){
+void initb64()
+{
     unsigned int i;
     for (i=0; i<256; i++) b64buf[i]=0x00;
     for (i=0; i<64; i++) b64buf[(int)(B64ABC[i])]=i;
@@ -24,12 +25,13 @@ void initb64(){
    Converts base64 string b to hexnumber d.
    Returns size of hexnumber in bytes.
    */
-int b64toh(const char *b, char *d){
+int b64toh(const char *b, char *d)
+{
     unsigned int i,k,l;
 
     l=strlen(b);
     if (l<2) return 0;
-    for (i=l-1;i>-1;i--){
+    for (i=l-1; i>-1; i--) {
         if (b64buf[(int)(b[i])]==0) l--;
         else break;
     }
@@ -65,14 +67,15 @@ int b64toh(const char *b, char *d){
    Converts hexnumber h (with length l bytes) to base64 string d.
    Returns length of base64 string.
    */
-int htob64(const char *h, char *d, unsigned int l){
+int htob64(const char *h, char *d, unsigned int l)
+{
     unsigned int i,j,k;
     unsigned char m,t;
 
     if (!l) return 0;
     l<<=3;                              // no. bits
     m=0x80;
-    for (i=0,j=0,k=0,t=0; i<l; i++){
+    for (i=0,j=0,k=0,t=0; i<l; i++) {
         if (h[(i>>3)]&m) t|=1;
         j++;
         if (!(m>>=1)) m=0x80;

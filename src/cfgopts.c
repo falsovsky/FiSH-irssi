@@ -13,7 +13,7 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, &error);
 
     // If file was read OK...
-    if (error == NULL) { 
+    if (error == NULL) {
         // If the record was found...
         value = g_key_file_get_string(key_file, section, key, &error);
         if (value != NULL && error == NULL) {

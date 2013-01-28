@@ -20,14 +20,13 @@ MODIFIED:
 #define RANDSIZ    (1<<RANDSIZL)
 
 /* context of random number generator */
-struct randctx
-{
-  ub4 randcnt;
-  ub4 randrsl[RANDSIZ];
-  ub4 randmem[RANDSIZ];
-  ub4 randa;
-  ub4 randb;
-  ub4 randc;
+struct randctx {
+    ub4 randcnt;
+    ub4 randrsl[RANDSIZ];
+    ub4 randmem[RANDSIZ];
+    ub4 randa;
+    ub4 randb;
+    ub4 randc;
 };
 typedef  struct randctx  randctx;
 

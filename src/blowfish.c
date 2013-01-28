@@ -88,10 +88,8 @@ void blowfish_init(const u_8bit_t * key, int keybytes, BF_CTX)
             bf_S[i][j] = initbf_S[i][j];
 
     j = 0;
-    if (keybytes > 0)
-    {
-        for (i = 0; i < bf_N + 2; ++i)
-        {
+    if (keybytes > 0) {
+        for (i = 0; i < bf_N + 2; ++i) {
             temp.w.byte0 = key[j];
             temp.w.byte1 = key[(j + 1) % keybytes];
             temp.w.byte2 = key[(j + 2) % keybytes];
@@ -105,17 +103,14 @@ void blowfish_init(const u_8bit_t * key, int keybytes, BF_CTX)
     datal = 0x00000000;
     datar = 0x00000000;
 
-    for (i = 0; i < bf_N + 2; i += 2)
-    {
+    for (i = 0; i < bf_N + 2; i += 2) {
         blowfish_encipher(&datal, &datar, bf_P, bf_S);
         bf_P[i] = datal;
         bf_P[i + 1] = datar;
     }
 
-    for (i = 0; i < 4; ++i)
-    {
-        for (j = 0; j < 256; j += 2)
-        {
+    for (i = 0; i < 4; ++i) {
+        for (j = 0; j < 256; j += 2) {
             blowfish_encipher(&datal, &datar, bf_P, bf_S);
             bf_S[i][j] = datal;
             bf_S[i][j + 1] = datar;
@@ -159,8 +154,7 @@ int encrypt_string(const char *key, const char *str, char *dest, int len)
     p = (unsigned char *)s;
     d = dest;
 
-    while (*p)
-    {
+    while (*p) {
         left = ((*p++) << 24);
         left += ((*p++) << 16);
         left += ((*p++) << 8);
@@ -173,14 +167,12 @@ int encrypt_string(const char *key, const char *str, char *dest, int len)
 
         blowfish_encipher(&left, &right, bf_P, bf_S);
 
-        for (i = 0; i < 6; i++)
-        {
+        for (i = 0; i < 6; i++) {
             *d++ = B64[right & 0x3f];
             right = (right >> 6);
         }
 
-        for (i = 0; i < 6; i++)
-        {
+        for (i = 0; i < 6; i++) {
             *d++ = B64[left & 0x3f];
             left = (left >> 6);
         }
@@ -212,8 +204,7 @@ int decrypt_string(const char *key, const char *str, char *dest, int len)
     p = s;
     d = dest;
 
-    while (*p)
-    {
+    while (*p) {
         right = 0L;
         left = 0L;
         for (i = 0; i < 6; i++) right |= (base64dec(*p++)) << (i * 6);

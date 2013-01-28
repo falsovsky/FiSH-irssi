@@ -37,7 +37,7 @@
 
 #ifdef FiSH_DECRYPT_ZNC_LOGS
 // ZNC logs timestamp "[14:13:43] +OK oUICg.tehx71..."
-	#define IsZNCtimestamp(msg) \
+#define IsZNCtimestamp(msg) \
 		msg[0] == '[' && \
 		isdigit(msg[1]) && isdigit(msg[2]) && \
 		msg[3] == ':' && \

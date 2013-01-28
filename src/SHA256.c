@@ -23,13 +23,12 @@ int sha_file(unsigned char *filename, unsigned char *hash)
     unsigned char *buffer;
 
     file = fopen(filename, "rb");
-    if(!file) return 0;
+    if (!file) return 0;
 
     SHA256_Init(&sha256);
     buffer = malloc(bufSize);
-    if(!buffer) return ENOMEM;
-    while((bytesRead = fread(buffer, 1, bufSize, file)))
-    {
+    if (!buffer) return ENOMEM;
+    while ((bytesRead = fread(buffer, 1, bufSize, file))) {
         SHA256_Update(&sha256, buffer, bytesRead);
     }
     SHA256_Final((unsigned char*)buf, &sha256);
