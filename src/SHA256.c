@@ -12,7 +12,7 @@ void SHA256_memory(char *buf, const int len, const char *hash)
 /*
  * SHA-256 a file, return 1 if ok
  */
-int SHA256_file(const char *filename, const char *hash)
+int sha_file(const char *filename, const char *hash)
 {
     char buf[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;

@@ -5,5 +5,4 @@
 #include <openssl/sha.h>
 
 void SHA256_memory(char *buf, const int len, const char *hash);
-int SHA256_file(const char *filename, const char *hash);
-
+int sha_file(const char *filename, const char *hash);

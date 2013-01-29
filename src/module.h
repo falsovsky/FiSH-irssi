@@ -1,6 +1,7 @@
-//#define HAVE_CONFIG_H
-
 #define MODULE_NAME "fish"
+
+#undef HAVE_CONFIG_H
+#include <common.h>
 
 #include <common.h>
 #include <core/servers.h>

@@ -1,9 +1,15 @@
-#include "module.h"
+#include <time.h>
+#include <unistd.h>
+
+#include "config.h.in"
+#include "config.h"
+
 #include "cfgopts.h"
 #include "blowfish.h"
 #include "DH1080.h"
-#include "config.h.in"
+#include "module.h"
 
+/*
 // Fix some warnings
 #undef UOFF_T_INT
 #undef UOFF_T_LONG
@@ -18,9 +24,7 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
-
-#include "config.h.in"
-#include "config.h"
+*/
 
 #define CONTACT_SIZE 100	// size of buffer for contactName (nick or #channel)
 #define KEYBUF_SIZE 150		// size of buffer for base64 blowfish key (from blow.ini)
@@ -45,11 +49,6 @@
 #endif
 
 
-// use irssi recode feature?
-// #define FiSH_USE_IRSSI_RECODE
-
-
-//int ExtractRhost (char *Rhost, char *incoming_msg);
 int ExtractRnick (char *Rnick, char *incoming_msg);
 void FixIniSection(const char *section, char *fixedSection);	// replace '[' and ']' in nick/channel with '~'
 int GetBlowIniSwitch(const char *section, const char *key, const char *default_value);
