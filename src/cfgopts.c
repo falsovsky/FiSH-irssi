@@ -4,6 +4,16 @@
 #include "splint.h"
 #endif
 
+/**
+ * Read the private key from the blow.ini file
+ * @param section section target "servertag:nick/#channel"
+ * @param key key - normaly is "key"
+ * @param default_value default value to write in buffer if something bad happens
+ * @param buffer value buffer destination
+ * @param buflen length of the destination buffer
+ * @param filepath file path to blow.ini
+ * @return the length of the buffer
+ */
 int GetPrivateProfileString(const char *section, const char *key, const char *default_value, char *buffer, int buflen, const char *filepath)
 {
     GKeyFile *key_file;
@@ -32,6 +42,14 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     return (int) strlen(buffer);
 }
 
+/**
+ * Write the private key to the blow.ini file
+ * @param section section target "servertag:nick/#channel"
+ * @param key key - normaly is "key"
+ * @param value value to write
+ * @param filepath file path to blow.ini
+ * @return 1 if everything is ok -1 if not
+ */
 int WritePrivateProfileString(const char *section, const char *key, const char *value, const char *filepath)
 {
     GKeyFile *key_file;
