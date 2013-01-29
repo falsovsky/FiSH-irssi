@@ -3,8 +3,8 @@
 /*
    Public Base64 conversion tables
    */
-static const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static char b64buf[256];
+const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+char b64buf[256];
 
 
 /*
