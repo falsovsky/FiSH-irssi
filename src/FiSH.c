@@ -720,7 +720,7 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
                         "delkey", &optlist, &target))
         return;
 
-    if (item != NULL && IsNULLorEmpty(target) ) target = window_item_get_target(item);
+    if (item != NULL && IsNULLorEmpty(target) ) target = (char *) window_item_get_target(item);
 
     if (IsNULLorEmpty(target)) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
@@ -732,7 +732,7 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     if (server == NULL || !server->connected)
         cmd_param_error(CMDERR_NOT_CONNECTED);
 
-    target = g_strchomp(target);
+    target = (char *)g_strchomp(target);
 
     if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
 
@@ -758,7 +758,7 @@ void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
                         "key", &optlist, &target))
         return;
 
-    if (item != NULL && IsNULLorEmpty(target) ) target = window_item_get_target(item);
+    if (item != NULL && IsNULLorEmpty(target) ) target = (char *) window_item_get_target(item);
 
     if (IsNULLorEmpty(target)) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
@@ -770,7 +770,7 @@ void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     if (server == NULL || !server->connected)
         cmd_param_error(CMDERR_NOT_CONNECTED);
 
-    target = g_strchomp(target);
+    target = (char *)g_strchomp(target);
 
     if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
 
