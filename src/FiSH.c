@@ -608,6 +608,12 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *ite
               "\002FiSH:\002 Changed back to default blow.ini password, you won't have to enter it on start-up anymore!");
 }
 
+/**
+ * Sets the key for a nick / #channel in a server
+ * @param data irssi data
+ * @param server currently selected server
+ * @param item currently selected window/item
+ */
 void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
     GHashTable *optlist;
