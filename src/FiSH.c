@@ -5,8 +5,13 @@
 #include "splint.h"
 #endif
 
-// load base64 blowfish key for contact
-// if theKey is NULL, only a test is made (= IsKeySetForContact)
+/*
+ * Load a base64 blowfish key for contact
+ * If theKey is NULL, only a test is made (= IsKeySetForContact)
+ * @param contactPtr
+ * @param theKey
+ * @return 1 if everything ok 0 if not
+ */
 BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
 {
     char tmpKey[KEYBUF_SIZE]="";
@@ -29,7 +34,13 @@ BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
     return bRet;
 }
 
-// construct a ini section key for contact
+/*
+ * Construct a ini section key for contact
+ * @param server irssi server record
+ * @param contactPtr contact ?
+ * @param iniSectionKey buffer to there the section key is generated
+ * @return TRUE if everything ok FALSE if not
+ */
 BOOL GetIniSectionForContact(const SERVER_REC *server, const char *contactPtr, char *iniSectionKey)
 {
     ZeroMemory(iniSectionKey, CONTACT_SIZE);
@@ -48,7 +59,14 @@ BOOL GetIniSectionForContact(const SERVER_REC *server, const char *contactPtr, c
     return TRUE;
 }
 
-// encrypt a message and store in bf_dest (using key for target)
+/*
+ * Encrypt a message and store in bf_dest (using key for target)
+ * @param server
+ * @param msg_ptr
+ * @param target
+ * @param bf_dest
+ * @return 1 if everything ok 0 if not
+ */
 int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *target, char *bf_dest)
 {
     char theKey[KEYBUF_SIZE]="";
@@ -70,7 +88,9 @@ int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *targ
     return 1;
 }
 
-// decrypt a base64 cipher text (using key for target)
+/*
+ * Decrypt a base64 cipher text (using key for target)
+ */
 int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const char *target)
 {
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="", bf_dest[1000]="";
@@ -234,7 +254,9 @@ void encrypt_msg(SERVER_REC *server, char *target, char *msg, char *orig_target)
     }
 }
 
-// format outgoing (encrypted) messages (add crypt-mark or remove plain-prefix)
+/*
+ * format outgoing (encrypted) messages (add crypt-mark or remove plain-prefix)
+ */
 void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
 {
     char contactName[CONTACT_SIZE]="", myMark[20]="", markPos[20]="", formattedMsg[800]="";
@@ -284,7 +306,9 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
     return;
 }
 
-// decrypt NOTICE messages (and forward DH1080 key-exchange)
+/*
+ * Decrypt NOTICE messages (and forward DH1080 key-exchange)
+ */
 void decrypt_notice(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
 {
     char *DH1024warn;
@@ -361,7 +385,9 @@ void raw_handler(SERVER_REC *server, char *data)
     FiSH_decrypt(server, ptr, ptr, channel);
 }
 
-// New command: /notice+ <nick/#channel> <notice message>
+/*
+ * New command: /notice+ <nick/#channel> <notice message>
+ */
 void cmd_crypt_notice(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
     char bf_dest[1000]="", *msg;
@@ -402,7 +428,9 @@ notice_error:
               "\002FiSH:\002 Usage: /notice+ <nick/#channel> <notice message>");
 }
 
-// New command: /me+ <action message>
+/*
+ * New command: /me+ <action message>
+ */
 void cmd_crypt_action(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {	// New command: /me+ <action message>
     char bf_dest[1000]="";
@@ -437,7 +465,9 @@ action_error:
               "\002FiSH:\002 Usage: /me+ <action message>");
 }
 
-// set encrypted topic for current channel, irssi syntax: /topic+ <your topic>
+/*
+ * Set encrypted topic for current channel, irssi syntax: /topic+ <your topic>
+ */
 void cmd_crypt_TOPIC(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
     char bf_dest[1000]="";
@@ -591,7 +621,9 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
                                      MSGLEVEL_CRAP, "\002FiSH:\002 blow.ini password hash saved.");
 }
 
-// Change back to default blow.ini password, irssi syntax: /unsetinipw
+/*
+ * Change back to default blow.ini password, irssi syntax: /unsetinipw
+ */
 static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *item)
 {
     unsetiniFlag=1;
@@ -609,10 +641,10 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *ite
 }
 
 /**
- * Sets the key for a nick / #channel in a server
- * @param data irssi data
- * @param server currently selected server
- * @param item currently selected window/item
+ * Sets the key for a nick / channel in a server
+ * @param data command
+ * @param server irssi server record
+ * @param item irssi window/item
  */
 void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
@@ -816,7 +848,9 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
     printtext(server, nick, MSGLEVEL_CRAP, "\002FiSH:\002 Key for %s successfully set!", nick);
 }
 
-// perform auto-keyXchange only for known people
+/*
+ * Perform auto-keyXchange only for known people
+ */
 void do_auto_keyx(QUERY_REC *query, int automatic)
 {
     char contactName[CONTACT_SIZE]="";
@@ -833,7 +867,9 @@ void do_auto_keyx(QUERY_REC *query, int automatic)
         cmd_keyx(query->name, query->server, NULL);
 }
 
-// copy key for old nick to use with the new one
+/*
+ * Copy key for old nick to use with the new one
+ */
 void query_nick_changed(QUERY_REC *query, char *orignick)
 {
     char theKey[KEYBUF_SIZE]="", contactName[CONTACT_SIZE]="";
@@ -967,7 +1003,9 @@ void fish_deinit(void)
     DH1080_DeInit();
 }
 
-// :someone!ident@host.net PRIVMSG leetguy :Some Text -> Result: Rnick="someone"
+/*
+ * :someone!ident@host.net PRIVMSG leetguy :Some Text -> Result: Rnick="someone"
+ */
 int ExtractRnick(char *Rnick, char *msg)		// needs direct pointer to "nick@host" or ":nick@host"
 {
     int k=0;
@@ -985,7 +1023,9 @@ int ExtractRnick(char *Rnick, char *msg)		// needs direct pointer to "nick@host"
     else return FALSE;
 }
 
-// replace '[' and ']' from nick/channel with '~' (otherwise problems with .ini files)
+/*
+ * replace '[' and ']' from nick/channel with '~' (otherwise problems with .ini files)
+ */
 void FixIniSection(const char *section, char *fixedSection)
 {
     if (section!=NULL) {
@@ -1004,7 +1044,13 @@ void memXOR(char *s1, const char *s2, int n)
     while (n--) *s1++ ^= *s2++;
 }
 
-// removes leading and trailing blanks from string
+/*
+ * Removes leading and trailing blanks from string
+ * @param dest destination buffer
+ * @param buffer string to clean
+ * @param destSize size of destination buffer
+ * @return destination buffer
+ */
 char *strfcpy(char *dest, char *buffer, int destSize)
 {
     int i=0, k=strlen(buffer);
@@ -1030,6 +1076,11 @@ int GetBlowIniSwitch(const char *section, const char *key, const char *default_v
     else return 1;
 }
 
+/**
+ * Checks is the message if prefixed with the "plain_prefix" variable
+ * @param msg message to check
+ * @returns the string without the "plain_prefix" prefix, or NULL if not prefixed with it
+ */
 char *IsPlainPrefix(const char *msg)
 {
     char plainPrefix[20]="";

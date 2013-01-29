@@ -186,7 +186,7 @@ ALIASES                =
 # For instance, some of the names that are used will be different. The list
 # of all members will be omitted, etc.
 
-OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES 
 
 # Set the OPTIMIZE_OUTPUT_JAVA tag to YES if your project consists of Java
 # sources only. Doxygen will then generate output that is more tailored for
@@ -270,7 +270,7 @@ SUBGROUPING            = YES
 # be useful for C code in case the coding convention dictates that all compound
 # types are typedef'ed and only the typedef is referenced, never the tag name.
 
-TYPEDEF_HIDES_STRUCT   = NO
+TYPEDEF_HIDES_STRUCT   = YES 
 
 # The SYMBOL_CACHE_SIZE determines the size of the internal cache use to
 # determine which symbols to keep in memory and which to flush to disk.
@@ -493,7 +493,7 @@ SHOW_FILES             = YES
 # This will remove the Namespaces entry from the Quick Index
 # and from the Folder Tree View (if specified). The default is YES.
 
-SHOW_NAMESPACES        = YES
+SHOW_NAMESPACES        = NO
 
 # The FILE_VERSION_FILTER tag can be used to specify a program or script that
 # doxygen should invoke to get the current version for each file (typically from
@@ -563,7 +563,7 @@ WARN_FORMAT            = "$file:$line: $text"
 # and error messages should be written. If left blank the output is written
 # to stderr.
 
-WARN_LOGFILE           =
+WARN_LOGFILE           = doxylog
 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
@@ -701,7 +701,7 @@ INLINE_SOURCES         = NO
 # doxygen to hide any special comment blocks from generated source code
 # fragments. Normal C and C++ comments will always remain visible.
 
-STRIP_CODE_COMMENTS    = YES
+STRIP_CODE_COMMENTS    = NO
 
 # If the REFERENCED_BY_RELATION tag is set to YES
 # then for each documented function all documented
@@ -1017,7 +1017,7 @@ SERVER_BASED_SEARCH    = NO
 # If the GENERATE_LATEX tag is set to YES (the default) Doxygen will
 # generate Latex output.
 
-GENERATE_LATEX         = YES
+GENERATE_LATEX         = NO
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put.
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be
@@ -1260,7 +1260,7 @@ ENABLE_PREPROCESSING   = YES
 # compilation will be performed. Macro expansion can be done in a controlled
 # way by setting EXPAND_ONLY_PREDEF to YES.
 
-MACRO_EXPANSION        = NO
+MACRO_EXPANSION        = YES
 
 # If the EXPAND_ONLY_PREDEF and MACRO_EXPANSION tags are both set to YES
 # then the macro expansion is limited to the macros specified with the
@@ -1277,7 +1277,7 @@ SEARCH_INCLUDES        = YES
 # contain include files that are not input files but should be processed by
 # the preprocessor.
 
-INCLUDE_PATH           =
+INCLUDE_PATH           = 
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
@@ -1367,7 +1367,7 @@ PERL_PATH              = /usr/bin/perl
 # fallback. It is recommended to install and use dot, since it yields more
 # powerful graphs.
 
-CLASS_DIAGRAMS         = YES
+CLASS_DIAGRAMS         = NO
 
 # You can define message sequence charts within doxygen comments using the \msc
 # command. Doxygen will then run the mscgen tool (see
@@ -1419,7 +1419,7 @@ DOT_FONTPATH           =
 # indirect inheritance relations. Setting this tag to YES will force the
 # the CLASS_DIAGRAMS tag to NO.
 
-CLASS_GRAPH            = YES
+CLASS_GRAPH            = NO
 
 # If the COLLABORATION_GRAPH and HAVE_DOT tags are set to YES then doxygen
 # will generate a graph for each documented class showing the direct and
@@ -1449,7 +1449,7 @@ TEMPLATE_RELATIONS     = NO
 # file showing the direct and indirect include dependencies of the file with
 # other documented files.
 
-INCLUDE_GRAPH          = YES
+INCLUDE_GRAPH          = NO
 
 # If the ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDED_BY_GRAPH, and
 # HAVE_DOT tags are set to YES then doxygen will generate a graph for each
@@ -1464,7 +1464,7 @@ INCLUDED_BY_GRAPH      = YES
 # the time of a run. So in most cases it will be better to enable call graphs
 # for selected functions only using the \callgraph command.
 
-CALL_GRAPH             = NO
+CALL_GRAPH             = YES
 
 # If the CALLER_GRAPH and HAVE_DOT tags are set to YES then
 # doxygen will generate a caller dependency graph for every global function
@@ -1477,14 +1477,14 @@ CALLER_GRAPH           = YES
 # If the GRAPHICAL_HIERARCHY and HAVE_DOT tags are set to YES then doxygen
 # will graphical hierarchy of all classes instead of a textual one.
 
-GRAPHICAL_HIERARCHY    = YES
+GRAPHICAL_HIERARCHY    = NO
 
 # If the DIRECTORY_GRAPH, SHOW_DIRECTORIES and HAVE_DOT tags are set to YES
 # then doxygen will show the dependencies a directory has on other directories
 # in a graphical way. The dependency relations are determined by the #include
 # relations between the files in the directories.
 
-DIRECTORY_GRAPH        = YES
+DIRECTORY_GRAPH        = NO
 
 # The DOT_IMAGE_FORMAT tag can be used to set the image format of the images
 # generated by dot. Possible values are png, jpg, or gif

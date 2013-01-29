@@ -3,16 +3,49 @@
 #ifdef S_SPLINT_S
 #include "splint.h"
 #endif
+/**
+ * @file   cfgopts.c
+ * @brief  Handles reading and writing to blow.ini
+ *
+ * These functions implement a config file based on GLib GKeyFile
+ * http://developer.gnome.org/glib/2.32/glib-Key-value-file-parser.html
+ *
+ * A normal blow.ini looks something like this:
+ * @code
+ * [FiSH]
+ * plain_prefix="+p "
+ * process_incoming=1
+ * process_outgoing=1
+ *
+ * [EFNet:#zbr]
+ * key=+OK IxH39/AbJUH/aRUx614KBmA.XkCgI/pV30Q.Fntj81tJF.Z1j3qP91n8Ogs1i.h0/1w2uqO0
+ *
+ * [EFNet:Jarbas]
+ * key=+OK 1m4r7//QR9O10.bHc/J5I54/y31qm0eTQne1ztw170pz8500B16PD0G5C1G0/1gHm/QcANO/
+ * @endcode
+ */
 
 /**
- * Read the private key from the blow.ini file
- * @param section section target "servertag:nick/#channel"
- * @param key key - normaly is "key"
- * @param default_value default value to write in buffer if something bad happens
- * @param buffer value buffer destination
- * @param buflen length of the destination buffer
- * @param filepath file path to blow.ini
+ * Read a key from blow.ini
+ * @param [in] section configuration value
+ * @param [in] key configuration key
+ * @param [in] default_value default value to write in buffer if something bad happens
+ * @param [out] buffer key
+ * @param [in] buflen length of buffer
+ * @param [in] filepath file path to blow.ini
  * @return the length of the buffer
+ *
+ * Example Usage:
+ * @code
+ * char tmpKey[KEYBUF_SIZE]="";
+ * char plainPrefix[20]="";
+ *
+ * // Reads the key for #zbr at EFNet
+ * GetPrivateProfileString("EFNet:#zbr", "key", "", tmpKey, KEYBUF_SIZE, iniPath);
+ *
+ * // Get the plain_prefix variable from the FiSH section, defaulting to "+p " if non-existant
+ * GetPrivateProfileString("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
+ * @endcode
  */
 int GetPrivateProfileString(const char *section, const char *key, const char *default_value, char *buffer, int buflen, const char *filepath)
 {
@@ -43,12 +76,18 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
 }
 
 /**
- * Write the private key to the blow.ini file
- * @param section section target "servertag:nick/#channel"
- * @param key key - normaly is "key"
- * @param value value to write
- * @param filepath file path to blow.ini
+ * Write a key to blow.ini
+ * @param [in] section configuration section
+ * @param [in] key configuration key
+ * @param [in] value value to write
+ * @param [in] filepath file path to blow.ini
  * @return 1 if everything is ok -1 if not
+ *
+ * Example Usage:
+ * @code
+ * // Set the plain_prefix variable as "+zbr "
+ * WritePrivateProfileString("FiSH", "plain_prefix", "+zbr ", iniPath);
+ * @endcode
  */
 int WritePrivateProfileString(const char *section, const char *key, const char *value, const char *filepath)
 {
@@ -82,3 +121,4 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
 
     return 1;
 }
+
