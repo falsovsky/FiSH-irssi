@@ -753,9 +753,11 @@ void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
                         "key", &optlist, &target))
         return;
 
+    if (item != NULL && IsNULLorEmpty(target) ) target = window_item_get_target(item);
+
     if (IsNULLorEmpty(target)) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                  "\002FiSH:\002 Please define nick/#channel. Usage: /key [-<server tag>] <nick | #channel>");
+                  "\002FiSH:\002 Please define nick/#channel. Usage: /key [-<server tag>] [<nick | #channel>]");
         return;
     }
 
@@ -763,19 +765,18 @@ void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
     if (server == NULL || !server->connected)
         cmd_param_error(CMDERR_NOT_CONNECTED);
 
+    target = g_strchomp(target);
+
     if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
 
     if (LoadKeyForContact(contactName, theKey)==FALSE) {
         ZeroMemory(theKey, KEYBUF_SIZE);
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                  "\002FiSH:\002 Key for %s not found or invalid!", target);
-        printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                  contactName);
+                  "\002FiSH:\002 Key for %s@%s not found or invalid!", target, server->tag);
         return;
     }
 
-    printtext(server, target, MSGLEVEL_CRAP, "\002FiSH:\002 Key for %s: %s", target, theKey);
-
+    printtext(server, target, MSGLEVEL_CRAP, "\002FiSH:\002 Key for %s@%s: %s", target, server->tag, theKey);
     ZeroMemory(theKey, KEYBUF_SIZE);
 }
 
