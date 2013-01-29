@@ -513,7 +513,7 @@ void cmd_helpfish(const char *arg, SERVER_REC *server, WI_ITEM_REC *item)
               " /notice+ <nick/#channel> <notice message>\n"
               " /me+ <your action message>\n"
               " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
-              " /delkey [-<server tag>] <nick | #channel>\n"
+              " /delkey [-<server tag>] [<nick | #channel>]\n"
               " /key [-<server tag>] [<nick | #channel>]\n"
               " /keyx [<nick>] (DH1080 KeyXchange)\n"
               " /setinipw <sekure_blow.ini_password>\n"
@@ -720,15 +720,19 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
                         "delkey", &optlist, &target))
         return;
 
+    if (item != NULL && IsNULLorEmpty(target) ) target = window_item_get_target(item);
+
     if (IsNULLorEmpty(target)) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
-                  "\002FiSH:\002 No parameters. Usage: /delkey [-<server tag>] <nick | #channel>");
+                  "\002FiSH:\002 No parameters. Usage: /delkey [-<server tag>] [<nick | #channel>]");
         return;
     }
 
     server = cmd_options_get_server("delkey", optlist, server);
     if (server == NULL || !server->connected)
         cmd_param_error(CMDERR_NOT_CONNECTED);
+
+    target = g_strchomp(target);
 
     if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
 

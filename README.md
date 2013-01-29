@@ -28,7 +28,7 @@ Also, some commands now allow to define the network.
 ```
 
 ```
-/delkey [-<server tag>] <nick | #channel>
+/delkey [-<server tag>] [<nick | #channel>]
 ```
 
 ```
