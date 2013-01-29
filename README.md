@@ -21,7 +21,7 @@ Needs to be changed to:
 key=+OK awrps/takkv.
 ```
 
-Also, the /setkey and /delkey commands now allow to define the network.
+Also, some commands now allow to define the network.
 
 ```
 /setkey [-<server tag >] [<nick | #channel>] <key>
