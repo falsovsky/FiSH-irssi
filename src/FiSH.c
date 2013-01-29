@@ -1,6 +1,10 @@
 // FiSH encryption module for irssi, v1.00
 #include "FiSH.h"
 
+#ifdef S_SPLINT_S
+#include "splint.h"
+#endif
+
 // load base64 blowfish key for contact
 // if theKey is NULL, only a test is made (= IsKeySetForContact)
 BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
@@ -699,18 +703,27 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
               "\002FiSH:\002 Key for %s@%s successfully removed!", target, server->tag);
 }
 
-void cmd_key(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
+void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
+    GHashTable *optlist;
+    char *target;
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="";
+    void *free_arg;
 
+    if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_OPTIONS |
+                        PARAM_FLAG_UNKNOWN_OPTIONS | PARAM_FLAG_GETREST,
+                        "key", &optlist, &target))
+        return;
 
     if (IsNULLorEmpty(target)) {
-        if (item!=NULL) target=window_item_get_target(item);
-        else {
-            printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH:\002 Please define nick/#channel. Usage: /key <nick/#channel>");
-            return;
-        }
+        printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
+                  "\002FiSH:\002 Please define nick/#channel. Usage: /key [-<server tag>] <nick | #channel>");
+        return;
     }
+
+    server = cmd_options_get_server("key", optlist, server);
+    if (server == NULL || !server->connected)
+        cmd_param_error(CMDERR_NOT_CONNECTED);
 
     if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
 

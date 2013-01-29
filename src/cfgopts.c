@@ -1,5 +1,9 @@
 #include "cfgopts.h"
 
+#ifdef S_SPLINT_S
+#include "splint.h"
+#endif
+
 int GetPrivateProfileString(const char *section, const char *key, const char *default_value, char *buffer, int buflen, const char *filepath)
 {
     GKeyFile *key_file;
@@ -18,12 +22,12 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
     }
 
     g_free(value);
+    g_key_file_free(key_file);
 
     // In case of any error...
     if (error != NULL) {
         strncpy(buffer, default_value, (size_t)buflen);
     }
-
 
     return (int) strlen(buffer);
 }
@@ -38,21 +42,21 @@ int WritePrivateProfileString(const char *section, const char *key, const char *
 
     key_file = g_key_file_new();
 
-    if ((int) g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL)==1) {
-        g_key_file_set_string(key_file, section, key, value);
-    }
+    (void) g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL);
+    g_key_file_set_string(key_file, section, key, value);
 
     // Get the content of the config to a string...
     config = g_key_file_to_data(key_file, &length, &error);
     if (error == NULL) { // If everything is ok...
         outfile = fopen(filepath, "w");
         if (outfile != NULL) {
-            fwrite(config, sizeof(gchar), (size_t) length, outfile);
-            fclose(outfile);
+            (void) fwrite(config, sizeof(gchar), (size_t) length, outfile);
+            (void) fclose(outfile);
         }
     }
 
     g_free(config);
+    g_key_file_free(key_file);
 
     if ((error != NULL) || (outfile == NULL)) {
         return -1;
