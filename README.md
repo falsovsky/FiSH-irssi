@@ -31,6 +31,10 @@ Also, the /setkey and /delkey commands now allow to define the network.
 /delkey [-<server tag>] <nick | #channel>
 ```
 
+```
+</key | /showkey> [-<server tag>] [<nick | #channel>]
+```
+
 ## Requirements
 
 * autoconf >= 2.59 - http://www.gnu.org/software/autoconf/
