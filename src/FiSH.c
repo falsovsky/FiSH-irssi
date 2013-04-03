@@ -910,7 +910,7 @@ void fish_init(void)
 
     if (DH1080_Init()==FALSE) return;
 
-    GetPrivateProfileString("FiSH", "ini_Password_hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
+    GetPrivateProfileString("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
     if (strlen(iniPasswordHash) == 43) {
         iniPass_ptr = getpass(" --> Please enter your blow.ini password: ");
         strcpy(iniKey, iniPass_ptr);
