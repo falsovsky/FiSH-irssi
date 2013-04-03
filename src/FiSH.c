@@ -314,7 +314,7 @@ void decrypt_notice(SERVER_REC *server, char *msg, char *nick, char *address, ch
     char *DH1024warn;
 
     if (strncmp(msg, "DH1024_", 7)==0) {
-        DH1024warn = "\002FiSH:\002 Received \002old DH1024\002 public key from you! Please update to latest version: http://fish.sekure.us";
+        DH1024warn = "\002FiSH:\002 Received \002old DH1024\002 public key from you! Please update to latest version: https://github.com/falsovsky/FiSH-irssi";
         signal_stop();
         irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s\n", nick, DH1024warn);
         signal_emit("message irc own_notice", 3, server, DH1024warn, nick);
@@ -967,7 +967,7 @@ void fish_init(void)
     command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
 
     printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
-              "FiSH v1.00 - encryption module for irssi loaded! URL: http://fish.sekure.us\n"
+              "FiSH v1.00 - encryption module for irssi loaded! URL: https://github.com/falsovsky/FiSH-irssi\n"
               "Try /helpfish or /fishhelp for a short command overview");
 
     module_register("fish", "core");
