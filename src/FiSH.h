@@ -4,7 +4,7 @@
 #include "config.h.in"
 #include "config.h"
 
-#include "cfgopts.h"
+#include "inifile.h"
 #include "blowfish.h"
 #include "DH1080.h"
 #include "module.h"
@@ -52,7 +52,7 @@
 int ExtractRnick (char *Rnick, char *incoming_msg);
 void FixIniSection(const char *section, char *fixedSection);	// replace '[' and ']' in nick/channel with '~'
 int GetBlowIniSwitch(const char *section, const char *key, const char *default_value);
-char *IsPlainPrefix(const char *msg);
+char *isPlainPrefix(const char *msg);
 char *strfcpy(char *dest, char *buffer, int destSize);	// removes leading and trailing blanks from string
 
 

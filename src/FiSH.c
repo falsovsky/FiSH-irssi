@@ -12,16 +12,18 @@
  * @param theKey
  * @return 1 if everything ok 0 if not
  */
-BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
+BOOL getContactKey(const char *contactPtr, char *theKey)
 {
     char tmpKey[KEYBUF_SIZE]="";
     BOOL bRet=FALSE;
 
-    GetPrivateProfileString(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
-    if (strlen(tmpKey) < 16) return FALSE;		// don't process, encrypted key not found in ini
+    getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
+    
+    // don't process, encrypted key not found in ini
+    if (strlen(tmpKey) < 16) return FALSE;
 
+    // encrypted key found
     if (strncmp(tmpKey, "+OK ", 4)==0) {
-        // encrypted key found
         if (theKey) {
             // if it's not just a test, lets decrypt the key
             decrypt_string((char *)iniKey, tmpKey+4, theKey, strlen(tmpKey+4));
@@ -37,24 +39,25 @@ BOOL LoadKeyForContact(const char *contactPtr, char *theKey)
 /*
  * Construct a ini section key for contact
  * @param server irssi server record
- * @param contactPtr contact ?
+ * @param contactPtr contact
  * @param iniSectionKey buffer to there the section key is generated
  * @return TRUE if everything ok FALSE if not
  */
-BOOL GetIniSectionForContact(const SERVER_REC *server, const char *contactPtr, char *iniSectionKey)
+BOOL getIniSectionForContact(const SERVER_REC *serverRec, const char *contactPtr, char *iniSectionKey)
 {
     ZeroMemory(iniSectionKey, CONTACT_SIZE);
 
     if (contactPtr==NULL) return FALSE;
     if (iniSectionKey==NULL) return FALSE;
 
-    if (server!=NULL) {
-        snprintf(iniSectionKey, CONTACT_SIZE, "%s:%s", server->tag, contactPtr);
+    if (serverRec!=NULL) {
+        snprintf(iniSectionKey, CONTACT_SIZE, "%s:%s", serverRec->tag, contactPtr);
     } else {
         snprintf(iniSectionKey, CONTACT_SIZE, "%s", contactPtr);
     }
 
-    FixIniSection(NULL, iniSectionKey);     // replace '[' and ']' with '~' in contact name
+    // replace '[' and ']' with '~' in contact name
+    FixIniSection(NULL, iniSectionKey);
 
     return TRUE;
 }
@@ -67,22 +70,22 @@ BOOL GetIniSectionForContact(const SERVER_REC *server, const char *contactPtr, c
  * @param bf_dest
  * @return 1 if everything ok 0 if not
  */
-int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *target, char *bf_dest)
+int FiSH_encrypt(const SERVER_REC *serverRec, const char *msgPtr, const char *target, char *bf_dest)
 {
     char theKey[KEYBUF_SIZE]="";
     char contactName[CONTACT_SIZE]="";
 
-    if (IsNULLorEmpty(msg_ptr) || bf_dest==NULL || IsNULLorEmpty(target)) return 0;
+    if (IsNULLorEmpty(msgPtr) || bf_dest==NULL || IsNULLorEmpty(target)) return 0;
 
     if (GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return 0;
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return 0;
+    if (getIniSectionForContact(serverRec, target, contactName)==FALSE) return 0;
 
-    if (LoadKeyForContact(contactName, theKey)==FALSE) return 0;
+    if (getContactKey(contactName, theKey)==FALSE) return 0;
 
     strcpy(bf_dest, "+OK ");
 
-    encrypt_string(theKey, msg_ptr, bf_dest+4, strlen(msg_ptr));
+    encrypt_string(theKey, msgPtr, bf_dest+4, strlen(msgPtr));
 
     ZeroMemory(theKey, KEYBUF_SIZE);
     return 1;
@@ -91,7 +94,7 @@ int FiSH_encrypt(const SERVER_REC *server, const char *msg_ptr, const char *targ
 /*
  * Decrypt a base64 cipher text (using key for target)
  */
-int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const char *target)
+int FiSH_decrypt(const SERVER_REC *serverRec, char *msg_ptr, char *msg_bak, const char *target)
 {
     char contactName[CONTACT_SIZE]="", theKey[KEYBUF_SIZE]="", bf_dest[1000]="";
     char myMark[20]="", markPos[20]="", *recoded;
@@ -110,9 +113,9 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     msg_len=strlen(msg_ptr);
     if ((strspn(msg_ptr, B64) != (size_t)msg_len) || (msg_len < 12)) return 0;
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return 0;
+    if (getIniSectionForContact(serverRec, target, contactName)==FALSE) return 0;
 
-    if (LoadKeyForContact(contactName, theKey)==FALSE) return 0;
+    if (getContactKey(contactName, theKey)==FALSE) return 0;
 
     // usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
     if (msg_len >= (int)(sizeof(bf_dest)*1.5)) msg_ptr[(int)(sizeof(bf_dest)*1.5)-20]='\0';
@@ -122,7 +125,7 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
     if (msg_len != (msg_len/12)*12) {
         msg_len=(msg_len/12)*12;
         msg_ptr[msg_len]='\0';
-        GetPrivateProfileString("FiSH", "mark_broken_block", " \002&\002", myMark, sizeof(myMark), iniPath);
+        getIniValue("FiSH", "mark_broken_block", " \002&\002", myMark, sizeof(myMark), iniPath);
         if (*myMark=='\0' || isNoChar(*myMark)) mark_broken_block=0;
         else mark_broken_block=1;
     }
@@ -134,8 +137,8 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
 
 #ifdef FiSH_USE_IRSSI_RECODE
     // recode message again, last time it was the encrypted message...
-    if (settings_get_bool("recode") && server!=NULL) {
-        recoded = recode_in(server, bf_dest, target);
+    if (settings_get_bool("recode") && serverRec!=NULL) {
+        recoded = recode_in(serverRec, bf_dest, target);
         if (recoded) {
             strncpy(bf_dest, recoded, sizeof(bf_dest));
             ZeroMemory(recoded, strlen(recoded));
@@ -159,9 +162,9 @@ int FiSH_decrypt(const SERVER_REC *server, char *msg_ptr, char *msg_bak, const c
 
     // append crypt-mark?
     if (GetBlowIniSwitch(contactName, "mark_encrypted", "1") != 0) {
-        GetPrivateProfileString("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
+        getIniValue("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
         if (*myMark != '\0') {
-            GetPrivateProfileString("FiSH", "mark_position", "0", markPos, sizeof(markPos), iniPath);
+            getIniValue("FiSH", "mark_position", "0", markPos, sizeof(markPos), iniPath);
             if (*markPos=='0' || action_found) strcat(bf_dest, myMark);		// append mark at the end (default for ACTION messages)
             else {	// prefix mark
                 i=strlen(myMark);
@@ -234,12 +237,12 @@ void encrypt_msg(SERVER_REC *server, char *target, char *msg, char *orig_target)
 
     if (IsNULLorEmpty(msg) || IsNULLorEmpty(target)) return;
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
+    if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (LoadKeyForContact(contactName, NULL)==FALSE) return;
+    if (getContactKey(contactName, NULL)==FALSE) return;
 
 
-    plainMsg = IsPlainPrefix(msg);
+    plainMsg = isPlainPrefix(msg);
     if (plainMsg) {
         signal_continue(4, server, target, plainMsg, orig_target);
         return;
@@ -267,12 +270,12 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
     if (IsNULLorEmpty(msg) || IsNULLorEmpty(target)) return;
     if (GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0) return;
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
+    if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (LoadKeyForContact(contactName, NULL)==FALSE) return;
+    if (getContactKey(contactName, NULL)==FALSE) return;
 
 
-    plainMsg = IsPlainPrefix(msg);
+    plainMsg = isPlainPrefix(msg);
     if (plainMsg) {
         signal_continue(4, server, plainMsg, target, orig_target);
         return;
@@ -285,11 +288,11 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
 
     // append crypt-mark?
     if (GetBlowIniSwitch(contactName, "mark_encrypted", "1") != 0) {
-        GetPrivateProfileString("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
+        getIniValue("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
         if (*myMark != '\0') {
             strcpy(formattedMsg, msg);
 
-            GetPrivateProfileString("FiSH", "mark_position", "0", markPos, sizeof(markPos), iniPath);
+            getIniValue("FiSH", "mark_position", "0", markPos, sizeof(markPos), iniPath);
             if (*markPos=='0') strcat(formattedMsg, myMark);		//append mark at the end
             else {	// prefix mark
                 i=strlen(myMark);
@@ -468,7 +471,7 @@ action_error:
 /*
  * Set encrypted topic for current channel, irssi syntax: /topic+ <your topic>
  */
-void cmd_crypt_TOPIC(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
+void cmd_crypt_topic(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
     char bf_dest[1000]="";
     const char *target;
@@ -606,7 +609,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
         rename(iniPath_new, iniPath);
     } else return;
 
-    if (WritePrivateProfileString("FiSH", "ini_password_Hash", B64digest, iniPath) == -1) {
+    if (setIniValue("FiSH", "ini_password_Hash", B64digest, iniPath) == -1) {
         ZeroMemory(B64digest, sizeof(B64digest));
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
@@ -631,7 +634,7 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *ite
     cmd_setinipw("Some_boogie_dummy_key", server, item);
     unsetiniFlag=0;
 
-    if (WritePrivateProfileString("FiSH", "ini_password_Hash", "\0", iniPath) == -1) {
+    if (setIniValue("FiSH", "ini_password_Hash", "\0", iniPath) == -1) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
@@ -690,9 +693,9 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     encrypt_key((char *)key, encryptedKey);
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
+    if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1) {
+    if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
         ZeroMemory(encryptedKey, sizeof(encryptedKey));
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
@@ -734,9 +737,9 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     target = (char *)g_strchomp(target);
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
+    if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (WritePrivateProfileString(contactName, "key", "\0", iniPath) == -1) {
+    if (setIniValue(contactName, "key", "\0", iniPath) == -1) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
@@ -772,9 +775,9 @@ void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     target = (char *)g_strchomp(target);
 
-    if (GetIniSectionForContact(server, target, contactName)==FALSE) return;
+    if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (LoadKeyForContact(contactName, theKey)==FALSE) {
+    if (getContactKey(contactName, theKey)==FALSE) {
         ZeroMemory(theKey, KEYBUF_SIZE);
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
                   "\002FiSH:\002 Key for %s@%s not found or invalid!", target, server->tag);
@@ -841,9 +844,9 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
     encrypt_key(hisPubKey, encryptedKey);
     ZeroMemory(hisPubKey, sizeof(hisPubKey));
 
-    if (GetIniSectionForContact(server, nick, contactName)==FALSE) return;
+    if (getIniSectionForContact(server, nick, contactName)==FALSE) return;
 
-    if (WritePrivateProfileString(contactName, "key", encryptedKey, iniPath) == -1) {
+    if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
         ZeroMemory(encryptedKey, KEYBUF_SIZE);
         printtext(server, nick,	MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
@@ -867,9 +870,9 @@ void do_auto_keyx(QUERY_REC *query, int automatic)
     if (GetBlowIniSwitch("FiSH", "auto_keyxchange", "1") == 0)
         return;
 
-    if (GetIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
+    if (getIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
 
-    if (LoadKeyForContact(contactName, NULL))
+    if (getContactKey(contactName, NULL))
         cmd_keyx(query->name, query->server, NULL);
 }
 
@@ -885,14 +888,14 @@ void query_nick_changed(QUERY_REC *query, char *orignick)
 
     if (orignick==NULL || strcasecmp(orignick, query->name)==0) return;	// same nick, different case?
 
-    if (GetIniSectionForContact(query->server, orignick, contactName)==FALSE) return;
+    if (getIniSectionForContact(query->server, orignick, contactName)==FALSE) return;
 
-    if (LoadKeyForContact(contactName, theKey)==FALSE)
+    if (getContactKey(contactName, theKey)==FALSE)
         return;	// see if there is a key for the old nick
 
-    if (GetIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
+    if (getIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
 
-    if (WritePrivateProfileString(contactName, "key", theKey, iniPath) == -1)
+    if (setIniValue(contactName, "key", theKey, iniPath) == -1)
         printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 
     ZeroMemory(theKey, KEYBUF_SIZE);
@@ -910,7 +913,7 @@ void fish_init(void)
 
     if (DH1080_Init()==FALSE) return;
 
-    GetPrivateProfileString("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
+    getIniValue("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
     if (strlen(iniPasswordHash) == 43) {
         iniPass_ptr = getpass(" --> Please enter your blow.ini password: ");
         strcpy(iniKey, iniPass_ptr);
@@ -951,7 +954,7 @@ void fish_init(void)
     signal_add("query created", (SIGNAL_FUNC) do_auto_keyx);
     signal_add("query nick changed", (SIGNAL_FUNC) query_nick_changed);
 
-    command_bind("topic+", NULL, (SIGNAL_FUNC) cmd_crypt_TOPIC);
+    command_bind("topic+", NULL, (SIGNAL_FUNC) cmd_crypt_topic);
     command_bind("notice+", NULL, (SIGNAL_FUNC) cmd_crypt_notice);
     command_bind("notfish", NULL, (SIGNAL_FUNC) cmd_crypt_notice);
     command_bind("me+", NULL, (SIGNAL_FUNC) cmd_crypt_action);
@@ -991,7 +994,7 @@ void fish_deinit(void)
     signal_remove("query created", (SIGNAL_FUNC) do_auto_keyx);
     signal_remove("query nick changed", (SIGNAL_FUNC) query_nick_changed);
 
-    command_unbind("topic+", (SIGNAL_FUNC) cmd_crypt_TOPIC);
+    command_unbind("topic+", (SIGNAL_FUNC) cmd_crypt_topic);
     command_unbind("notice+", (SIGNAL_FUNC) cmd_crypt_notice);
     command_unbind("notfish", (SIGNAL_FUNC) cmd_crypt_notice);
     command_unbind("me+", (SIGNAL_FUNC) cmd_crypt_action);
@@ -1077,7 +1080,7 @@ int GetBlowIniSwitch(const char *section, const char *key, const char *default_v
 {
     char ini_value[10];
 
-    GetPrivateProfileString(section, key, default_value, ini_value, sizeof(ini_value), iniPath);
+    getIniValue(section, key, default_value, ini_value, sizeof(ini_value), iniPath);
     if (isNoChar(*ini_value)) return 0;
     else return 1;
 }
@@ -1087,12 +1090,12 @@ int GetBlowIniSwitch(const char *section, const char *key, const char *default_v
  * @param msg message to check
  * @returns the string without the "plain_prefix" prefix, or NULL if not prefixed with it
  */
-char *IsPlainPrefix(const char *msg)
+char *isPlainPrefix(const char *msg)
 {
     char plainPrefix[20]="";
     int i;
 
-    GetPrivateProfileString("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
+    getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
     if (*plainPrefix != '\0') {
         i=strlen(plainPrefix);
         if (strncasecmp(msg, plainPrefix, i)==0) return (char *)msg+i;

@@ -1,10 +1,11 @@
-#include "cfgopts.h"
+#include "inifile.h"
 
 #ifdef S_SPLINT_S
 #include "splint.h"
 #endif
+
 /**
- * @file   cfgopts.c
+ * @file   inifile.c
  * @brief  Handles reading and writing to blow.ini
  *
  * These functions implement a config file based on GLib GKeyFile
@@ -41,13 +42,13 @@
  * char plainPrefix[20]="";
  *
  * // Reads the key for #zbr at EFNet
- * GetPrivateProfileString("EFNet:#zbr", "key", "", tmpKey, KEYBUF_SIZE, iniPath);
+ * getIniValue("EFNet:#zbr", "key", "", tmpKey, KEYBUF_SIZE, iniPath);
  *
  * // Get the plain_prefix variable from the FiSH section, defaulting to "+p " if non-existant
- * GetPrivateProfileString("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
+ * getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
  * @endcode
  */
-int GetPrivateProfileString(const char *section, const char *key, const char *default_value, char *buffer, int buflen, const char *filepath)
+int getIniValue(const char *section, const char *key, const char *default_value, char *buffer, int buflen, const char *filepath)
 {
     GKeyFile *key_file;
     GError *error = NULL;
@@ -86,10 +87,10 @@ int GetPrivateProfileString(const char *section, const char *key, const char *de
  * Example Usage:
  * @code
  * // Set the plain_prefix variable as "+zbr "
- * WritePrivateProfileString("FiSH", "plain_prefix", "+zbr ", iniPath);
+ * setIniValue("FiSH", "plain_prefix", "+zbr ", iniPath);
  * @endcode
  */
-int WritePrivateProfileString(const char *section, const char *key, const char *value, const char *filepath)
+int setIniValue(const char *section, const char *key, const char *value, const char *filepath)
 {
     GKeyFile *key_file;
     GError *error = NULL;
