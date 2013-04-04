@@ -76,6 +76,31 @@ int getIniValue(const char *section, const char *key, const char *default_value,
     return (int) strlen(buffer);
 }
 
+void deleteIniValue(const char *section, const char *key, const char *filepath)
+{
+    GKeyFile *key_file;
+    GError *error = NULL;
+    gsize num_keys = 0;
+
+    key_file = g_key_file_new();
+
+    // If file was read OK...
+    if ((int) g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL)==1) {
+    	g_key_file_remove_key(key_file, section, key, &error);
+        if (error == NULL) {
+        	// Check if group is empty, if it is, remove it also
+        	(void) g_key_file_get_keys(key_file, section, &num_keys, &error);
+        	if (error == NULL && num_keys == 0) {
+        		g_key_file_remove_group(key_file, section, NULL);
+
+        		writeIniFile(key_file, filepath);
+        	}
+        }
+    }
+
+    g_key_file_free(key_file);
+}
+
 /**
  * Write a key to blow.ini
  * @param [in] section configuration section
@@ -94,14 +119,27 @@ int setIniValue(const char *section, const char *key, const char *value, const c
 {
     GKeyFile *key_file;
     GError *error = NULL;
-    FILE *outfile = NULL;
-    gsize length = 0;
-    gchar *config = NULL;
 
     key_file = g_key_file_new();
-
     (void) g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL);
     g_key_file_set_string(key_file, section, key, value);
+
+    writeIniFile(key_file, filepath);
+
+    g_key_file_free(key_file);
+
+    if (error != NULL) {
+        return -1;
+    }
+
+    return 1;
+}
+
+void writeIniFile(GKeyFile *key_file, const char *filepath) {
+	gchar *config = NULL;
+	GError *error = NULL;
+	gsize length = 0;
+	FILE *outfile = NULL;
 
     // Get the content of the config to a string...
     config = g_key_file_to_data(key_file, &length, &error);
@@ -113,13 +151,6 @@ int setIniValue(const char *section, const char *key, const char *value, const c
         }
     }
 
-    g_free(config);
-    g_key_file_free(key_file);
-
-    if ((error != NULL) || (outfile == NULL)) {
-        return -1;
-    }
-
-    return 1;
+	g_free(config);
 }
 

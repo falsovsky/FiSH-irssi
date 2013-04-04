@@ -27,7 +27,7 @@ void DH1080_DeInit();
 #define DH1080_PRIME_BYTES	135
 #define ZeroMemory(dest,count) memset((void *)dest, 0, count)
 
-void initb64();
+void initb64(void);
 int b64toh(char *b, char *d);
 int htob64(char *h, char *d, unsigned int l);
 

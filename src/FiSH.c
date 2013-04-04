@@ -569,6 +569,8 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
     // re-encrypt blow.ini with new password
     strcpy(iniPath_new, iniPath);
     strcat(iniPath_new, "_new");
+
+    /* TODO: REWRITE THIS PLZ */
     h_ini_new=fopen(iniPath_new, "w");
     h_ini=fopen(iniPath,"r");
     if (h_ini && h_ini_new) {
@@ -609,6 +611,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
         remove(iniPath);
         rename(iniPath_new, iniPath);
     } else return;
+    /* TODO: END REWRITE */
 
     if (setIniValue("FiSH", "ini_password_Hash", B64digest, iniPath) == -1) {
         ZeroMemory(B64digest, sizeof(B64digest));
@@ -740,11 +743,16 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
+    /* TODO: Create a function to delete keys from the ini (inifile.c) */
+    /*
     if (setIniValue(contactName, "key", "\0", iniPath) == -1) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
     }
+	*/
+    deleteIniValue(contactName, "key", iniPath);
+
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
               "\002FiSH:\002 Key for %s@%s successfully removed!", target, server->tag);

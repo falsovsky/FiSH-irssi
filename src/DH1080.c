@@ -29,7 +29,7 @@ static char prime1080[135] = {
 mpz_t b_prime1080;
 randctx csprng;
 
-BOOL DH1080_Init()
+BOOL DH1080_Init(void)
 {
     unsigned char raw_buf[256];
     unsigned char iniHash[33] = { '\0' };
@@ -69,7 +69,7 @@ BOOL DH1080_Init()
     return TRUE;
 }
 
-void DH1080_DeInit()
+void DH1080_DeInit(void)
 {
     mpz_clear(b_prime1080);
     memset(&csprng, 0, sizeof(csprng));
