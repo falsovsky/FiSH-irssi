@@ -9,7 +9,6 @@
    The calculated secret key is hashed with SHA-256, the result is converted
    to base64 for final use with blowfish. */
 
-
 #include "DH1080.h"
 
 // ### new sophie-germain 1080bit prime number ###
@@ -32,8 +31,10 @@ randctx csprng;
 
 BOOL DH1080_Init()
 {
-    unsigned char raw_buf[256], iniHash[33];
+    unsigned char raw_buf[256];
+    unsigned char iniHash[33] = { '\0' };
     FILE *hRnd;
+
     hRnd = fopen("/dev/urandom", "rb");     // don't use /dev/random, it's a blocking device
     if (!hRnd) return FALSE;
 
@@ -149,7 +150,8 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
 {
     //int i=0;
     int iRet;
-    unsigned char SHA256digest[35], base64_tmp[160];
+    unsigned char SHA256digest[35] = { '\0' };
+    unsigned char base64_tmp[160];
     mpz_t b_myPrivkey, b_HisPubkey, b_theKey;
     size_t len;
 

@@ -526,7 +526,8 @@ void cmd_helpfish(const char *arg, SERVER_REC *server, WI_ITEM_REC *item)
 void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
 {
     int i=0, pw_len, re_enc=0;
-    char B64digest[50], SHA256digest[35];
+    char B64digest[50];
+    char SHA256digest[35] = { '\0' };
     char bfKey[512], new_iniKey[KEYBUF_SIZE], old_iniKey[KEYBUF_SIZE], *fptr, *ok_ptr, line_buf[1000], iniPath_new[300];
     FILE *h_ini, *h_ini_new;
 
@@ -903,7 +904,8 @@ void query_nick_changed(QUERY_REC *query, char *orignick)
 
 void fish_init(void)
 {
-    char iniPasswordHash[50], SHA256digest[35], B64digest[50], *iniPass_ptr;
+    char iniPasswordHash[50], B64digest[50], *iniPass_ptr;
+    char SHA256digest[35] = { '\0' };
     int i;
 
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
