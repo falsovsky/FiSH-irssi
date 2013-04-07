@@ -58,9 +58,8 @@ char *strfcpy(char *dest, char *buffer, int destSize);	// removes leading and tr
 
 void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
 
-
-const char default_iniKey[]="blowinikey", blow_ini[]="/blow.ini";
-char iniKey[100], iniPath[255], tempPath[255];
+const char blow_ini[]="/blow.ini";
+char iniKey[100], iniPath[255];
 char g_myPrivKey[300], g_myPubKey[300];
 
-BOOL unsetiniFlag=0, keyx_query_created=0;
+BOOL keyx_query_created=0;
