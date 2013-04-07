@@ -1,9 +1,15 @@
 // FiSH encryption module for irssi, v1.00
 #include "FiSH.h"
+#include "password.h"
 
 #ifdef S_SPLINT_S
 #include "splint.h"
 #endif
+
+/**
+ * Default key for FiSH ini file.
+ */
+static const char default_iniKey[] = "blowinikey";
 
 /*
  * Load a base64 blowfish key for contact
@@ -18,7 +24,7 @@ BOOL getContactKey(const char *contactPtr, char *theKey)
     BOOL bRet=FALSE;
 
     getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
-    
+
     // don't process, encrypted key not found in ini
     if (strlen(tmpKey) < 16) return FALSE;
 
@@ -523,16 +529,67 @@ void cmd_helpfish(const char *arg, SERVER_REC *server, WI_ITEM_REC *item)
               " /unsetinipw\n");
 }
 
+/* TODO: REWRITE THIS PLZ */
+int recrypt_ini_file(const char* iniPath, const char* iniPath_new, const char* old_iniKey)
+{
+    FILE *h_ini = NULL;
+    FILE *h_ini_new = NULL;
+    char *fptr, *ok_ptr, line_buf[1000];
+    char bfKey[512];
+    int re_enc = 0;
+
+    h_ini_new=fopen(iniPath_new, "w");
+    h_ini=fopen(iniPath,"r");
+
+    if (h_ini && h_ini_new) {
+        while (!feof(h_ini)) {
+            fptr=fgets(line_buf, sizeof(line_buf)-2, h_ini);
+            if (fptr) {
+                ok_ptr=strstr(line_buf, "+OK ");
+                if (ok_ptr) {
+                    re_enc=1;
+                    strtok(ok_ptr+4, " \n\r");
+                    decrypt_string(old_iniKey, ok_ptr+4, bfKey, strlen(ok_ptr+4));
+                    ZeroMemory(ok_ptr+4, strlen(ok_ptr+4)+1);
+                    encrypt_string(iniKey, bfKey, ok_ptr+4, strlen(bfKey));
+                    strcat(line_buf, "\n");
+                }
+                if (fprintf(h_ini_new, "%s", line_buf) < 0) {
+                    fclose(h_ini);
+                    fclose(h_ini_new);
+                    remove(iniPath_new);
+                    ZeroMemory(bfKey, sizeof(bfKey));
+                    ZeroMemory(line_buf, sizeof(line_buf));
+
+                    return -1;
+                }
+            }
+        }
+
+        fclose(h_ini);
+        fclose(h_ini_new);
+        remove(iniPath);
+        rename(iniPath_new, iniPath);
+    }
+
+    ZeroMemory(bfKey, sizeof(bfKey));
+    ZeroMemory(line_buf, sizeof(line_buf));
+    return re_enc;
+}
+/* TODO: END REWRITE */
+
 void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
 {
     int i=0, pw_len, re_enc=0;
-    char B64digest[50];
-    char SHA256digest[35] = { '\0' };
-    char bfKey[512], new_iniKey[KEYBUF_SIZE], old_iniKey[KEYBUF_SIZE], *fptr, *ok_ptr, line_buf[1000], iniPath_new[300];
-    FILE *h_ini, *h_ini_new;
+    char B64digest[50] = { '\0' };
+    char key[32] = { '\0' };
+    char hash[32] = { '\0' };
 
+    char new_iniKey[KEYBUF_SIZE], old_iniKey[KEYBUF_SIZE], iniPath_new[300];
 
-    if (!unsetiniFlag) {
+    strcpy(old_iniKey, iniKey);
+
+    if (iniPW != NULL) {
         pw_len=strlen(iniPW);
         if (pw_len < 1 || (size_t)pw_len > sizeof(new_iniKey)) {
             printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
@@ -550,68 +607,34 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
             return;
         }
 
-        SHA256_memory(new_iniKey, pw_len, SHA256digest);
+        key_from_password(new_iniKey, key);
+        htob64(key, B64digest, 32);
         ZeroMemory(new_iniKey, sizeof(new_iniKey));
-        for (i=0; i<40872; i++) SHA256_memory(SHA256digest, 32, SHA256digest);
-        htob64(SHA256digest, B64digest, 32);
+        strcpy(iniKey, B64digest); // this is used for encrypting blow.ini
+    } else {
+        strcpy(iniKey, default_iniKey); // use default blow.ini key
     }
 
-    strcpy(old_iniKey, iniKey);
-
-    if (unsetiniFlag) strcpy(iniKey, default_iniKey);	// unsetinipw -> use default blow.ini key
-    else strcpy(iniKey, B64digest);	// this is used for encrypting blow.ini
-
-    for (i=0; i<30752; i++) SHA256_memory(SHA256digest, 32, SHA256digest);
-    htob64(SHA256digest, B64digest, 32);	// this is used to verify the entered password
-    ZeroMemory(SHA256digest, sizeof(SHA256digest));
-
+    key_hash(key, hash);
+    htob64(hash, B64digest, 32);       // this is used to verify the entered password
+    ZeroMemory(hash, sizeof(hash));
+    ZeroMemory(key, sizeof(key));
 
     // re-encrypt blow.ini with new password
     strcpy(iniPath_new, iniPath);
     strcat(iniPath_new, "_new");
 
-    /* TODO: REWRITE THIS PLZ */
-    h_ini_new=fopen(iniPath_new, "w");
-    h_ini=fopen(iniPath,"r");
-    if (h_ini && h_ini_new) {
-        while (!feof(h_ini)) {
-            fptr=fgets(line_buf, sizeof(line_buf)-2, h_ini);
-            if (fptr) {
-                ok_ptr=strstr(line_buf, "+OK ");
-                if (ok_ptr) {
-                    re_enc=1;
-                    strtok(ok_ptr+4, " \n\r");
-                    decrypt_string(old_iniKey, ok_ptr+4, bfKey, strlen(ok_ptr+4));
-                    ZeroMemory(ok_ptr+4, strlen(ok_ptr+4)+1);
-                    encrypt_string(iniKey, bfKey, ok_ptr+4, strlen(bfKey));
-                    strcat(line_buf, "\n");
-                }
-                if (fprintf(h_ini_new, "%s", line_buf) < 0) {
-                    ZeroMemory(B64digest, sizeof(B64digest));
-                    ZeroMemory(bfKey, sizeof(bfKey));
-                    ZeroMemory(line_buf, sizeof(line_buf));
-                    ZeroMemory(old_iniKey, sizeof(old_iniKey));
-                    fclose(h_ini);
-                    fclose(h_ini_new);
-                    remove(iniPath_new);
-
-                    printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
-                              "\002FiSH ERROR:\002 Unable to write new blow.ini, probably out of disc space.");
-
-                    return;
-                }
-            }
-        }
-
-        ZeroMemory(bfKey, sizeof(bfKey));
-        ZeroMemory(line_buf, sizeof(line_buf));
+    re_enc = recrypt_ini_file(iniPath, iniPath_new, old_iniKey);
+    if (re_enc < 0) {
+        ZeroMemory(B64digest, sizeof(B64digest));
         ZeroMemory(old_iniKey, sizeof(old_iniKey));
-        fclose(h_ini);
-        fclose(h_ini_new);
-        remove(iniPath);
-        rename(iniPath_new, iniPath);
-    } else return;
-    /* TODO: END REWRITE */
+
+        printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
+                  "\002FiSH ERROR:\002 Unable to write new blow.ini, probably out of disc space.");
+        return;
+    } else {
+        ZeroMemory(old_iniKey, sizeof(old_iniKey));
+    }
 
     if (setIniValue("FiSH", "ini_password_Hash", B64digest, iniPath) == -1) {
         ZeroMemory(B64digest, sizeof(B64digest));
@@ -622,11 +645,15 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
 
     ZeroMemory(B64digest, sizeof(B64digest));
 
-    if (re_enc) printtext(server, item!=NULL ? window_item_get_target(item) : NULL,
-                              MSGLEVEL_CRAP, "\002FiSH: Re-encrypted blow.ini\002 with new password.");
+    if (re_enc) {
+        printtext(server, item!=NULL ? window_item_get_target(item) : NULL,
+                  MSGLEVEL_CRAP, "\002FiSH: Re-encrypted blow.ini\002 with new password.");
+    }
 
-    if (!unsetiniFlag) printtext(server, item!=NULL ? window_item_get_target(item) : NULL,
-                                     MSGLEVEL_CRAP, "\002FiSH:\002 blow.ini password hash saved.");
+    if (iniPW != NULL) {
+        printtext(server, item!=NULL ? window_item_get_target(item) : NULL,
+                  MSGLEVEL_CRAP, "\002FiSH:\002 blow.ini password hash saved.");
+    }
 }
 
 /*
@@ -634,9 +661,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
  */
 static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *item)
 {
-    unsetiniFlag=1;
-    cmd_setinipw("Some_boogie_dummy_key", server, item);
-    unsetiniFlag=0;
+    cmd_setinipw(NULL, server, item);
 
     if (setIniValue("FiSH", "ini_password_Hash", "\0", iniPath) == -1) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
@@ -910,32 +935,44 @@ void query_nick_changed(QUERY_REC *query, char *orignick)
     ZeroMemory(theKey, KEYBUF_SIZE);
 }
 
+void prompt_for_password (char* a_output)
+{
+    char* password = getpass(" --> Please enter your blow.ini password: ");
+
+    strcpy(a_output, password);
+    ZeroMemory(password, strlen(password));
+    irssi_redraw(); // getpass() screws irssi GUI, lets redraw!
+}
+
+void calculate_password_key_and_hash (
+    const char* a_password,
+    char* a_key,
+    char* a_hash)
+{
+    char key[256/8];
+    char hash[256/8];
+
+    key_from_password(a_password, key);
+    htob64(key, a_key, 32);
+
+    key_hash(key, hash);
+    htob64(hash, a_hash, 32);
+}
+
 void fish_init(void)
 {
-    char iniPasswordHash[50], B64digest[50], *iniPass_ptr;
-    char SHA256digest[35] = { '\0' };
-    int i;
+    char iniPasswordHash[50], B64digest[50];
 
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
-    strcpy(tempPath, iniPath);
     strcpy(strrchr(iniPath, '/'), blow_ini);
-    strcpy(strrchr(tempPath, '/'), "/temp_FiSH.$$$");
 
     if (DH1080_Init()==FALSE) return;
 
     getIniValue("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
     if (strlen(iniPasswordHash) == 43) {
-        iniPass_ptr = getpass(" --> Please enter your blow.ini password: ");
-        strcpy(iniKey, iniPass_ptr);
-        ZeroMemory(iniPass_ptr, strlen(iniPass_ptr));
-        irssi_redraw();		// getpass() screws irssi GUI, lets redraw!
+        prompt_for_password(iniKey);
+        calculate_password_key_and_hash(iniKey, iniKey, B64digest);
 
-        SHA256_memory(iniKey, strlen(iniKey), SHA256digest);
-        for (i=0; i<40872; i++) SHA256_memory(SHA256digest, 32, SHA256digest);
-        htob64(SHA256digest, B64digest, 32);
-        strcpy(iniKey, B64digest);      // this is used for encrypting blow.ini
-        for (i=0; i<30752; i++) SHA256_memory(SHA256digest, 32, SHA256digest);
-        htob64(SHA256digest, B64digest, 32);	// this is used to verify the entered password
         if (strcmp(B64digest, iniPasswordHash) != 0) {
             printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH:\002 Wrong blow.ini password entered, try again...");
             printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH module NOT loaded.\002");
