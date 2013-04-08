@@ -8,6 +8,7 @@
 #include "blowfish.h"
 #include "DH1080.h"
 #include "module.h"
+#include "standard.h"
 
 /*
 // Fix some warnings
@@ -54,7 +55,7 @@ void FixIniSection(const char *section, char *fixedSection);	// replace '[' and 
 int GetBlowIniSwitch(const char *section, const char *key, const char *default_value);
 char *isPlainPrefix(const char *msg);
 char *strfcpy(char *dest, char *buffer, int destSize);	// removes leading and trailing blanks from string
-
+void memXOR(char *s1, const char *s2, int n);
 
 void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
 

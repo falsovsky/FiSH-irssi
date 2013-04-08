@@ -1,11 +1,6 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <gmp.h>
 
-#include "SHA256.h"
-#include "rand.h"
+#ifndef DH_1080_H_
+#define DH1080_H_
 
 // Input:  priv_key = buffer of 200 bytes
 //         pub_key  = buffer of 200 bytes
@@ -19,12 +14,10 @@ int DH1080_gen(char *priv_key, char *pub_key);
 //         HisPubKey = the secret key
 int DH1080_comp(char *MyPrivKey, char *HisPubKey);
 
+// Initializes diffie-hellman exchange structures.
+int DH1080_Init(const char seed[256]);
 
-BOOL DH1080_Init(const char* ini_path, const char* conf_path);
 void DH1080_DeInit();
 
-#define DH1080_PRIME_BITS	1080
-#define DH1080_PRIME_BYTES	135
-#define ZeroMemory(dest,count) memset((void *)dest, 0, count)
+#endif // DH_1080_H_
 
-void memXOR(char *s1, const char *s2, int n);

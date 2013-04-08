@@ -11,6 +11,16 @@
 
 #include "DH1080.h"
 #include "base64.h"
+#include "SHA256.h"
+#include "rand.h"
+
+#include <string.h>
+#include <gmp.h>
+
+#define DH1080_PRIME_BITS	1080
+#define DH1080_PRIME_BYTES	135
+
+#define ZeroMemory(dest,count) memset((void *)dest, 0, count)
 
 // ### new sophie-germain 1080bit prime number ###
 static char prime1080[135] = {
@@ -30,42 +40,15 @@ static char prime1080[135] = {
 mpz_t b_prime1080;
 randctx csprng;
 
-BOOL DH1080_Init(const char* ini_path, const char* conf_path)
+BOOL DH1080_Init(const char seed[256])
 {
-    unsigned char raw_buf[256];
-    unsigned char iniHash[33] = { '\0' };
-    FILE *hRnd;
-
-    hRnd = fopen("/dev/urandom", "rb");     // don't use /dev/random, it's a blocking device
-    if (!hRnd) return FALSE;
-
-    // #*#*#*#*#* RNG START #*#*#*#*#*
-    if (fread(raw_buf, 1, sizeof(raw_buf), hRnd) < 128) { /* At least 128 bytes of seeding */
-        ZeroMemory(raw_buf, sizeof(raw_buf));
-        fclose(hRnd);
-        return FALSE;
-    }
-    fclose(hRnd);
-
-    sha_file(ini_path, (char *)iniHash);
-    memXOR((char *)raw_buf+128, (char *)iniHash, 32);
-
-    sha_file(conf_path, (char *)iniHash);
-    memXOR((char *)raw_buf+128, (char *)iniHash, 32);
-    ZeroMemory(iniHash, sizeof(iniHash));
-    // first 128 byte in raw_buf: output from /dev/urandom
-    // last 32 byte in raw_buf: SHA-256 digest from blow.ini and irssi.conf
-
     /* Seed and initialize ISAAC */
-    memcpy(csprng.randrsl, raw_buf, sizeof(raw_buf));
+    memcpy(csprng.randrsl, seed, sizeof(seed));
     randinit(&csprng, TRUE);
-
-    /* RNG END */
 
     initb64();
 
     mpz_init(b_prime1080);
-
     mpz_import(b_prime1080, DH1080_PRIME_BYTES, 1, 1, 0, 0, prime1080);
 
     return TRUE;

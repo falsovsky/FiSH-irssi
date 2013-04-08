@@ -2,6 +2,7 @@
 #include "FiSH.h"
 #include "password.h"
 #include "base64.h"
+#include "SHA256.h"
 
 #ifdef S_SPLINT_S
 #include "splint.h"
@@ -960,6 +961,51 @@ void calculate_password_key_and_hash (
     htob64(hash, a_hash, 32);
 }
 
+BOOL get_random_seed (
+    const char* ini_path,
+    const char* conf_path,
+    char seed[])
+{
+    static const unsigned int seed_length = 256;
+
+    unsigned char iniHash[33] = { '\0' };
+    FILE *hRnd;
+
+    hRnd = fopen("/dev/urandom", "rb");     // don't use /dev/random, it's a blocking device
+    if (!hRnd) return FALSE;
+
+    // #*#*#*#*#* RNG START #*#*#*#*#*
+    if (fread(seed, 1, seed_length, hRnd) < 128) { /* At least 128 bytes of seeding */
+        ZeroMemory(seed, seed_length);
+        fclose(hRnd);
+        return FALSE;
+    }
+    fclose(hRnd);
+
+    sha_file(ini_path, (char *)iniHash);
+    memXOR((char *)seed+128, (char *)iniHash, 32);
+
+    sha_file(conf_path, (char *)iniHash);
+    memXOR((char *)seed+128, (char *)iniHash, 32);
+    ZeroMemory(iniHash, sizeof(iniHash));
+
+    // first 128 byte in seed: output from /dev/urandom
+    // last 32 byte in seed: SHA-256 digest from blow.ini and irssi.conf
+
+    return TRUE;
+}
+
+BOOL key_exchange_init(const char* ini_path)
+{
+    char seed[256];
+
+    if (get_random_seed(ini_path, get_irssi_config(), seed) == FALSE) return FALSE;
+    if (DH1080_Init(seed)==FALSE) return FALSE;
+
+    memset(seed, 0, sizeof(seed));
+    return TRUE;
+}
+
 void fish_init(void)
 {
     char iniPasswordHash[50], B64digest[50];
@@ -967,7 +1013,7 @@ void fish_init(void)
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
     strcpy(strrchr(iniPath, '/'), blow_ini);
 
-    if (DH1080_Init(iniPath, get_irssi_config())==FALSE) return;
+    if (key_exchange_init(iniPath) == FALSE) return;
 
     getIniValue("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
     if (strlen(iniPasswordHash) == 43) {
