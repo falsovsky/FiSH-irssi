@@ -967,7 +967,7 @@ void fish_init(void)
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
     strcpy(strrchr(iniPath, '/'), blow_ini);
 
-    if (DH1080_Init()==FALSE) return;
+    if (DH1080_Init(iniPath, get_irssi_config())==FALSE) return;
 
     getIniValue("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
     if (strlen(iniPasswordHash) == 43) {

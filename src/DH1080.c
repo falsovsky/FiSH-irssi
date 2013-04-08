@@ -30,7 +30,7 @@ static char prime1080[135] = {
 mpz_t b_prime1080;
 randctx csprng;
 
-BOOL DH1080_Init(void)
+BOOL DH1080_Init(const char* ini_path, const char* conf_path)
 {
     unsigned char raw_buf[256];
     unsigned char iniHash[33] = { '\0' };
@@ -47,9 +47,10 @@ BOOL DH1080_Init(void)
     }
     fclose(hRnd);
 
-    sha_file(iniPath, (char *)iniHash);
+    sha_file(ini_path, (char *)iniHash);
     memXOR((char *)raw_buf+128, (char *)iniHash, 32);
-    sha_file((char *)get_irssi_config(), (char *)iniHash);
+
+    sha_file(conf_path, (char *)iniHash);
     memXOR((char *)raw_buf+128, (char *)iniHash, 32);
     ZeroMemory(iniHash, sizeof(iniHash));
     // first 128 byte in raw_buf: output from /dev/urandom

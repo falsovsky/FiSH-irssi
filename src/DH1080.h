@@ -20,7 +20,7 @@ int DH1080_gen(char *priv_key, char *pub_key);
 int DH1080_comp(char *MyPrivKey, char *HisPubKey);
 
 
-BOOL DH1080_Init();
+BOOL DH1080_Init(const char* ini_path, const char* conf_path);
 void DH1080_DeInit();
 
 #define DH1080_PRIME_BITS	1080
@@ -28,8 +28,3 @@ void DH1080_DeInit();
 #define ZeroMemory(dest,count) memset((void *)dest, 0, count)
 
 void memXOR(char *s1, const char *s2, int n);
-
-extern char iniPath[];
-
-// return full path for ~/.irssi/config
-extern const char *get_irssi_config(void);
