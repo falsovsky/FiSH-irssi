@@ -10,6 +10,7 @@
    to base64 for final use with blowfish. */
 
 #include "DH1080.h"
+#include "base64.h"
 
 // ### new sophie-germain 1080bit prime number ###
 static char prime1080[135] = {
@@ -156,7 +157,7 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
     size_t len;
 
     // Verify base64 strings
-    if ((strspn(MyPrivKey, B64ABC) != strlen(MyPrivKey)) || (strspn(HisPubKey, B64ABC) != strlen(HisPubKey))) {
+    if (!valid_b64(MyPrivKey, strlen(MyPrivKey)) || !valid_b64(HisPubKey, strlen(HisPubKey))) {
         memset(MyPrivKey, 0x20, strlen(MyPrivKey));
         memset(HisPubKey, 0x20, strlen(HisPubKey));
         return 0;

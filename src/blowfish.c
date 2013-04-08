@@ -218,3 +218,8 @@ void encrypt_key(const char *key, char *encryptedKey)
     i=strlen(key);
     encrypt_string(iniKey, key, encryptedKey+4, i>80 ? 80 : i);
 }
+
+int valid_blowfish(const char *str, int len)
+{
+    return strspn(str, B64) == (size_t)len;
+}

@@ -27,13 +27,6 @@ void DH1080_DeInit();
 #define DH1080_PRIME_BYTES	135
 #define ZeroMemory(dest,count) memset((void *)dest, 0, count)
 
-void initb64(void);
-int b64toh(char *b, char *d);
-int htob64(char *h, char *d, unsigned int l);
-
-extern char B64ABC[];	// original Base64 alphabet
-extern char B64[];	// Base64 alphabet used by blowcrypt
-
 void memXOR(char *s1, const char *s2, int n);
 
 extern char iniPath[];

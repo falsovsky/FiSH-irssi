@@ -3,7 +3,7 @@
 /*
    Public Base64 conversion tables
    */
-const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char B64ABC[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char b64buf[256];
 
 
@@ -94,4 +94,9 @@ int htob64(const char *h, char *d, unsigned int l)
     }
     d[k]&=0;
     return (int) strlen(d);
+}
+
+int valid_b64(const char *str, int len)
+{
+    return strspn(str, B64ABC) == (size_t)len;
 }

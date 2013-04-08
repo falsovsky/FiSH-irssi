@@ -1,6 +1,7 @@
 // FiSH encryption module for irssi, v1.00
 #include "FiSH.h"
 #include "password.h"
+#include "base64.h"
 
 #ifdef S_SPLINT_S
 #include "splint.h"
@@ -117,7 +118,7 @@ int FiSH_decrypt(const SERVER_REC *serverRec, char *msg_ptr, char *msg_bak, cons
 
     // Verify base64 string
     msg_len=strlen(msg_ptr);
-    if ((strspn(msg_ptr, B64) != (size_t)msg_len) || (msg_len < 12)) return 0;
+    if (msg_len < 12 || !valid_blowfish(msg_ptr, msg_len)) return 0;
 
     if (getIniSectionForContact(serverRec, target, contactName)==FALSE) return 0;
 
@@ -580,7 +581,7 @@ int recrypt_ini_file(const char* iniPath, const char* iniPath_new, const char* o
 
 void cmd_setinipw(const char *iniPW, SERVER_REC *server, WI_ITEM_REC *item)
 {
-    int i=0, pw_len, re_enc=0;
+    int pw_len, re_enc=0;
     char B64digest[50] = { '\0' };
     char key[32] = { '\0' };
     char hash[32] = { '\0' };
@@ -857,7 +858,7 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 
     if (strncmp(msg, "DH1080_INIT ", 12)==0) {
         strcpy(hisPubKey, msg+12);
-        if (strspn(hisPubKey, B64ABC) != strlen(hisPubKey)) return;
+        if (!valid_b64(hisPubKey, strlen(hisPubKey))) return;
 
         if (query_find(server, nick)==NULL) {	// query window not found, lets create one
             keyx_query_created=1;
