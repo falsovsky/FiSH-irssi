@@ -46,8 +46,6 @@ BOOL DH1080_Init(const char seed[256])
     memcpy(csprng.randrsl, seed, sizeof(seed));
     randinit(&csprng, TRUE);
 
-    initb64();
-
     mpz_init(b_prime1080);
     mpz_import(b_prime1080, DH1080_PRIME_BYTES, 1, 1, 0, 0, prime1080);
 

@@ -1013,6 +1013,7 @@ void fish_init(void)
     strcpy(iniPath, get_irssi_config());	// path to irssi config file
     strcpy(strrchr(iniPath, '/'), blow_ini);
 
+    initb64();
     if (key_exchange_init(iniPath) == FALSE) return;
 
     getIniValue("FiSH", "ini_password_Hash", "0", iniPasswordHash, sizeof(iniPasswordHash), iniPath);
