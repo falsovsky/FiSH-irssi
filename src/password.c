@@ -2,6 +2,8 @@
 #include "password.h"
 #include "SHA256.h"
 
+#include <string.h>
+
 void key_from_password (
     const char* a_password,
     char* a_key)

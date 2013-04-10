@@ -1,5 +1,12 @@
 #include "SHA256.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <openssl/sha.h>
+
+
 /*
  * SHA-256 a block of memory
  */

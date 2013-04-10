@@ -1,8 +1,7 @@
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <openssl/sha.h>
+#ifndef SHA256_H_
+#define SHA256_H_
 
 void SHA256_memory(char *buf, const int len, const char *hash);
 int sha_file(const char *filename, const char *hash);
+
+#endif // SHA256_H_

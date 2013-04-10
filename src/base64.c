@@ -27,7 +27,7 @@ void initb64()
    */
 int b64toh(const char *b, char *d)
 {
-    unsigned int i,k,l;
+    int i,k,l;
 
     l=strlen(b);
     if (l<2) return 0;
