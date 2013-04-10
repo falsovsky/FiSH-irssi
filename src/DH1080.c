@@ -9,13 +9,14 @@
    The calculated secret key is hashed with SHA-256, the result is converted
    to base64 for final use with blowfish. */
 
+#include <stdlib.h>
+#include <string.h>
+#include <gmp.h>
+
 #include "DH1080.h"
 #include "base64.h"
 #include "SHA256.h"
 #include "rand.h"
-
-#include <string.h>
-#include <gmp.h>
 
 #define DH1080_PRIME_BITS	1080
 #define DH1080_PRIME_BYTES	135
@@ -37,36 +38,45 @@ static char prime1080[135] = {
 // base16: FBE1022E23D213E8ACFA9AE8B9DFADA3EA6B7AC7A7B7E95AB5EB2DF858921FEADE95E6AC7BE7DE6ADBAB8A783E7AF7A7FA6A2B7BEB1E72EAE2B72F9FA2BFB2A2EFBEFAC868BADB3E828FA8BADFADA3E4CC1BE7E8AFE85E9698A783EB68FA07A77AB6AD7BEB618ACF9CA2897EB28A6189EFA07AB99A8A7FA9AE299EFA7BA66DEAFEFBEFBF0B7D8B
 // base10: 12745216229761186769575009943944198619149164746831579719941140425076456621824834322853258804883232842877311723249782818608677050956745409379781245497526069657222703636504651898833151008222772087491045206203033063108075098874712912417029101508315117935752962862335062591404043092163187352352197487303798807791605274487594646923
 
-mpz_t b_prime1080;
-randctx csprng;
+struct dh1080_s {
+    mpz_t   b_prime1080;
+    randctx csprng;
+};
 
-BOOL DH1080_Init(const char seed[256])
+BOOL DH1080_Init(dh1080_t *ctx, const char seed[256])
 {
-    /* Seed and initialize ISAAC */
-    memcpy(csprng.randrsl, seed, sizeof(seed));
-    randinit(&csprng, TRUE);
+    *ctx = (dh1080_t)malloc(sizeof(struct dh1080_s));
+    if (*ctx == NULL) {
+        return FALSE;
+    }
 
-    mpz_init(b_prime1080);
-    mpz_import(b_prime1080, DH1080_PRIME_BYTES, 1, 1, 0, 0, prime1080);
+    /* Seed and initialize ISAAC */
+    memcpy((*ctx)->csprng.randrsl, seed, sizeof(seed));
+    randinit(&(*ctx)->csprng, TRUE);
+
+    mpz_init((*ctx)->b_prime1080);
+    mpz_import((*ctx)->b_prime1080, DH1080_PRIME_BYTES, 1, 1, 0, 0, prime1080);
 
     return TRUE;
 }
 
-void DH1080_DeInit(void)
+void DH1080_DeInit(dh1080_t ctx)
 {
-    mpz_clear(b_prime1080);
-    memset(&csprng, 0, sizeof(csprng));
+    printf("deiniting %p\n", ctx);
+    mpz_clear(ctx->b_prime1080);
+    memset(&ctx->csprng, 0, sizeof(ctx->csprng));
+    free(ctx);
 }
 
 
 // verify the Diffie-Hellman public key as described in RFC 2631
-BOOL DH_verifyPubKey(mpz_t b_pubkey)
+BOOL DH_verifyPubKey(dh1080_t ctx, mpz_t b_pubkey)
 {
     BOOL bRet = FALSE;
 
     // Verify that pubkey lies within the interval [2,p-1].
     // If it does not, the key is invalid.
-    if ( (mpz_cmp(b_pubkey, b_prime1080) == -1) &&
+    if ( (mpz_cmp(b_pubkey, ctx->b_prime1080) == -1) &&
             (mpz_cmp_ui(b_pubkey, 1) == 1) )
         bRet = TRUE;
 
@@ -77,7 +87,7 @@ BOOL DH_verifyPubKey(mpz_t b_pubkey)
 //         pub_key  = buffer of 200 bytes
 // Output: priv_key = Your private key
 //         pub_key  = Your public key
-int DH1080_gen(char *priv_key, char *pub_key)
+int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key)
 {
     unsigned char raw_buf[256]; //, iniHash[33];
     //unsigned long seed;
@@ -99,14 +109,14 @@ int DH1080_gen(char *priv_key, char *pub_key)
 
     do {
         for (i=0; i < DH1080_PRIME_BYTES; i++)
-            temp[i] = (unsigned char)rand(&csprng);
+            temp[i] = (unsigned char)rand(&ctx->csprng);
         mpz_import(b_privkey, DH1080_PRIME_BYTES, 1, 1, 0, 0, temp);
-        mpz_mod(b_privkey, b_privkey, b_prime1080); /* [2, prime1080-1] */
+        mpz_mod(b_privkey, b_privkey, ctx->b_prime1080); /* [2, prime1080-1] */
     } while ( mpz_cmp_ui(b_privkey, 1) != 1); /* while smaller than 2 */
 
-    mpz_powm(b_pubkey, b_base, b_privkey, b_prime1080);
+    mpz_powm(b_pubkey, b_base, b_privkey, ctx->b_prime1080);
 
-    if (DH_verifyPubKey(b_pubkey)) {
+    if (DH_verifyPubKey(ctx, b_pubkey)) {
         mpz_export(raw_buf, &len, 1, 1, 0, 0, b_privkey);
         mpz_clear(b_privkey);
         htob64((char *)raw_buf, priv_key, len);
@@ -129,7 +139,7 @@ int DH1080_gen(char *priv_key, char *pub_key)
 //         HisPubKey = Someones public key
 // Output: MyPrivKey has been destroyed for security reasons
 //         HisPubKey = the secret key
-int DH1080_comp(char *MyPrivKey, char *HisPubKey)
+int DH1080_comp(dh1080_t ctx, char *MyPrivKey, char *HisPubKey)
 {
     //int i=0;
     int iRet;
@@ -151,14 +161,14 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
     len=b64toh(HisPubKey, (char *)base64_tmp);
     mpz_import(b_HisPubkey, len, 1, 1, 0, 0, base64_tmp);
 
-    if (DH_verifyPubKey(b_HisPubkey)) {
+    if (DH_verifyPubKey(ctx, b_HisPubkey)) {
         mpz_init(b_myPrivkey);
 
         len=b64toh(MyPrivKey, (char *)base64_tmp);
         mpz_import(b_myPrivkey, len, 1, 1, 0, 0, base64_tmp);
         memset(MyPrivKey, 0x20, strlen(MyPrivKey));
 
-        mpz_powm(b_theKey, b_HisPubkey, b_myPrivkey, b_prime1080);
+        mpz_powm(b_theKey, b_HisPubkey, b_myPrivkey, ctx->b_prime1080);
         mpz_clear(b_myPrivkey);
 
         mpz_export(base64_tmp, &len, 1, 1, 0, 0, b_theKey);

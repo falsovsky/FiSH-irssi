@@ -8,6 +8,10 @@
 #include "splint.h"
 #endif
 
+// Static context information
+static dh1080_t dh1080_ctx;
+
+
 /**
  * Default key for FiSH ini file.
  */
@@ -839,7 +843,7 @@ void cmd_keyx(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
         return;
     }
 
-    DH1080_gen(g_myPrivKey, g_myPubKey);
+    DH1080_gen(dh1080_ctx, g_myPrivKey, g_myPubKey);
 
     irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s %s", target, "DH1080_INIT", g_myPubKey);
 
@@ -869,12 +873,12 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 
         printtext(server, nick, MSGLEVEL_CRAP, "\002FiSH:\002 Received DH1080 public key from %s, sending mine...", nick);
 
-        DH1080_gen(g_myPrivKey, g_myPubKey);
+        DH1080_gen(dh1080_ctx, g_myPrivKey, g_myPubKey);
         irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s %s", nick, "DH1080_FINISH", g_myPubKey);
     } else if (strncmp(msg, "DH1080_FINISH ", 14)==0) strcpy(hisPubKey, msg+14);
     else return;
 
-    if (DH1080_comp(g_myPrivKey, hisPubKey)==0) return;
+    if (DH1080_comp(dh1080_ctx, g_myPrivKey, hisPubKey)==0) return;
     signal_stop();
 
     encrypt_key(hisPubKey, encryptedKey);
@@ -1000,7 +1004,7 @@ BOOL key_exchange_init(const char* ini_path)
     char seed[256];
 
     if (get_random_seed(ini_path, get_irssi_config(), seed) == FALSE) return FALSE;
-    if (DH1080_Init(seed)==FALSE) return FALSE;
+    if (DH1080_Init(dh1080_ctx, seed)==FALSE) return FALSE;
 
     memset(seed, 0, sizeof(seed));
     return TRUE;
@@ -1104,7 +1108,7 @@ void fish_deinit(void)
     command_unbind("fishhelp", (SIGNAL_FUNC) cmd_helpfish);
     command_unbind("helpfish", (SIGNAL_FUNC) cmd_helpfish);
 
-    DH1080_DeInit();
+    DH1080_DeInit(dh1080_ctx);
 }
 
 /*
