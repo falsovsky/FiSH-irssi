@@ -356,7 +356,7 @@ void decrypt_topic(SERVER_REC *server, char *channel, char *topic, char *nick, c
 
 void decrypt_changed_topic(CHANNEL_REC *chan_rec)
 {
-    FiSH_decrypt(NULL, chan_rec->topic, chan_rec->topic, chan_rec->name);
+    FiSH_decrypt(chan_rec->server, chan_rec->topic, chan_rec->topic, chan_rec->name);
 }
 
 void raw_handler(SERVER_REC *server, char *data)
