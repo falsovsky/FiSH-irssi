@@ -91,7 +91,7 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 	if (IsNULLorEmpty(msgPtr) || bf_dest == NULL || IsNULLorEmpty(target))
 		return 0;
 
-	if (GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0)
+	if (settings_get_bool("process_outgoing") == 0)
 		return 0;
 
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
@@ -116,13 +116,13 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 {
 	char contactName[CONTACT_SIZE] = "", theKey[KEYBUF_SIZE] =
 	    "", bf_dest[1000] = "";
-	char myMark[20] = "", markPos[20] = "", *recoded;
-	int msg_len, i, mark_broken_block = 0, action_found = 0;
+	char myMark[20] = "", *recoded;
+	int msg_len, i, mark_broken_block = 0, action_found = 0, markPos;
 
 	if (IsNULLorEmpty(msg_ptr) || msg_bak == NULL || IsNULLorEmpty(target))
 		return 0;
 
-	if (GetBlowIniSwitch("FiSH", "process_incoming", "1") == 0)
+	if (settings_get_bool("process_incoming") == 0)
 		return 0;
 
 	if (strncmp(msg_ptr, "+OK ", 4) == 0)
@@ -152,8 +152,8 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 	if (msg_len != (msg_len / 12) * 12) {
 		msg_len = (msg_len / 12) * 12;
 		msg_ptr[msg_len] = '\0';
-		getIniValue("FiSH", "mark_broken_block", " \002&\002", myMark,
-			    sizeof(myMark), iniPath);
+		strncpy(myMark, settings_get_str("mark_broken_block"),
+			sizeof(myMark));
 		if (*myMark == '\0' || isNoChar(*myMark))
 			mark_broken_block = 0;
 		else
@@ -194,19 +194,15 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 		strcat(bf_dest, myMark);
 
 	// append crypt-mark?
-	if (GetBlowIniSwitch(contactName, "mark_encrypted", "1") != 0) {
-		getIniValue("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
-		if (*myMark != '\0') {
-			getIniValue("FiSH", "mark_position", "0", markPos,
-				    sizeof(markPos), iniPath);
-			if (*markPos == '0' || action_found)
-				strcat(bf_dest, myMark);	// append mark at the end (default for ACTION messages)
-			else {	// prefix mark
-				i = strlen(myMark);
-				memmove(bf_dest + i, bf_dest,
-					strlen(bf_dest) + 1);
-				strncpy(bf_dest, myMark, i);
-			}
+	strncpy(myMark, settings_get_str("mark_encrypted"), sizeof(myMark));
+	if (*myMark != '\0') {
+		markPos = settings_get_int("mark_position");
+		if (markPos == 0 || action_found)
+			strcat(bf_dest, myMark);	// append mark at the end (default for ACTION messages)
+		else {		// prefix mark
+			i = strlen(myMark);
+			memmove(bf_dest + i, bf_dest, strlen(bf_dest) + 1);
+			strncpy(bf_dest, myMark, i);
 		}
 	}
 
@@ -314,14 +310,15 @@ void encrypt_msg(SERVER_REC * server, char *target, char *msg,
  */
 void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 {
-	char contactName[CONTACT_SIZE] = "", myMark[20] = "", markPos[20] =
+	char contactName[CONTACT_SIZE] = "", myMark[20] =
 	    "", formattedMsg[800] = "";
-	int i;
+	int i, markPos;
 	char *plainMsg;
 
 	if (IsNULLorEmpty(msg) || IsNULLorEmpty(target))
 		return;
-	if (GetBlowIniSwitch("FiSH", "process_outgoing", "1") == 0)
+
+	if (settings_get_bool("process_outgoing") == 0)
 		return;
 
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
@@ -340,27 +337,22 @@ void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 		msg[512] = '\0';
 
 	// append crypt-mark?
-	if (GetBlowIniSwitch(contactName, "mark_encrypted", "1") != 0) {
-		getIniValue("FiSH", "mark_encrypted", "", myMark, sizeof(myMark), iniPath);	// global setting
-		if (*myMark != '\0') {
-			strcpy(formattedMsg, msg);
-
-			getIniValue("FiSH", "mark_position", "0", markPos,
-				    sizeof(markPos), iniPath);
-			if (*markPos == '0')
-				strcat(formattedMsg, myMark);	//append mark at the end
-			else {	// prefix mark
-				i = strlen(myMark);
-				memmove(formattedMsg + i, formattedMsg,
-					strlen(formattedMsg) + 1);
-				strncpy(formattedMsg, myMark, i);
-			}
-
-			signal_continue(4, server, formattedMsg, target,
-					orig_target);
-
-			ZeroMemory(formattedMsg, sizeof(formattedMsg));
+	strncpy(myMark, settings_get_str("mark_encrypted"), sizeof(myMark));
+	if (*myMark != '\0') {
+		strcpy(formattedMsg, msg);
+		markPos = settings_get_int("mark_position");
+		if (markPos == 0)
+			strcat(formattedMsg, myMark);	//append mark at the end
+		else {		// prefix mark
+			i = strlen(myMark);
+			memmove(formattedMsg + i, formattedMsg,
+				strlen(formattedMsg) + 1);
+			strncpy(formattedMsg, myMark, i);
 		}
+
+		signal_continue(4, server, formattedMsg, target, orig_target);
+
+		ZeroMemory(formattedMsg, sizeof(formattedMsg));
 	}
 
 	return;
@@ -668,7 +660,7 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
 
 void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 {
-	int i = 0, pw_len, re_enc = 0;
+	int pw_len, re_enc = 0;
 	char B64digest[50] = { '\0' };
 	char key[32] = { '\0' };
 	char hash[32] = { '\0' };
@@ -890,14 +882,6 @@ void cmd_delkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
 		return;
 
-	/* TODO: Create a function to delete keys from the ini (inifile.c) */
-	/*
-	   if (setIniValue(contactName, "key", "\0", iniPath) == -1) {
-	   printtext(server, item!=NULL ? window_item_get_target(item) : NULL,      MSGLEVEL_CRAP,
-	   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
-	   return;
-	   }
-	 */
 	deleteIniValue(contactName, "key", iniPath);
 
 	printtext(server, item != NULL ? window_item_get_target(item) : NULL,
@@ -1052,7 +1036,7 @@ void do_auto_keyx(QUERY_REC * query, int automatic)
 	if (keyx_query_created)
 		return;		// query was created by FiSH
 
-	if (GetBlowIniSwitch("FiSH", "auto_keyxchange", "1") == 0)
+	if (settings_get_bool("auto_keyxchange") == 0)
 		return;
 
 	if (getIniSectionForContact(query->server, query->name, contactName) ==
@@ -1070,7 +1054,7 @@ void query_nick_changed(QUERY_REC * query, char *orignick)
 {
 	char theKey[KEYBUF_SIZE] = "", contactName[CONTACT_SIZE] = "";
 
-	if (GetBlowIniSwitch("FiSH", "nicktracker", "1") == 0)
+	if (settings_get_bool("nicktracker") == 0)
 		return;
 
 	if (orignick == NULL || strcasecmp(orignick, query->name) == 0)
@@ -1178,6 +1162,18 @@ void fish_init(void)
 
 	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
+
+	settings_add_bool_module("fish", "FiSH", "process_outgoing", 1);
+	settings_add_bool_module("fish", "FiSH", "process_incoming", 1);
+	settings_add_bool_module("fish", "FiSH", "auto_keyxchange", 1);
+	settings_add_bool_module("fish", "FiSH", "nicktracker", 1);
+
+	settings_add_str_module("fish", "FiSH", "mark_broken_block",
+				" \002&\002");
+	settings_add_str_module("fish", "FiSH", "mark_encrypted", "");
+	settings_add_str_module("fish", "FiSH", "plain_prefix", "+p ");
+
+	settings_add_int_module("fish", "FiSH", "mark_position", 0);
 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		  "FiSH v1.00 - encryption module for irssi loaded! URL: https://github.com/falsovsky/FiSH-irssi\n"
@@ -1295,19 +1291,6 @@ char *strfcpy(char *dest, char *buffer, int destSize)
 	return dest;
 }
 
-int GetBlowIniSwitch(const char *section, const char *key,
-		     const char *default_value)
-{
-	char ini_value[10];
-
-	getIniValue(section, key, default_value, ini_value, sizeof(ini_value),
-		    iniPath);
-	if (isNoChar(*ini_value))
-		return 0;
-	else
-		return 1;
-}
-
 /**
  * Checks is the message if prefixed with the "plain_prefix" variable
  * @param msg message to check
@@ -1318,8 +1301,8 @@ char *isPlainPrefix(const char *msg)
 	char plainPrefix[20] = "";
 	int i;
 
-	getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix,
-		    sizeof(plainPrefix), iniPath);
+	strncpy(plainPrefix, settings_get_str("plain_prefix"),
+		sizeof(plainPrefix));
 	if (*plainPrefix != '\0') {
 		i = strlen(plainPrefix);
 		if (strncasecmp(msg, plainPrefix, i) == 0)
