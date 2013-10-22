@@ -16,29 +16,28 @@ MODIFIED:
 
 #ifndef RAND
 #define RAND
-#define RANDSIZL   (8)  /* I recommend 8 for crypto, 4 for simulations */
+#define RANDSIZL   (8)		/* I recommend 8 for crypto, 4 for simulations */
 #define RANDSIZ    (1<<RANDSIZL)
 
 /* context of random number generator */
 struct randctx {
-    ub4 randcnt;
-    ub4 randrsl[RANDSIZ];
-    ub4 randmem[RANDSIZ];
-    ub4 randa;
-    ub4 randb;
-    ub4 randc;
+	ub4 randcnt;
+	ub4 randrsl[RANDSIZ];
+	ub4 randmem[RANDSIZ];
+	ub4 randa;
+	ub4 randb;
+	ub4 randc;
 };
-typedef  struct randctx  randctx;
+typedef struct randctx randctx;
 
 /*
 ------------------------------------------------------------------------------
  If (flag==TRUE), then use the contents of randrsl[0..RANDSIZ-1] as the seed.
 ------------------------------------------------------------------------------
 */
-void randinit(/*_ randctx *r, word flag _*/);
+void randinit( /*_ randctx *r, word flag _*/ );
 
-void isaac(/*_ randctx *r _*/);
-
+void isaac( /*_ randctx *r _*/ );
 
 /*
 ------------------------------------------------------------------------------
@@ -50,6 +49,4 @@ void isaac(/*_ randctx *r _*/);
      (isaac(r), (r)->randcnt=RANDSIZ-1, (r)->randrsl[(r)->randcnt]) : \
      (r)->randrsl[(r)->randcnt])
 
-#endif  /* RAND */
-
-
+#endif				/* RAND */

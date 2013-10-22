@@ -48,18 +48,18 @@
 		msg[9] == ']' && msg[10] == ' '
 #endif
 
-
-int ExtractRnick (char *Rnick, char *incoming_msg);
+int ExtractRnick(char *Rnick, char *incoming_msg);
 void FixIniSection(const char *section, char *fixedSection);	// replace '[' and ']' in nick/channel with '~'
-int GetBlowIniSwitch(const char *section, const char *key, const char *default_value);
+int GetBlowIniSwitch(const char *section, const char *key,
+		     const char *default_value);
 char *isPlainPrefix(const char *msg);
 char *strfcpy(char *dest, char *buffer, int destSize);	// removes leading and trailing blanks from string
 
+void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
+		     char *target);
 
-void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
-
-const char blow_ini[]="/blow.ini";
+const char blow_ini[] = "/blow.ini";
 char iniKey[100], iniPath[255];
 char g_myPrivKey[300], g_myPubKey[300];
 
-BOOL keyx_query_created=0;
+BOOL keyx_query_created = 0;
