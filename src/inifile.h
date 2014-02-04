@@ -1,9 +1,6 @@
 #ifndef INIFILE_H_
 #define INIFILE_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <glib.h>
 
 int setIniValue(const char *section, const char *key, const char *value, const char *filepath);

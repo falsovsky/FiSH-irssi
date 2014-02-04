@@ -4,6 +4,11 @@
 #include "splint.h"
 #endif
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+
 /**
  * @file   inifile.c
  * @brief  Handles reading and writing to blow.ini
