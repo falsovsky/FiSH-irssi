@@ -51,7 +51,7 @@ BOOL DH1080_Init(dh1080_t *ctx, const char seed[256])
     }
 
     /* Seed and initialize ISAAC */
-    memcpy((*ctx)->csprng.randrsl, seed, sizeof(seed));
+    memcpy((*ctx)->csprng.randrsl, seed, 256);
     randinit(&(*ctx)->csprng, TRUE);
 
     mpz_init((*ctx)->b_prime1080);
