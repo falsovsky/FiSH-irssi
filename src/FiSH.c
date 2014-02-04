@@ -3,6 +3,8 @@
 #include "password.h"
 #include "base64.h"
 #include "SHA256.h"
+#include "inifile.h"
+#include "key_store.h"
 
 #ifdef S_SPLINT_S
 #include "splint.h"
@@ -10,43 +12,12 @@
 
 // Static context information
 static dh1080_t dh1080_ctx;
-
+static key_store_t key_store_ctx;
 
 /**
  * Default key for FiSH ini file.
  */
 static const char default_iniKey[] = "blowinikey";
-
-/*
- * Load a base64 blowfish key for contact
- * If theKey is NULL, only a test is made (= IsKeySetForContact)
- * @param contactPtr
- * @param theKey
- * @return 1 if everything ok 0 if not
- */
-BOOL getContactKey(const char *contactPtr, char *theKey)
-{
-    char tmpKey[KEYBUF_SIZE]="";
-    BOOL bRet=FALSE;
-
-    getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
-
-    // don't process, encrypted key not found in ini
-    if (strlen(tmpKey) < 16) return FALSE;
-
-    // encrypted key found
-    if (strncmp(tmpKey, "+OK ", 4)==0) {
-        if (theKey) {
-            // if it's not just a test, lets decrypt the key
-            decrypt_string((char *)iniKey, tmpKey+4, theKey, strlen(tmpKey+4));
-        }
-
-        bRet=TRUE;
-    }
-
-    ZeroMemory(tmpKey, KEYBUF_SIZE);
-    return bRet;
-}
 
 /*
  * Construct a ini section key for contact
@@ -55,7 +26,7 @@ BOOL getContactKey(const char *contactPtr, char *theKey)
  * @param iniSectionKey buffer to there the section key is generated
  * @return TRUE if everything ok FALSE if not
  */
-BOOL getIniSectionForContact(const SERVER_REC *serverRec, const char *contactPtr, char *iniSectionKey)
+BOOL getIniSectionForContact (const SERVER_REC *serverRec, const char *contactPtr, char *iniSectionKey)
 {
     ZeroMemory(iniSectionKey, CONTACT_SIZE);
 
@@ -93,7 +64,7 @@ int FiSH_encrypt(const SERVER_REC *serverRec, const char *msgPtr, const char *ta
 
     if (getIniSectionForContact(serverRec, target, contactName)==FALSE) return 0;
 
-    if (getContactKey(contactName, theKey)==FALSE) return 0;
+    if (key_store_get(key_store_ctx, contactName, theKey) < 0) return 0;
 
     strcpy(bf_dest, "+OK ");
 
@@ -127,7 +98,7 @@ int FiSH_decrypt(const SERVER_REC *serverRec, char *msg_ptr, char *msg_bak, cons
 
     if (getIniSectionForContact(serverRec, target, contactName)==FALSE) return 0;
 
-    if (getContactKey(contactName, theKey)==FALSE) return 0;
+    if (key_store_get(key_store_ctx, contactName, theKey) < 0) return 0;
 
     // usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
     if (msg_len >= (int)(sizeof(bf_dest)*1.5)) msg_ptr[(int)(sizeof(bf_dest)*1.5)-20]='\0';
@@ -251,7 +222,7 @@ void encrypt_msg(SERVER_REC *server, char *target, char *msg, char *orig_target)
 
     if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (getContactKey(contactName, NULL)==FALSE) return;
+    if (key_store_get(key_store_ctx, contactName, NULL) < 0) return;
 
 
     plainMsg = isPlainPrefix(msg);
@@ -284,7 +255,7 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
 
     if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (getContactKey(contactName, NULL)==FALSE) return;
+    if (key_store_get(key_store_ctx, contactName, NULL) < 0) return;
 
 
     plainMsg = isPlainPrefix(msg);
@@ -688,7 +659,7 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC *server, WI_ITEM_REC *ite
 void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 {
     GHashTable *optlist;
-    char contactName[CONTACT_SIZE]="", encryptedKey[150]="";
+    char contactName[CONTACT_SIZE]="";
     const char *target, *key;
     void *free_arg;
 
@@ -726,19 +697,14 @@ void cmd_setkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
         }
     }
 
-    encrypt_key((char *)key, encryptedKey);
-
     if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
-        ZeroMemory(encryptedKey, sizeof(encryptedKey));
+    if (key_store_set(key_store_ctx, contactName, key) < 0) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         cmd_params_free(free_arg);
         return;
     }
-
-    ZeroMemory(encryptedKey, sizeof(encryptedKey));
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
               "\002FiSH:\002 Key for %s@%s successfully set!", target, server->tag);
@@ -774,16 +740,11 @@ void cmd_delkey(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    /* TODO: Create a function to delete keys from the ini (inifile.c) */
-    /*
-    if (setIniValue(contactName, "key", "\0", iniPath) == -1) {
+    if (key_store_unset(key_store_ctx, contactName) < 0) {
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
                   "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
     }
-	*/
-    deleteIniValue(contactName, "key", iniPath);
-
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL,	MSGLEVEL_CRAP,
               "\002FiSH:\002 Key for %s@%s successfully removed!", target, server->tag);
@@ -817,7 +778,7 @@ void cmd_key(const char *data, SERVER_REC *server, WI_ITEM_REC *item)
 
     if (getIniSectionForContact(server, target, contactName)==FALSE) return;
 
-    if (getContactKey(contactName, theKey)==FALSE) {
+    if (key_store_get(key_store_ctx, contactName, theKey) < 0) {
         ZeroMemory(theKey, KEYBUF_SIZE);
         printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
                   "\002FiSH:\002 Key for %s@%s not found or invalid!", target, server->tag);
@@ -912,7 +873,7 @@ void do_auto_keyx(QUERY_REC *query, int automatic)
 
     if (getIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
 
-    if (getContactKey(contactName, NULL))
+    if (key_store_get(key_store_ctx, contactName, NULL) == 0)
         cmd_keyx(query->name, query->server, NULL);
 }
 
@@ -930,12 +891,12 @@ void query_nick_changed(QUERY_REC *query, char *orignick)
 
     if (getIniSectionForContact(query->server, orignick, contactName)==FALSE) return;
 
-    if (getContactKey(contactName, theKey)==FALSE)
-        return;	// see if there is a key for the old nick
+    if (key_store_get(key_store_ctx, contactName, theKey) < 0)
+        return; // see if there is a key for the old nick
 
     if (getIniSectionForContact(query->server, query->name, contactName)==FALSE) return;
 
-    if (setIniValue(contactName, "key", theKey, iniPath) == -1)
+    if (key_store_set(key_store_ctx, contactName, theKey) < 0)
         printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 
     ZeroMemory(theKey, KEYBUF_SIZE);
@@ -1004,7 +965,8 @@ BOOL key_exchange_init(const char* ini_path)
     char seed[256];
 
     if (get_random_seed(ini_path, get_irssi_config(), seed) == FALSE) return FALSE;
-    if (DH1080_Init(dh1080_ctx, seed)==FALSE) return FALSE;
+
+    if (DH1080_Init(&dh1080_ctx, seed)==FALSE) return FALSE;
 
     memset(seed, 0, sizeof(seed));
     return TRUE;
@@ -1031,6 +993,11 @@ void fish_init(void)
             return;
         }
         printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH:\002 Correct blow.ini password entered, lets go!");
+        if (key_store_init(&key_store_ctx, iniPath, iniKey) != 0) {
+          return;
+        }
+
+
     } else {
         strcpy(iniKey, default_iniKey);
         printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");

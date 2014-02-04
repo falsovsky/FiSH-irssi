@@ -4,7 +4,6 @@
 #include "config.h.in"
 #include "config.h"
 
-#include "inifile.h"
 #include "blowfish.h"
 #include "DH1080.h"
 #include "module.h"
