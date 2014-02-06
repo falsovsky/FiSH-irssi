@@ -1,3 +1,4 @@
+// Copyright (c) 2014 Hugo Peixoto, hugopeixoto.net
 
 #include "key_store.h"
 #include "inifile.h"
