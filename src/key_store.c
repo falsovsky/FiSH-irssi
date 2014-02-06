@@ -19,6 +19,9 @@ int key_store_init (
     const char* filekey)
 {
     (*ctx) = (key_store_t)malloc(sizeof(struct key_store_s));
+    if (*ctx == NULL) {
+        return -1;
+    }
 
     (*ctx)->filepath = strdup(filepath);
     (*ctx)->filekey  = strdup(filekey);
