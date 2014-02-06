@@ -159,3 +159,18 @@ void writeIniFile(GKeyFile *key_file, const char *filepath) {
 	g_free(config);
 }
 
+/*
+ * replace '[' and ']' from nick/channel with '~' (otherwise problems with .ini files)
+ */
+void FixIniSection(const char *section, char *fixedSection, size_t n)
+{
+    if (section!=NULL) {
+        strncpy(fixedSection, section, n);
+        fixedSection[n-1] = '\0';
+    }
+
+    while (*fixedSection != '\0') {
+        if ((*fixedSection == '[') || (*fixedSection == ']')) *fixedSection='~';
+        fixedSection++;
+    }
+}

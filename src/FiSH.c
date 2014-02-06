@@ -40,7 +40,7 @@ BOOL getIniSectionForContact (const SERVER_REC *serverRec, const char *contactPt
     }
 
     // replace '[' and ']' with '~' in contact name
-    FixIniSection(NULL, iniSectionKey);
+    FixIniSection(NULL, iniSectionKey, CONTACT_SIZE);
 
     return TRUE;
 }
@@ -1096,22 +1096,6 @@ int ExtractRnick(char *Rnick, char *msg)		// needs direct pointer to "nick@host"
 
     if (*Rnick != '\0') return TRUE;
     else return FALSE;
-}
-
-/*
- * replace '[' and ']' from nick/channel with '~' (otherwise problems with .ini files)
- */
-void FixIniSection(const char *section, char *fixedSection)
-{
-    if (section!=NULL) {
-        strncpy(fixedSection, section, CONTACT_SIZE);
-        fixedSection[CONTACT_SIZE-1] = '\0';
-    }
-
-    while (*fixedSection != '\0') {
-        if ((*fixedSection == '[') || (*fixedSection == ']')) *fixedSection='~';
-        fixedSection++;
-    }
 }
 
 void memXOR(char *s1, const char *s2, int n)
