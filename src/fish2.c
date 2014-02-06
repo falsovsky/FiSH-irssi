@@ -50,11 +50,33 @@ struct settings_t {
     char default_value[32];
 };
 
+static int fish2_get_contact (
+    fish2_t ctx,
+    const char* server_tag,
+    const char* target,
+    char* contact)
+{
+    memset(contact, 0, CONTACT_SIZE);
+
+    if (server_tag == NULL) {
+        snprintf(contact, CONTACT_SIZE, "%s", target);
+    } else {
+        snprintf(contact, CONTACT_SIZE, "%s:%s", server_tag, target);
+    }
+
+    // Should INI fixing be here?
+    return 0;
+}
+
 static struct settings_t settings[] = {
-  { "process_outgoing", "1" },
-  { "process_incoming", "1" },
-  { "auto_keyxchange",  "1" },
-  { "nicktracker",      "1" }
+  { "process_outgoing",  "1" },
+  { "process_incoming",  "1" },
+  { "auto_keyxchange",   "1" },
+  { "nicktracker",       "1" },
+  { "mark_broken_block", "1" },
+  { "mark_encrypted",    "1" },
+  { "mark_encrypted",    "" },
+  { "mark_bloken_block", " \002&\002" }
 };
 
 #define isNoChar(c) ((c) == 'n' || (c) == 'N' || (c) == '0')
@@ -76,22 +98,44 @@ int fish2_get_setting_bool (
     return !isNoChar(*value);
 }
 
-static int fish2_get_contact (
+int fish2_get_setting_string (
+    fish2_t ctx,
+    int field,
+    char* output,
+    size_t n)
+{
+    getIniValue(
+        "FiSH",
+        settings[field].name,
+        settings[field].default_value,
+        output,
+        n,
+        ctx->filepath);
+
+    return 0;
+}
+
+
+int fish2_get_user_setting_bool (
     fish2_t ctx,
     const char* server_tag,
     const char* target,
-    char* contact)
+    int field)
 {
-    memset(contact, 0, CONTACT_SIZE);
+    char contact[CONTACT_SIZE];
+    char value[32];
 
-    if (server_tag == NULL) {
-        snprintf(contact, CONTACT_SIZE, "%s", target);
-    } else {
-        snprintf(contact, CONTACT_SIZE, "%s:%s", server_tag, target);
-    }
+    fish2_get_contact(ctx, server_tag, target, contact);
 
-    // Should INI fixing be here?
-    return 0;
+    getIniValue(
+        contact,
+        settings[field].name,
+        settings[field].default_value,
+        value,
+        sizeof(value),
+        ctx->filepath);
+
+    return !isNoChar(*value);
 }
 
 int fish2_has_key (
@@ -217,6 +261,58 @@ int fish2_encrypt (
     return 0;
 }
 
+int fish2_mark_encryption (
+    fish2_t ctx,
+    const char* server_tag,
+    const char* sender,
+    const char* plaintext,
+    int broken,
+    char* marked,
+    size_t n)
+{
+    struct encrypter_s encrypter;
+    char encryption_mark[32]   = { '\0' };
+    char broken_block_mark[32] = { '\0' };
+
+    if (fish2_get_encrypter(
+          ctx,
+          plaintext,
+          strlen(plaintext),
+          &encrypter) < 0) {
+        return -1;
+    }
+
+    if (fish2_get_user_setting_bool(
+            ctx,
+            server_tag,
+            sender,
+            FISH2_MARK_ENCRYPTION) == 1) {
+        fish2_get_setting_string(
+            ctx,
+            FISH2_ENCRYPTION_MARK,
+            encryption_mark,
+            sizeof(encryption_mark));
+    }
+
+    if (broken) {
+      fish2_get_setting_string(
+          ctx,
+          FISH2_BROKEN_BLOCK_MARK,
+          broken_block_mark,
+          sizeof(broken_block_mark));
+    }
+
+    // TODO(hpeixoto): mark could be at the end.
+    snprintf(
+        marked, n,
+        "%s%s%s",
+        encryption_mark,
+        plaintext + encrypter.offset,
+        broken_block_mark);
+
+    return 0;
+}
+
 int fish2_decrypt (
     fish2_t ctx,
     const char* server_tag,
@@ -252,9 +348,14 @@ int fish2_decrypt (
         return -2;
     }
 
-    // TODO(hpeixoto): Apply mark_broken_block
-    // TODO(hpeixoto): Apply mark_encrypted (mark_position)
-    snprintf(unencrypted, n, "%s", plaintext);
+    fish2_mark_encryption(
+        ctx,
+        server_tag,
+        sender,
+        plaintext,
+        0,
+        unencrypted,
+        n);
 
     memset(key, 0, KEYBUF_SIZE);
     memset(plaintext, 0, plainsize);
