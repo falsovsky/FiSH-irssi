@@ -161,6 +161,35 @@ int fish2_get_key (
     return key_store_get(ctx->key_store, contact, key);
 }
 
+int fish2_set_key (
+    fish2_t ctx,
+    const char* server_tag,
+    const char* receiver,
+    const char* key)
+{
+    char contact[CONTACT_SIZE] = { '\0' };
+
+    if (fish2_get_contact(ctx, server_tag, receiver, contact) < 0) {
+        return -1;
+    }
+
+    return key_store_set(ctx->key_store, contact, key);
+}
+
+int fish_unset_key (
+    fish2_t ctx,
+    const char* server_tag,
+    const char* receiver)
+{
+    char contact[CONTACT_SIZE] = { '\0' };
+
+    if (fish2_get_contact(ctx, server_tag, receiver, contact) < 0) {
+        return -1;
+    }
+
+    return key_store_unset(ctx->key_store, contact);
+}
+
 typedef int (*decrypter_f)(
     const char*, const char*,
     size_t, char**, size_t*);

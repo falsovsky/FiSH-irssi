@@ -51,6 +51,17 @@ int fish2_get_key (
     const char* contact,
     char* key);
 
+int fish2_set_key (
+    fish2_t ctx,
+    const char* server_tag,
+    const char* contact,
+    const char* key);
+
+int fish2_unset_key (
+    fish2_t ctx,
+    const char* server_tag,
+    const char* contact);
+
 int fish2_encrypt (
     fish2_t ctx,
     const char* server_tag,
