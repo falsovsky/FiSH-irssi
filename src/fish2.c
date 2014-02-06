@@ -215,15 +215,15 @@ static int fish2_get_decrypter (
     struct decrypter_s* decrypter)
 {
     if (strncmp(encrypted, "+OK ", 4) == 0) {
-      decrypter->func   = &fish2_blowfish_decrypt;
-      decrypter->offset = 4;
-      return 0;
+        decrypter->func   = &fish2_blowfish_decrypt;
+        decrypter->offset = 4;
+        return 0;
     }
 
     if (strncmp(encrypted, "mcps ", 5) == 0) {
-      decrypter->func   = &fish2_blowfish_decrypt;
-      decrypter->offset = 5;
-      return 0;
+        decrypter->func   = &fish2_blowfish_decrypt;
+        decrypter->offset = 5;
+        return 0;
     }
 
     return -1;
@@ -235,12 +235,13 @@ static int fish2_get_encrypter (
     size_t n,
     struct encrypter_s* encrypter)
 {
+    // getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
     if (strncmp(unencrypted, "+p ", 4) == 0) {
-      encrypter->func   = &fish2_noop_encrypt;
-      encrypter->offset = 4;
+        encrypter->func   = &fish2_noop_encrypt;
+        encrypter->offset = 4;
     } else {
-      encrypter->func   = &fish2_blowfish_encrypt;
-      encrypter->offset = 0;
+        encrypter->func   = &fish2_blowfish_encrypt;
+        encrypter->offset = 0;
     }
 
     return 0;
@@ -261,10 +262,10 @@ int fish2_encrypt (
 
     struct encrypter_s encrypter;
     if (fish2_get_encrypter(
-          ctx,
-          plaintext,
-          input_size,
-          &encrypter) < 0) {
+            ctx,
+            plaintext,
+            input_size,
+            &encrypter) < 0) {
         return -3;
     }
 
@@ -304,10 +305,10 @@ int fish2_mark_encryption (
     char broken_block_mark[32] = { '\0' };
 
     if (fish2_get_encrypter(
-          ctx,
-          plaintext,
-          strlen(plaintext),
-          &encrypter) < 0) {
+            ctx,
+            plaintext,
+            strlen(plaintext),
+            &encrypter) < 0) {
         return -1;
     }
 
