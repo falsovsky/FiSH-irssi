@@ -216,7 +216,7 @@ static void calculate_password_key_and_hash (
         key_from_password(a_password, key);
         htob64(key, a_key, 32);
     } else {
-        strncpy(a_key, a_password, 32);
+        strncpy(a_key, default_iniKey, 32);
     }
 
     key_hash(key, hash);
