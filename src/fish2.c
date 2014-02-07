@@ -22,11 +22,10 @@ struct fish2_s {
 
 int fish2_init (
     fish2_t* ctx,
-    const char* filepath,
-    const char* filekey)
+    const char* filepath)
 {
     (*ctx) = (fish2_t)malloc(sizeof(struct fish2_s));
-    if (key_store_init(&(*ctx)->key_store, filepath, filekey) < 0) {
+    if (key_store_init(&(*ctx)->key_store, filepath) < 0) {
         free(*ctx);
         return -1;
     }
@@ -36,6 +35,22 @@ int fish2_init (
 
     return 0;
 }
+
+int fish2_rekey (fish2_t ctx, const char* new_key)
+{
+    return key_store_recrypt(ctx->key_store, new_key);
+}
+
+int fish2_has_master_key (fish2_t ctx)
+{
+    return key_store_has_master_key(ctx->key_store);
+}
+
+int fish2_validate_master_key (fish2_t ctx, const char* key)
+{
+    return key_store_validate_master_key(ctx->key_store, key);
+}
+
 
 void fish2_deinit (fish2_t ctx)
 {

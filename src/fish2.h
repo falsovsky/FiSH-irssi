@@ -17,13 +17,26 @@
 struct fish2_s;
 typedef struct fish2_s* fish2_t;
 
+// Context management
 int fish2_init (
     fish2_t* ctx,
-    const char* filepath,
-    const char* filekey);
+    const char* filepath);
 
 void fish2_deinit (fish2_t ctx);
 
+// Master password
+int fish2_has_master_key (
+    fish2_t ctx);
+
+int fish2_validate_master_key (
+    fish2_t ctx,
+    const char* key);
+
+int fish2_rekey (
+    fish2_t ctx,
+    const char* new_key);
+
+// Settings
 int fish2_get_setting_bool (
     fish2_t ctx,
     int field);
@@ -40,6 +53,7 @@ int fish2_get_user_setting_bool (
     const char* contact,
     int field);
 
+// Contact keys
 int fish2_has_key (
     fish2_t ctx,
     const char* server_tag,
@@ -62,6 +76,7 @@ int fish2_unset_key (
     const char* server_tag,
     const char* contact);
 
+// Ciphers
 int fish2_encrypt (
     fish2_t ctx,
     const char* server_tag,

@@ -211,12 +211,12 @@ int decrypt_string(const char *key, const char *str, char *dest, int len)
     return 1;
 }
 
-void encrypt_key(const char *key, char *encryptedKey)
+void encrypt_key(const char* master_key, const char *key, char *encryptedKey)
 {
     int i;
     strcpy(encryptedKey, "+OK ");
     i=strlen(key);
-    encrypt_string(iniKey, key, encryptedKey+4, i>80 ? 80 : i);
+    encrypt_string(master_key, key, encryptedKey+4, i>80 ? 80 : i);
 }
 
 int valid_blowfish(const char *str, int len)
