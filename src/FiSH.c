@@ -41,6 +41,8 @@ size_t irssi_recode_text (
         recoded = recode_in(server, text, target);
         if (recoded) {
             strncpy(text, recoded, max_n);
+            text[max_n-1] = '\0';
+
             memset(recoded, 0, strlen(recoded));
             g_free(recoded);
         }
