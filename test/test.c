@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
+#include <string.h>
 
 static const char sample[] = "hide your brains";
 
@@ -50,6 +51,28 @@ void test_encrypt(fish2_t ctx) {
   printf("[%s]\n", text);
 }
 
+void test_encrypt_short(fish2_t ctx) {
+  char text[1024];
+
+  assert(fish2_validate_master_key(ctx, NULL) == 0);
+  assert(fish2_set_key(ctx, "freenet", "nick", "mininikey") == 0);
+  assert(fish2_encrypt(ctx, "freenet", "nick", "hi", text, sizeof(text)) == 0);
+
+  printf("[%s]\n", text);
+}
+
+void test_decrypt_short(fish2_t ctx) {
+  static const char input[] = "+OK ayuCH1sPC/o/";
+  char text[4+12+1];
+
+  assert(fish2_validate_master_key(ctx, NULL) == 0);
+  assert(fish2_set_key(ctx, "freenet", "nick", "wikikiw") == 0);
+  assert(fish2_decrypt(ctx, "freenet", "nick", input, text, sizeof(text)) == 0);
+
+  assert(!strcmp("oi", text));
+  printf("[%s]\n", text);
+}
+
 void test_roundtrip(fish2_t ctx) {
   char text[1024];
   char back[1024];
@@ -75,13 +98,15 @@ void test_mark(fish2_t ctx) {
 
 int main () {
   int i;
-  int n = 10;
+  int n = 1;
   for (i = 0; i < n; ++i) {
     RUN(test_nothing);
     RUN(test_default_key);
     RUN(test_set_master_key);
     RUN(test_has_key);
     RUN(test_encrypt);
+    RUN(test_encrypt_short);
+    RUN(test_decrypt_short);
     RUN(test_roundtrip);
     RUN(test_mark);
   }
