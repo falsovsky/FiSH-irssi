@@ -30,7 +30,7 @@ int fish2_init (
         return -1;
     }
 
-    (*ctx)->prefix = strdup("+ OK");
+    (*ctx)->prefix = strdup("+OK ");
     (*ctx)->filepath = strdup(filepath);
 
     return 0;
@@ -50,7 +50,6 @@ int fish2_validate_master_key (fish2_t ctx, const char* key)
 {
     return key_store_validate_master_key(ctx->key_store, key);
 }
-
 
 void fish2_deinit (fish2_t ctx)
 {
@@ -158,7 +157,7 @@ int fish2_has_key (
   const char* server_tag,
   const char* receiver)
 {
-    return fish2_get_key(ctx, server_tag, receiver, NULL);
+    return fish2_get_key(ctx, server_tag, receiver, NULL) == 0;
 }
 
 int fish2_get_key (
@@ -191,7 +190,7 @@ int fish2_set_key (
     return key_store_set(ctx->key_store, contact, key);
 }
 
-int fish_unset_key (
+int fish2_unset_key (
     fish2_t ctx,
     const char* server_tag,
     const char* receiver)

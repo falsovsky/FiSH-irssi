@@ -51,7 +51,7 @@ int key_store_has_master_key (
 
     getIniValue("FiSH", "ini_password_Hash", "", value, 50, ctx->filepath);
 
-    return strncmp(value, "", 50) == 0;
+    return strncmp(value, "", 50) != 0;
 }
 
 int key_store_validate_master_key (
@@ -60,19 +60,25 @@ int key_store_validate_master_key (
 {
     char key[50];
     char hash[50];
-    char current_hash[50];
+    char current_hash[50] = { '\0' };
 
     calculate_password_key_and_hash(password, key, hash);
 
     getIniValue("FiSH", "ini_password_Hash", "", current_hash, 50, ctx->filepath);
 
-    if (strncmp(hash, current_hash, 50) != 0) {
+    if (strncmp(password ? hash : "", current_hash, 50) != 0) {
+        memset(key, 0, sizeof(key));
+        memset(hash, 0, sizeof(hash));
+        memset(current_hash, 0, sizeof(current_hash));
         return -1;
     }
 
     free(ctx->filekey);
     ctx->filekey = strdup(key);
 
+    memset(key, 0, sizeof(key));
+    memset(hash, 0, sizeof(hash));
+    memset(current_hash, 0, sizeof(current_hash));
     return 0;
 }
 
@@ -113,7 +119,7 @@ int key_store_set (key_store_t ctx, const char* contact, const char* key)
 
     memset(encrypted_key, 0, sizeof(encrypted_key));
 
-    return ret == 1 ? 0 : ret; // hack while setIniValue doesn't return 0
+    return ret == 1 ? 0 : -1; // hack while setIniValue doesn't return 0
 }
 
 int key_store_unset (key_store_t ctx, const char* contact)

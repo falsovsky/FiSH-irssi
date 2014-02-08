@@ -2,6 +2,7 @@
 
 #include "fish2/noop.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 int fish2_noop_encrypt (

@@ -1,7 +1,6 @@
 // Copyright (c) 2014 Hugo Peixoto, hugopeixoto.net
 
 #include "fish2/blowcrypt.h"
-
 #include "blowfish.h"
 
 int fish2_blowfish_encrypt (
@@ -11,7 +10,7 @@ int fish2_blowfish_encrypt (
     char** ciphertext,
     size_t* ciphersize)
 {
-    size_t cipher_size = (n + 7) / 8 * 12;
+    size_t cipher_size = (n + 7) / 8 * 12 + 1;
 
     *ciphertext = (char*)malloc(cipher_size);
 
@@ -34,7 +33,7 @@ int fish2_blowfish_decrypt (
     char** plaintext,
     size_t* plainsize)
 {
-    size_t plain_size = n / 12 * 8;
+    size_t plain_size = n / 12 * 8 + 1;
 
     if (n < 12 || !valid_blowfish(ciphertext, n)) {
         return -1;

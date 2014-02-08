@@ -4,8 +4,6 @@
 #include "config.h.in"
 #include "config.h"
 
-#include "blowfish.h"
-#include "DH1080.h"
 #include "module.h"
 #include "standard.h"
 
@@ -49,17 +47,8 @@
 #endif
 
 
-int ExtractRnick (char *Rnick, char *incoming_msg);
-void FixIniSection(const char *section, char *fixedSection);	// replace '[' and ']' in nick/channel with '~'
-int GetBlowIniSwitch(const char *section, const char *key, const char *default_value);
-char *isPlainPrefix(const char *msg);
-char *strfcpy(char *dest, char *buffer, int destSize);	// removes leading and trailing blanks from string
-void memXOR(char *s1, const char *s2, int n);
+int ExtractRnick (char *Rnick, const char *incoming_msg);
+char *strfcpy(char *dest, const char *buffer, int destSize);	// removes leading and trailing blanks from string
 
 void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
 
-const char blow_ini[]="/blow.ini";
-char iniKey[100], iniPath[255];
-char g_myPrivKey[300], g_myPubKey[300];
-
-BOOL keyx_query_created=0;

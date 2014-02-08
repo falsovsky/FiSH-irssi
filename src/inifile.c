@@ -7,7 +7,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <glib.h>
 
+
+static void writeIniFile(GKeyFile *key_file, const char *filepath);
 
 /**
  * @file   inifile.c
@@ -140,7 +143,7 @@ int setIniValue(const char *section, const char *key, const char *value, const c
     return 1;
 }
 
-void writeIniFile(GKeyFile *key_file, const char *filepath) {
+static void writeIniFile(GKeyFile *key_file, const char *filepath) {
 	gchar *config = NULL;
 	GError *error = NULL;
 	gsize length = 0;
