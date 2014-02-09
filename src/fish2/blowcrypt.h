@@ -18,6 +18,7 @@ int fish2_blowfish_decrypt (
     const char* ciphertext,
     size_t n,
     char** plaintext,
-    size_t* plainsize);
+    size_t* plainsize,
+    int* broken);
 
 #endif // FISH2_BLOWCRYPT_H_

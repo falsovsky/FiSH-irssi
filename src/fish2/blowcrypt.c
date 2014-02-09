@@ -31,7 +31,8 @@ int fish2_blowfish_decrypt (
     const char* ciphertext,
     size_t n,
     char** plaintext,
-    size_t* plainsize)
+    size_t* plainsize,
+    int* broken)
 {
     size_t plain_size = n / 12 * 8 + 1;
 
@@ -48,6 +49,7 @@ int fish2_blowfish_decrypt (
     decrypt_string(key, ciphertext, *plaintext, plain_size);
     if (plainsize) {
         *plainsize = plain_size;
+        *broken = n % 12;
     }
 
     return 0;

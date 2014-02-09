@@ -18,6 +18,7 @@ int fish2_noop_decrypt (
     const char* ciphertext,
     size_t n,
     char** plaintext,
-    size_t* plainsize);
+    size_t* plainsize,
+    int* broken);
 
 #endif // FISH2_NOOP_H_

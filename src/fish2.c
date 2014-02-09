@@ -206,7 +206,7 @@ int fish2_unset_key (
 
 typedef int (*decrypter_f)(
     const char*, const char*,
-    size_t, char**, size_t*);
+    size_t, char**, size_t*, int*);
 
 typedef int (*encrypter_f)(
     const char*, const char*,
@@ -369,6 +369,7 @@ int fish2_decrypt (
     size_t input_size = strlen(encrypted);
     char* plaintext = NULL;
     size_t plainsize = 0;
+    int broken = 0;
 
     struct decrypter_s decrypter;
     if (fish2_get_decrypter(
@@ -388,7 +389,8 @@ int fish2_decrypt (
             encrypted + decrypter.offset,
             input_size - decrypter.offset,
             &plaintext,
-            &plainsize) < 0) {
+            &plainsize,
+            &broken) < 0) {
         return -2;
     }
 
@@ -397,7 +399,7 @@ int fish2_decrypt (
         server_tag,
         sender,
         plaintext,
-        0,
+        broken,
         unencrypted,
         n);
 
