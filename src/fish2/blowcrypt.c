@@ -45,7 +45,7 @@ int fish2_blowfish_decrypt (
         return -2;
     }
 
-    decrypt_string(key, ciphertext, *plaintext, n);
+    decrypt_string(key, ciphertext, *plaintext, plain_size);
     if (plainsize) {
         *plainsize = plain_size;
     }

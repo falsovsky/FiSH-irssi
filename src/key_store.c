@@ -102,7 +102,11 @@ int key_store_get (key_store_t ctx, const char* contact, char* key)
 
     if (key) {
         // if it's not just a test, lets decrypt the key
-        decrypt_string(ctx->filekey, encrypted_key + 4, key, strlen(encrypted_key + 4));
+        decrypt_string(
+            ctx->filekey,
+            encrypted_key + 4,
+            key,
+            KEYBUF_SIZE);
     }
 
     memset(encrypted_key, 0, sizeof(encrypted_key));
@@ -180,7 +184,7 @@ static int recrypt_ini_file (
                 if (ok_ptr) {
                     re_enc=1;
                     strtok(ok_ptr+4, " \n\r");
-                    decrypt_string(old_key, ok_ptr+4, bfKey, strlen(ok_ptr+4));
+                    decrypt_string(old_key, ok_ptr+4, bfKey, 512);
                     memset(ok_ptr+4, 0, strlen(ok_ptr+4)+1);
                     encrypt_string(new_key, bfKey, ok_ptr+4, strlen(bfKey));
                     strcat(line_buf, "\n");

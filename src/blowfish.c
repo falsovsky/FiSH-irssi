@@ -181,22 +181,24 @@ int encrypt_string(const char *key, const char *str, char *dest, int len)
 int decrypt_string(const char *key, const char *str, char *dest, int len)
 {
     u_32bit_t left, right, bf_P[bf_N+2], bf_S[4][256];
-    char *p, *s, *d;
+    char *p, *s, *d, *f;
     int i;
+    int str_len = strlen(str);
 
     /* Pad encoded string with 0 bits in case it's bogus */
     if ((!key) || (!key[0])) return 0;
 
-    s = (char *) malloc(len + 12);
-    strncpy(s, str, len);
-    memset(s+len, 0, 12);
+    s = (char *) malloc(str_len + 12);
+    strncpy(s, str, str_len);
+    memset(s+str_len, 0, 12);
 
     blowfish_init((u_8bit_t *) key, strlen(key), bf_P, bf_S);
 
     p = s;
     d = dest;
+    f = dest + len;
 
-    while (*p) {
+    while (*p && (f - d) > 8) {
         right = 0L;
         left = 0L;
         for (i = 0; i < 6; i++) right |= (base64dec(*p++)) << (i * 6);

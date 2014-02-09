@@ -69,7 +69,18 @@ void test_decrypt_short(fish2_t ctx) {
   assert(fish2_set_key(ctx, "freenet", "nick", "wikikiw") == 0);
   assert(fish2_decrypt(ctx, "freenet", "nick", input, text, sizeof(text)) == 0);
 
+  printf("[%s]\n", text);
   assert(!strcmp("oi", text));
+}
+
+void test_decrypt_invalid(fish2_t ctx) {
+  static const char input[] = "+OK owqueyewqiuyeoiquwey";
+  char text[4+12+1];
+
+  assert(fish2_validate_master_key(ctx, NULL) == 0);
+  assert(fish2_set_key(ctx, "freenet", "nick", "wikikiw") == 0);
+  assert(fish2_decrypt(ctx, "freenet", "nick", input, text, sizeof(text)) == 0);
+
   printf("[%s]\n", text);
 }
 
@@ -109,6 +120,7 @@ int main () {
     RUN(test_decrypt_short);
     RUN(test_roundtrip);
     RUN(test_mark);
+    RUN(test_decrypt_invalid);
   }
 
   return 0;
