@@ -250,7 +250,7 @@ static int fish2_get_encrypter (
     struct encrypter_s* encrypter)
 {
     // getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
-    if (strncmp(unencrypted, "+p ", 4) == 0) {
+    if (strncmp(unencrypted, "+p ", strlen("+p ")) == 0) {
         encrypter->func   = &fish2_noop_encrypt;
         encrypter->offset = 4;
     } else {
