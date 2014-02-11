@@ -1,11 +1,7 @@
-#include <time.h>
-#include <unistd.h>
-
 #include "config.h.in"
 #include "config.h"
 
 #include "module.h"
-#include "standard.h"
 
 /*
 // Fix some warnings

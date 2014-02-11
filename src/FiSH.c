@@ -15,7 +15,7 @@
 static keyx_t keyx_ctx;
 static fish2_t fish2_ctx;
 
-static BOOL keyx_query_created = 0;
+static int keyx_query_created = 0;
 
 static const char* server_tag (const SERVER_REC* server)
 {
@@ -710,7 +710,7 @@ void prompt_for_password (char* a_output)
     irssi_redraw(); // getpass() screws irssi GUI, lets redraw!
 }
 
-static BOOL get_random_seed (char seed[])
+static int get_random_seed (char seed[])
 {
     static const unsigned int seed_length = 256;
 
