@@ -43,7 +43,7 @@ struct dh1080_s {
     mpz_t   b_prime1080;
 };
 
-BOOL DH1080_Init(dh1080_t *ctx, const char seed[256])
+BOOL DH1080_Init(dh1080_t *ctx)
 {
     *ctx = (dh1080_t)malloc(sizeof(struct dh1080_s));
     if (*ctx == NULL) {

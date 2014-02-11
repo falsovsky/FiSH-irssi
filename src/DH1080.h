@@ -6,7 +6,7 @@ struct dh1080_s;
 typedef struct dh1080_s* dh1080_t;
 
 // Initializes diffie-hellman exchange structures.
-int DH1080_Init(dh1080_t *ctx, const char seed[256]);
+int DH1080_Init(dh1080_t *ctx);
 
 // Frees all allocated resources regarding the DH context.
 void DH1080_DeInit(dh1080_t ctx);

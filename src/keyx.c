@@ -16,7 +16,7 @@ struct keyx_s {
     char my_public_key[KEY_SIZE+1];
 };
 
-int keyx_init (keyx_t* ctx, char seed[256])
+int keyx_init (keyx_t* ctx)
 {
     *ctx = (keyx_t)malloc(sizeof(struct keyx_s));
     if (*ctx == NULL) {
@@ -24,7 +24,7 @@ int keyx_init (keyx_t* ctx, char seed[256])
     }
 
     initb64();
-    DH1080_Init(&(*ctx)->dh_ctx, seed);
+    DH1080_Init(&(*ctx)->dh_ctx);
 
     (*ctx)->running = 0;
 

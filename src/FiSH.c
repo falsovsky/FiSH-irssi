@@ -716,43 +716,13 @@ void prompt_for_password (char* a_output)
     irssi_redraw(); // getpass() screws irssi GUI, lets redraw!
 }
 
-static int get_random_seed (char seed[])
-{
-    static const unsigned int seed_length = 256;
-
-    // don't use /dev/random, it's a blocking device
-    FILE *hRnd = fopen("/dev/urandom", "rb");
-
-    if (!hRnd) return FALSE;
-
-    if (fread(seed, 1, seed_length, hRnd) != seed_length) {
-        fclose(hRnd);
-        return FALSE;
-    }
-
-    fclose(hRnd);
-    return TRUE;
-}
-
-int key_exchange_init (const char* ini_path)
-{
-    char seed[256];
-
-    if (get_random_seed(seed) == FALSE) return FALSE;
-
-    if (keyx_init(&keyx_ctx, seed) < 0) return FALSE;
-
-    memset(seed, 0, sizeof(seed));
-    return TRUE;
-}
-
 void fish_init(void)
 {
     static const char blow_ini[]="blow.ini";
     char iniPath[256];
     snprintf(iniPath, sizeof(iniPath), "%s/%s", get_irssi_dir(), blow_ini);
 
-    if (key_exchange_init(iniPath) == FALSE) return;
+    if (keyx_init(&keyx_ctx) < 0) return;
 
     if (fish2_init(&fish2_ctx, iniPath) < 0) return;
 

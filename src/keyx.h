@@ -6,7 +6,7 @@
 struct keyx_s;
 typedef struct keyx_s* keyx_t;
 
-int keyx_init (keyx_t* ctx, char seed[256]);
+int keyx_init (keyx_t* ctx);
 void keyx_deinit (keyx_t ctx);
 
 int keyx_start (keyx_t ctx);
