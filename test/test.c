@@ -1,5 +1,6 @@
 
 #include "fish2.h"
+#include "blowfish.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -107,6 +108,27 @@ void test_mark(fish2_t ctx) {
   assert(fish2_mark_encryption(ctx, "freenet", "nick", sample, 0, text, sizeof(text)) == 0);
 }
 
+void test_openssl_blowfish(fish2_t ctx) {
+  char text[512] = "hello, world.";
+  char cipher_original[512];
+  char cipher_openssl[512];
+  char plain_original[512];
+  char plain_openssl[512];
+
+  encrypt_string(sample, text, cipher_original, 512);
+  openssl_blowfish_encrypt_string(sample, text, cipher_openssl, 512);
+
+  decrypt_string(sample, cipher_original, plain_original, 512);
+  openssl_blowfish_decrypt_string(sample, cipher_openssl, plain_openssl, 512);
+
+  printf("[%s] [%s]\n", cipher_original, cipher_openssl);
+  printf("[%s] [%s]\n", plain_original, plain_openssl);
+
+  assert(!strcmp(cipher_original, cipher_openssl));
+  assert(!strcmp(plain_original, plain_openssl));
+
+}
+
 int main () {
   int i;
   int n = 1;
@@ -121,6 +143,8 @@ int main () {
     RUN(test_roundtrip);
     RUN(test_mark);
     RUN(test_decrypt_invalid);
+
+    RUN(test_openssl_blowfish);
   }
 
   return 0;

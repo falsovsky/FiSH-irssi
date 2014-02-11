@@ -8,6 +8,7 @@ pkglib_LTLIBRARIES = libfish.la
 libfish_la_SOURCES = SHA256.c \
 				 base64.c \
 				 blowfish.c \
+				 openssl_blowfish.c \
 				 inifile.c \
 				 DH1080.c \
 				 FiSH.c \
