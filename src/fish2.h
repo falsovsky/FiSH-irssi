@@ -3,7 +3,7 @@
 #ifndef FISH2_H_
 #define FISH2_H_
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #define FISH2_PROCESS_OUTGOING  0
 #define FISH2_PROCESS_INCOMING  1

@@ -1,5 +1,9 @@
 #include "blowfish.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 const char B64[]="./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /* #define S(x,i) (bf_S[i][x.w.byte##i]) */

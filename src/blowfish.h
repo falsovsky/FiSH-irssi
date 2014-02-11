@@ -1,5 +1,5 @@
-#include <string.h>
-#include <stdlib.h>
+#ifndef BLOWFISH_H_
+#define BLOWFISH_H_
 
 #define MAXKEYBYTES	56		/* 448 bits */
 #define bf_N		16
@@ -178,3 +178,5 @@ static const u_32bit_t initbf_S[4][256] = {
         0x85cbfe4e, 0x8ae88dd8, 0x7aaaf9b0, 0x4cf9aa7e, 0x1948c25c, 0x02fb8a8c, 0x01c36ae4, 0xd6ebe1f9,
         0x90d4f869, 0xa65cdea0, 0x3f09252d, 0xc208e69f, 0xb74e6132, 0xce77e25b, 0x578fdfe3, 0x3ac372e6}
 };
+
+#endif // BLOWFISH_H_

@@ -3,6 +3,8 @@
 #include "fish2/blowcrypt.h"
 #include "blowfish.h"
 
+#include <stdlib.h>
+
 int fish2_blowfish_encrypt (
     const char* key,
     const char* plaintext,
