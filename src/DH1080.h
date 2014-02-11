@@ -24,4 +24,3 @@ int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key);
 int DH1080_comp(dh1080_t ctx, char *MyPrivKey, char *HisPubKey);
 
 #endif // DH_1080_H_
-

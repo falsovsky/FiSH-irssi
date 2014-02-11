@@ -9,15 +9,14 @@
    The calculated secret key is hashed with SHA-256, the result is converted
    to base64 for final use with blowfish. */
 
-#include <stdlib.h>
-#include <string.h>
-#include <gmp.h>
-
 #include "DH1080.h"
 #include "base64.h"
 #include "SHA256.h"
 #include "random.h"
-#include "standard.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <gmp.h>
 
 #define DH1080_PRIME_BITS	1080
 #define DH1080_PRIME_BYTES	135
@@ -43,37 +42,35 @@ struct dh1080_s {
     mpz_t   b_prime1080;
 };
 
-BOOL DH1080_Init(dh1080_t *ctx)
+int DH1080_Init(dh1080_t *ctx)
 {
     *ctx = (dh1080_t)malloc(sizeof(struct dh1080_s));
     if (*ctx == NULL) {
-        return FALSE;
+        return 0;
     }
 
     mpz_init((*ctx)->b_prime1080);
     mpz_import((*ctx)->b_prime1080, DH1080_PRIME_BYTES, 1, 1, 0, 0, prime1080);
 
-    return TRUE;
+    return 1;
 }
 
 void DH1080_DeInit(dh1080_t ctx)
 {
-    printf("deiniting %p\n", ctx);
     mpz_clear(ctx->b_prime1080);
     free(ctx);
 }
 
-
 // verify the Diffie-Hellman public key as described in RFC 2631
-BOOL DH_verifyPubKey(dh1080_t ctx, mpz_t b_pubkey)
+int DH_verifyPubKey(dh1080_t ctx, mpz_t b_pubkey)
 {
-    BOOL bRet = FALSE;
+    int bRet = 0;
 
     // Verify that pubkey lies within the interval [2,p-1].
     // If it does not, the key is invalid.
     if ( (mpz_cmp(b_pubkey, ctx->b_prime1080) == -1) &&
             (mpz_cmp_ui(b_pubkey, 1) == 1) )
-        bRet = TRUE;
+        bRet = 1;
 
     return bRet;
 }
@@ -84,8 +81,7 @@ BOOL DH_verifyPubKey(dh1080_t ctx, mpz_t b_pubkey)
 //         pub_key  = Your public key
 int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key)
 {
-    unsigned char raw_buf[256]; //, iniHash[33];
-    //unsigned long seed;
+    unsigned char raw_buf[256];
     int iRet;
     size_t len;
 
@@ -109,7 +105,7 @@ int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key)
 
         mpz_import(b_privkey, DH1080_PRIME_BYTES, 1, 1, 0, 0, temp);
         mpz_mod(b_privkey, b_privkey, ctx->b_prime1080); /* [2, prime1080-1] */
-    } while ( mpz_cmp_ui(b_privkey, 1) != 1); /* while smaller than 2 */
+    } while (mpz_cmp_ui(b_privkey, 1) != 1); /* while smaller than 2 */
 
     mpz_powm(b_pubkey, b_base, b_privkey, ctx->b_prime1080);
 
