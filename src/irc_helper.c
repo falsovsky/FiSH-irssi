@@ -1,7 +1,7 @@
 #include "irc_helper.h"
 
 #include <common.h>
-#include <irc/core/irc.h>
+#include <irc/core/irc.h> // ischannel
 
 #include <string.h>
 #include <stdio.h>
@@ -115,4 +115,25 @@ int irssi_target (
         snprintf(contact, n, "%s", nick);
         return 0;
     }
+}
+
+/*
+ * Removes leading and trailing blanks from string
+ * @param dest destination buffer
+ * @param buffer string to clean
+ * @param destSize size of destination buffer
+ * @return destination buffer
+ */
+char *strfcpy(char *dest, const char* buffer, int destSize)
+{
+    int i = 0;
+    int k = strlen(buffer);
+
+    if (k < 2) return NULL;
+
+    while (buffer[i]==' ') i++;
+    while (buffer[k-1]==' ') k--;
+
+    snprintf(dest, destSize, "%*s", k - i, buffer + i);
+    return dest;
 }
