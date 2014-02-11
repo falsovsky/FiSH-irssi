@@ -17,6 +17,9 @@ static fish2_t fish2_ctx;
 
 static int keyx_query_created = 0;
 
+static void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
+static void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
+
 static const char* server_tag (const SERVER_REC* server)
 {
     if (server == NULL) {
@@ -608,7 +611,7 @@ void cmd_keyx(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
               "\002FiSH:\002 Sent my DH1080 public key to %s, waiting for reply ...", target);
 }
 
-void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
+static void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
 {
     const char *DH1024warn = "\002FiSH:\002 Received \002old DH1024\002 public key from you! Please update to latest version: https://github.com/falsovsky/FiSH-irssi";
     signal_stop();
@@ -616,7 +619,7 @@ void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, c
     signal_emit("message irc own_notice", 3, server, DH1024warn, nick);
 }
 
-void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
+static void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
 {
     char their_public_key[180+1] = { '\0' };
     char secret_key[180+1] = { '\0' };
@@ -844,5 +847,3 @@ void fish_deinit(void)
 
     keyx_deinit(keyx_ctx);
 }
-
-

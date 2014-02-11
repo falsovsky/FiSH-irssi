@@ -29,7 +29,3 @@
 // Exported module functions
 void fish_init ();
 void fish_deinit ();
-
-
-void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
-void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
