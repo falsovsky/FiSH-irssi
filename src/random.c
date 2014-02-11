@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-int random_read (char* dest, size_t n)
+int random_read (unsigned char* dest, size_t n)
 {
     FILE* fp = fopen("/dev/urandom", "rb");
 
