@@ -183,17 +183,12 @@ void format_msg(SERVER_REC *server, char *msg, char *target, char *orig_target)
  */
 void decrypt_notice(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
 {
-    const char *DH1024warn;
-
-    if (strncmp(msg, "DH1024_", 7)==0) {
-        DH1024warn = "\002FiSH:\002 Received \002old DH1024\002 public key from you! Please update to latest version: https://github.com/falsovsky/FiSH-irssi";
-        signal_stop();
-        irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s\n", nick, DH1024warn);
-        signal_emit("message irc own_notice", 3, server, DH1024warn, nick);
+    if (strncmp(msg, "DH1024_", 7) == 0) {
+        DH1024_received(server, msg, nick, address, target);
         return;
     }
 
-    if (strncmp(msg, "DH1080_", 7)==0) {
+    if (strncmp(msg, "DH1080_", 7) == 0) {
         DH1080_received(server, msg, nick, address, target);
         return;
     }
@@ -611,6 +606,14 @@ void cmd_keyx(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
               "\002FiSH:\002 Sent my DH1080 public key to %s, waiting for reply ...", target);
+}
+
+void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
+{
+    const char *DH1024warn = "\002FiSH:\002 Received \002old DH1024\002 public key from you! Please update to latest version: https://github.com/falsovsky/FiSH-irssi";
+    signal_stop();
+    irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s\n", nick, DH1024warn);
+    signal_emit("message irc own_notice", 3, server, DH1024warn, nick);
 }
 
 void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)

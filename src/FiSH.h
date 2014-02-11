@@ -47,4 +47,4 @@ int ExtractRnick (char *Rnick, const char *incoming_msg);
 char *strfcpy(char *dest, const char *buffer, int destSize);	// removes leading and trailing blanks from string
 
 void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
-
+void DH1024_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target);
