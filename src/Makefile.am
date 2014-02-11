@@ -17,6 +17,7 @@ libfish_la_SOURCES = SHA256.c \
 				 fish2/noop.c \
 				 keyx.c \
 				 randport.c \
+				 random.c \
 				 password.c \
 				 irc_helper.c \
 				 key_store.c
