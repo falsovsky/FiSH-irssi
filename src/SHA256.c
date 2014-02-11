@@ -6,20 +6,12 @@
 #include <stdlib.h>
 #include <openssl/sha.h>
 
-
-/*
- * SHA-256 a block of memory
- */
-void SHA256_memory(char *buf, const int len, const char *hash)
+void SHA256_memory (const char* buffer, size_t len, char* hash)
 {
-    SHA256((const unsigned char *)buf, len, (unsigned char *)hash);
+    SHA256((const unsigned char *)buffer, len, (unsigned char *)hash);
 }
 
-
-/*
- * SHA-256 a file, return 1 if ok
- */
-int sha_file(const char *filename, const char *hash)
+int sha_file (const char *filename, char* hash)
 {
     char buf[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
