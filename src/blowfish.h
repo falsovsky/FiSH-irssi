@@ -3,7 +3,6 @@
 
 int decrypt_string(const char *key, const char *str, char *dest, int len);
 int encrypt_string(const char *key, const char *str, char *dest, int len);
-int valid_blowfish(const char *str, int len);
 
 
 #endif // BLOWFISH_H_

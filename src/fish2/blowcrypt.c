@@ -38,7 +38,7 @@ int fish2_blowfish_decrypt (
 {
     size_t plain_size = n / 12 * 8 + 1;
 
-    if (n < 12 || !valid_blowfish(ciphertext, n)) {
+    if (n < 12) {
         return -1;
     }
 
@@ -48,11 +48,11 @@ int fish2_blowfish_decrypt (
         return -2;
     }
 
-    decrypt_string(key, ciphertext, *plaintext, plain_size);
+    int ret = decrypt_string(key, ciphertext, *plaintext, plain_size);
     if (plainsize) {
         *plainsize = plain_size;
         *broken = n % 12;
     }
 
-    return 0;
+    return ret == 0 ? -3 : 0;
 }

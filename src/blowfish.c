@@ -306,6 +306,11 @@ int base64dec(char c)
     return 0;
 }
 
+int valid_blowfish(const char *str, int len)
+{
+    return strspn(str, B64) == (size_t)len;
+}
+
 /* Returned string must be freed when done with it! */
 int encrypt_string(const char *key, const char *str, char *dest, int len)
 {
@@ -362,9 +367,10 @@ int decrypt_string(const char *key, const char *str, char *dest, int len)
     int i;
     int str_len = strlen(str);
 
-    /* Pad encoded string with 0 bits in case it's bogus */
     if ((!key) || (!key[0])) return 0;
+    if (!valid_blowfish(str, str_len)) return 0;
 
+    /* Pad encoded string with 0 bits in case it's bogus */
     s = (char *) malloc(str_len + 12);
     strncpy(s, str, str_len);
     memset(s+str_len, 0, 12);
@@ -396,9 +402,4 @@ void encrypt_key(const char* master_key, const char *key, char *encryptedKey)
     strcpy(encryptedKey, "+OK ");
     i=strlen(key);
     encrypt_string(master_key, key, encryptedKey+4, i>80 ? 80 : i);
-}
-
-int valid_blowfish(const char *str, int len)
-{
-    return strspn(str, B64) == (size_t)len;
 }
