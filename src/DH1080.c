@@ -16,7 +16,8 @@
 #include "DH1080.h"
 #include "base64.h"
 #include "SHA256.h"
-#include "rand.h"
+#include "random.h"
+#include "standard.h"
 
 #define DH1080_PRIME_BITS	1080
 #define DH1080_PRIME_BYTES	135
@@ -40,7 +41,6 @@ static char prime1080[135] = {
 
 struct dh1080_s {
     mpz_t   b_prime1080;
-    randctx csprng;
 };
 
 BOOL DH1080_Init(dh1080_t *ctx, const char seed[256])
@@ -49,10 +49,6 @@ BOOL DH1080_Init(dh1080_t *ctx, const char seed[256])
     if (*ctx == NULL) {
         return FALSE;
     }
-
-    /* Seed and initialize ISAAC */
-    memcpy((*ctx)->csprng.randrsl, seed, 256);
-    randinit(&(*ctx)->csprng, TRUE);
 
     mpz_init((*ctx)->b_prime1080);
     mpz_import((*ctx)->b_prime1080, DH1080_PRIME_BYTES, 1, 1, 0, 0, prime1080);
@@ -64,7 +60,6 @@ void DH1080_DeInit(dh1080_t ctx)
 {
     printf("deiniting %p\n", ctx);
     mpz_clear(ctx->b_prime1080);
-    memset(&ctx->csprng, 0, sizeof(ctx->csprng));
     free(ctx);
 }
 
@@ -91,7 +86,7 @@ int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key)
 {
     unsigned char raw_buf[256]; //, iniHash[33];
     //unsigned long seed;
-    int iRet, i;
+    int iRet;
     size_t len;
 
     mpz_t b_privkey, b_pubkey, b_base;
@@ -108,8 +103,10 @@ int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key)
     mpz_init_set_ui(b_base, 2);
 
     do {
-        for (i=0; i < DH1080_PRIME_BYTES; i++)
-            temp[i] = (unsigned char)rand(&ctx->csprng);
+        if (random_read(temp, DH1080_PRIME_BYTES) < 0) {
+            return 0;
+        }
+
         mpz_import(b_privkey, DH1080_PRIME_BYTES, 1, 1, 0, 0, temp);
         mpz_mod(b_privkey, b_privkey, ctx->b_prime1080); /* [2, prime1080-1] */
     } while ( mpz_cmp_ui(b_privkey, 1) != 1); /* while smaller than 2 */
