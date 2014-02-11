@@ -115,9 +115,9 @@ int key_store_get (key_store_t ctx, const char* contact, char* key)
 
 int key_store_set (key_store_t ctx, const char* contact, const char* key)
 {
-    char encrypted_key[KEYBUF_SIZE] = { '\0' };
+    char encrypted_key[KEYBUF_SIZE] = "+OK ";
 
-    encrypt_key(ctx->filekey, key, encrypted_key);
+    encrypt_string(ctx->filekey, key, encrypted_key + 4, KEYBUF_SIZE-4);
 
     int ret = setIniValue(contact, "key", encrypted_key, ctx->filepath);
 
