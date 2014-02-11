@@ -2,21 +2,19 @@
 // Copyright: Mostly unknown
 
 #include "FiSH.h"
+
 #include "fish2.h"
+#include "keyx.h"
 #include "irc_helper.h"
-#include "base64.h"
-#include "DH1080.h"
 
 #ifdef S_SPLINT_S
 #include "splint.h"
 #endif
 
 // Static context information
-static dh1080_t dh1080_ctx;
+static keyx_t keyx_ctx;
 static fish2_t fish2_ctx;
 
-static char g_myPrivKey[300];
-static char g_myPubKey[300];
 static BOOL keyx_query_created = 0;
 
 static const char* server_tag (const SERVER_REC* server)
@@ -602,9 +600,14 @@ void cmd_keyx(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
         return;
     }
 
-    DH1080_gen(dh1080_ctx, g_myPrivKey, g_myPubKey);
+    keyx_start(keyx_ctx);
 
-    irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s %s", target, "DH1080_INIT", g_myPubKey);
+    irc_send_cmdv(
+        (IRC_SERVER_REC *)server,
+        "NOTICE %s :%s %s",
+        target,
+        "DH1080_INIT",
+        keyx_public_key(keyx_ctx));
 
     printtext(server, item!=NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP,
               "\002FiSH:\002 Sent my DH1080 public key to %s, waiting for reply ...", target);
@@ -612,18 +615,15 @@ void cmd_keyx(const char *target, SERVER_REC *server, WI_ITEM_REC *item)
 
 void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, char *target)
 {
-    int i;
-    char hisPubKey[300];
+    char their_public_key[180+1] = { '\0' };
+    char secret_key[180+1] = { '\0' };
 
-    if (ischannel(*target) || ischannel(*nick)) return;	// no KeyXchange for channels...
-    i=strlen(msg);
-    if (i<191 || i>195) return;
+    if (ischannel(*target) || ischannel(*nick)) return; // no KeyXchange for channels...
 
-    if (strncmp(msg, "DH1080_INIT ", 12)==0) {
-        strcpy(hisPubKey, msg+12);
-        if (!valid_b64(hisPubKey, strlen(hisPubKey))) return;
+    if (strncmp(msg, "DH1080_INIT ", 12) == 0) {
+        strncpy(their_public_key, msg+12, 180);
 
-        if (query_find(server, nick)==NULL) {	// query window not found, lets create one
+        if (query_find(server, nick) == NULL) { // query window not found, lets create one
             keyx_query_created=1;
             irc_query_create(server->tag, nick, TRUE);
             keyx_query_created=0;
@@ -631,21 +631,35 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 
         printtext(server, nick, MSGLEVEL_CRAP, "\002FiSH:\002 Received DH1080 public key from %s, sending mine...", nick);
 
-        DH1080_gen(dh1080_ctx, g_myPrivKey, g_myPubKey);
-        irc_send_cmdv((IRC_SERVER_REC *)server, "NOTICE %s :%s %s", nick, "DH1080_FINISH", g_myPubKey);
-    } else if (strncmp(msg, "DH1080_FINISH ", 14)==0) strcpy(hisPubKey, msg+14);
-    else return;
+        keyx_start(keyx_ctx);
+        irc_send_cmdv(
+            (IRC_SERVER_REC *)server,
+            "NOTICE %s :%s %s",
+            nick,
+            "DH1080_FINISH",
+            keyx_public_key(keyx_ctx));
 
-    if (DH1080_comp(dh1080_ctx, g_myPrivKey, hisPubKey)==0) return;
-    signal_stop();
-
-    if (fish2_set_key(fish2_ctx, server_tag(server), nick, hisPubKey) < 0) {
-        ZeroMemory(hisPubKey, sizeof(hisPubKey));
-        printtext(server, nick,	MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
+    } else if (strncmp(msg, "DH1080_FINISH ", 14) == 0) {
+        strncpy(their_public_key, msg+14, 180);
+    } else {
         return;
     }
 
-    ZeroMemory(hisPubKey, sizeof(hisPubKey));
+    if (keyx_finish(keyx_ctx, their_public_key, secret_key, 180+1) < 0) {
+      return;
+    }
+
+    signal_stop();
+
+    if (fish2_set_key(fish2_ctx, server_tag(server), nick, secret_key) < 0) {
+        ZeroMemory(their_public_key, sizeof(their_public_key));
+        ZeroMemory(secret_key, sizeof(secret_key));
+        printtext(server, nick, MSGLEVEL_CRAP, "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
+        return;
+    }
+
+    ZeroMemory(their_public_key, sizeof(their_public_key));
+    ZeroMemory(secret_key, sizeof(secret_key));
 
     printtext(server, nick, MSGLEVEL_CRAP, "\002FiSH:\002 Key for %s successfully set!", nick);
 }
@@ -656,7 +670,7 @@ void DH1080_received(SERVER_REC *server, char *msg, char *nick, char *address, c
 void do_auto_keyx(QUERY_REC *query, int automatic)
 {
     if (keyx_query_created)
-        return;	// query was created by FiSH
+        return; // query was created by FiSH.
 
     if (!fish2_get_setting_bool(fish2_ctx, FISH2_AUTO_KEYEXCHANGE))
         return;
@@ -714,13 +728,13 @@ static BOOL get_random_seed (char seed[])
     return TRUE;
 }
 
-BOOL key_exchange_init (const char* ini_path)
+int key_exchange_init (const char* ini_path)
 {
     char seed[256];
 
     if (get_random_seed(seed) == FALSE) return FALSE;
 
-    if (DH1080_Init(&dh1080_ctx, seed)==FALSE) return FALSE;
+    if (keyx_init(&keyx_ctx, seed) < 0) return FALSE;
 
     memset(seed, 0, sizeof(seed));
     return TRUE;
@@ -731,8 +745,6 @@ void fish_init(void)
     static const char blow_ini[]="blow.ini";
     char iniPath[256];
     snprintf(iniPath, sizeof(iniPath), "%s/%s", get_irssi_dir(), blow_ini);
-
-    initb64();
 
     if (key_exchange_init(iniPath) == FALSE) return;
 
@@ -827,7 +839,7 @@ void fish_deinit(void)
     command_unbind("fishhelp", (SIGNAL_FUNC) cmd_helpfish);
     command_unbind("helpfish", (SIGNAL_FUNC) cmd_helpfish);
 
-    DH1080_DeInit(dh1080_ctx);
+    keyx_deinit(keyx_ctx);
 }
 
 /*
