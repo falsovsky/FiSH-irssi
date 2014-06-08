@@ -58,6 +58,7 @@ BOOL getIniSectionForContact(const SERVER_REC * serverRec,
 
 	if (contactPtr == NULL)
 		return FALSE;
+
 	if (iniSectionKey == NULL)
 		return FALSE;
 
@@ -69,6 +70,7 @@ BOOL getIniSectionForContact(const SERVER_REC * serverRec,
 	}
 
 	// replace '[' and ']' with '~' in contact name
+	// TODO: maybe this isnt needed anymoar
 	FixIniSection(NULL, iniSectionKey);
 
 	return TRUE;
@@ -105,6 +107,7 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 	encrypt_string(theKey, msgPtr, bf_dest + 4, strlen(msgPtr));
 
 	ZeroMemory(theKey, KEYBUF_SIZE);
+
 	return 1;
 }
 
@@ -114,9 +117,11 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 		 const char *target)
 {
-	char contactName[CONTACT_SIZE] = "", theKey[KEYBUF_SIZE] =
-	    "", bf_dest[1000] = "";
-	char myMark[20] = "", *recoded;
+	char contactName[CONTACT_SIZE] = "";
+	char theKey[KEYBUF_SIZE] = "";
+	char bf_dest[1000] = "";
+	char myMark[20] = "";
+	char *recoded;
 	int msg_len, i, mark_broken_block = 0, action_found = 0, markPos;
 
 	if (IsNULLorEmpty(msg_ptr) || msg_bak == NULL || IsNULLorEmpty(target))
@@ -125,8 +130,9 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 	if (settings_get_bool("process_incoming") == 0)
 		return 0;
 
-	if (strncmp(msg_ptr, "+OK ", 4) == 0)
+	if (strncmp(msg_ptr, "+OK ", 4) == 0) 
 		msg_ptr += 4;
+	// TODO: Maybe remove this?
 	else if (strncmp(msg_ptr, "mcps ", 5) == 0)
 		msg_ptr += 5;
 	else
@@ -1163,17 +1169,17 @@ void fish_init(void)
 	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
 
-	settings_add_bool_module("fish", "FiSH", "process_outgoing", 1);
-	settings_add_bool_module("fish", "FiSH", "process_incoming", 1);
-	settings_add_bool_module("fish", "FiSH", "auto_keyxchange", 1);
-	settings_add_bool_module("fish", "FiSH", "nicktracker", 1);
+	settings_add_bool_module("fish", "fish", "process_outgoing", 1);
+	settings_add_bool_module("fish", "fish", "process_incoming", 1);
+	settings_add_bool_module("fish", "fish", "auto_keyxchange", 1);
+	settings_add_bool_module("fish", "fish", "nicktracker", 1);
 
-	settings_add_str_module("fish", "FiSH", "mark_broken_block",
-				" \002&\002");
-	settings_add_str_module("fish", "FiSH", "mark_encrypted", "");
-	settings_add_str_module("fish", "FiSH", "plain_prefix", "+p ");
+	settings_add_str_module("fish", "fish", "mark_broken_block",
+				"\002&\002");
+	settings_add_str_module("fish", "fish", "mark_encrypted", "\002>\002 ");
+	settings_add_str_module("fish", "fish", "plain_prefix", "+p ");
 
-	settings_add_int_module("fish", "FiSH", "mark_position", 0);
+	settings_add_int_module("fish", "fish", "mark_position", 1);
 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		  "FiSH v1.00 - encryption module for irssi loaded! URL: https://github.com/falsovsky/FiSH-irssi\n"
