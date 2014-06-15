@@ -1,7 +1,7 @@
 dnl minimum autoconf version
 AC_PREREQ([2.59])
 dnl name, version, etc
-AC_INIT([libfish], [1.2], [falsovsky@gmail.com], [FiSH irssi module])
+AC_INIT([libfish], [1.2], [falsovsky@gmail.com], [FiSH_irssi_module])
 dnl file to check if exists
 AC_CONFIG_SRCDIR([src/FiSH.c])
 dnl file to use for defines
