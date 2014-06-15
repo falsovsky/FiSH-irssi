@@ -27,6 +27,14 @@ then
 fi
 
 aclocal --force
-libtoolize --force
+
+if [ "$OS" = "Darwin" ];
+then
+LIBTOOLIZE='glibtoolize'
+else
+LIBTOOLIZE='libtoolize'
+fi
+
+$LIBTOOLIZE --force
 autoconf --force
 automake -a
