@@ -34,7 +34,7 @@ int b64toh(const char *b, char *d)
 	l = strlen(b);
 	if (l < 2)
 		return 0;
-	for (i = l - 1; i >= 0; i--) {
+	for (i = l - 1; ; i--) {
 		if (b64buf[(int)(b[i])] == 0)
 			l--;
 		else
