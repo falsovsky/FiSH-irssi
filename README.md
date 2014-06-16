@@ -1,10 +1,11 @@
 # FiSH module for irssi
 
-* Based on official from http://fish.secure.la/ (DEAD?)
-* Changed to use GMP instead of MIRACL by Dcoder
-* Basic autoconf/automake support by falso
-* Changed the blow.ini reading/writing to Glib's GKeyFile - http://developer.gnome.org/glib/stable/glib-Key-value-file-parser.html
-* Multi-server support (__New! January 2013__)
+* Based on official from http://fish.secure.la/ (now dead)
+* Uses GMP instead of MIRACL
+* Configured and built using autotools+libtool
+* Changed the blow.ini I/O to Glib's GKeyFile
+* Multi-server support
+* Options now used with irssi /set and not on blow.ini
 
 You will need to edit your blow.ini manually if you want to continue using it.  
 Just prefix the servertag and a ":" to the target, for example:
@@ -51,9 +52,9 @@ First download the irssi source code and extract it, for example **/home/jacinto
 Now enter the FiSH-irssi directory and run the following combo.
 <pre>
 # ./regen.sh
-# ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15
+# ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15 --prefix=/usr
 # make
-# sudo cp src/.libs/libfish.so /usr/lib/irssi/modules
+# sudo make install
 </pre>
 ## To run
 
