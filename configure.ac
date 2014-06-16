@@ -1,7 +1,7 @@
 dnl minimum autoconf version
 AC_PREREQ([2.59])
 dnl name, version, etc
-AC_INIT([libfish], [1.2], [falsovsky@gmail.com], [FiSH_irssi_module])
+AC_INIT([libfish], [1.2], [falsovsky@gmail.com], [FiSH-irssi], [https://github.com/falsovsky/FiSH-irssi])
 dnl file to check if exists
 AC_CONFIG_SRCDIR([src/FiSH.c])
 dnl file to use for defines
@@ -45,6 +45,18 @@ AC_ARG_WITH([irssi-source],
 Then re-run this configure script with --with-irssi-source=/path/to/irssi/source.
 eg: ./configure --with-irssi-source=/home/falso/src/irssi-0.8.15])]
 )
+
+# Irssi searches for modules in $HOME/.irssi/modules and  $(libdir)/irssi/modules
+# where the value of $(libdir) may depend on your distribution, architecture,
+# and whether irssi was installed from package or from source.
+# The hardcoded value should work for most systems but you need to override it for
+# e.g. x86_64 Fedora.
+AC_ARG_WITH([irssi-module-dir],
+	AS_HELP_STRING([--with-irssi-module-dir=DIR], [Irssi module directory]),
+	[IRSSI_MODULE_DIR="$withval"],
+	[IRSSI_MODULE_DIR="$libdir/irssi/modules"])
+
+AC_SUBST(IRSSI_MODULE_DIR)
 
 dnl GMP include directory
 AC_ARG_WITH([gmp_include],

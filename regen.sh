@@ -30,9 +30,9 @@ aclocal --force
 
 if [ "$OS" = "Darwin" ];
 then
-LIBTOOLIZE='glibtoolize'
+	LIBTOOLIZE='glibtoolize'
 else
-LIBTOOLIZE='libtoolize'
+	LIBTOOLIZE='libtoolize'
 fi
 
 $LIBTOOLIZE --force
