@@ -481,14 +481,14 @@ void cmd_crypt_notice(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	if (strlen(msg) >= 512) {
 		printtext(server, target, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 /notice+ \002error\002: message argument exceeds buffer size!");
-		goto notice_error;
+		return;
 	}
 
 	if (FiSH_encrypt(server, msg, target, bf_dest) == 0) {
 		printtext(server, target, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 /notice+ \002error\002: Encryption disabled or no key found for %s.",
 			  target);
-		goto notice_error;
+		return;
 	}
 
 	bf_dest[512] = '\0';
@@ -1156,7 +1156,6 @@ void fish_init(void)
 
 	command_bind("topic+", NULL, (SIGNAL_FUNC) cmd_crypt_topic);
 	command_bind("notice+", NULL, (SIGNAL_FUNC) cmd_crypt_notice);
-	command_bind("notfish", NULL, (SIGNAL_FUNC) cmd_crypt_notice);
 	command_bind("me+", NULL, (SIGNAL_FUNC) cmd_crypt_action);
 	command_bind("setkey", NULL, (SIGNAL_FUNC) cmd_setkey);
 	command_bind("delkey", NULL, (SIGNAL_FUNC) cmd_delkey);
