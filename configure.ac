@@ -19,6 +19,8 @@ dnl find and test libtool
 AC_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
 
+LT_INIT([dlopen shared])
+
 dnl irssi-recode define (maybe remove?)
 AC_ARG_ENABLE([irssi-recode], 
     AS_HELP_STRING([--disable-irssi-recode],[disable irssi unicode recode]),
