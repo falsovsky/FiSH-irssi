@@ -51,7 +51,7 @@ Also, some commands now allow to define the network.
 First download the irssi source code and extract it, for example **/home/jacinto/irssi-0.8.15**.  
 Now enter the FiSH-irssi directory and run the following combo.
 <pre>
-# ./regen.sh
+# ./autogen.sh
 # ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15 --prefix=/usr
 # make
 # sudo make install
@@ -62,6 +62,9 @@ If you installed the module in the default directory, you just need to run the f
 <pre>/load fish</pre>
 If not, just include the path while loading:
 <pre>/load /home/jacinto/libfish.so</pre>
+
+To load automatically at startup:
+<pre>echo "load fish" >> /home/<username>/.irssi/startup</pre>
 
 ## Tested on
 * Linux/x86
