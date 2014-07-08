@@ -128,9 +128,9 @@ int key_store_set (key_store_t ctx, const char* contact, const char* key)
 
 int key_store_unset (key_store_t ctx, const char* contact)
 {
-    deleteIniValue(contact, "key", ctx->filepath);
+    int ret = deleteIniValue(contact, "key", ctx->filepath);
 
-    return 0; // TODO(hpeixoto): deleteIniValue should probably return something.
+    return ret == 1 ? 0 : -1; // hack while deleteIniValue doesn't return 0
 }
 
 int key_store_recrypt (key_store_t ctx, const char* new_password)

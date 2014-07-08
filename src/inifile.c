@@ -1,9 +1,5 @@
 #include "inifile.h"
 
-#ifdef S_SPLINT_S
-#include "splint.h"
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,12 +83,13 @@ getIniValue(const char *section, const char *key, const char *default_value,
 	return (int)strlen(buffer);
 }
 
-void deleteIniValue(const char *section, const char *key, const char *filepath)
+int deleteIniValue(const char *section, const char *key, const char *filepath)
 {
 	GKeyFile *key_file;
 	GError *error = NULL;
 	gsize num_keys = 0;
-
+	int ret = 0;
+	
 	key_file = g_key_file_new();
 
 	// If file was read OK...
@@ -110,10 +107,15 @@ void deleteIniValue(const char *section, const char *key, const char *filepath)
 
 				writeIniFile(key_file, filepath);
 			}
+			ret = 1;
+		} else {
+			ret = 0;
 		}
 	}
 
 	g_key_file_free(key_file);
+	
+	return ret;
 }
 
 /**

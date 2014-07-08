@@ -7,10 +7,6 @@
 #include "keyx.h"
 #include "irc_helper.h"
 
-#ifdef S_SPLINT_S
-#include "splint.h"
-#endif
-
 // Static context information
 static keyx_t keyx_ctx;
 static fish2_t fish2_ctx;
@@ -513,8 +509,7 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 	}
 
-	printtext(server, target_window, MSGLEVEL_CRAP,
-		  "\002FiSH\002: Params valid.");
+	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
 
 	server = cmd_options_get_server("setkey", optlist, server);
 	if (server == NULL || !server->connected)
@@ -569,6 +564,8 @@ void cmd_delkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 	}
 
+	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
+
 	server = cmd_options_get_server("delkey", optlist, server);
 	if (server == NULL || !server->connected)
 		cmd_param_error(CMDERR_NOT_CONNECTED);
@@ -611,6 +608,8 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 			  "\002FiSH:\002 Please define nick/#channel. Usage: /key [-<server tag>] [<nick | #channel>]");
 		return;
 	}
+
+	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
 
 	server = cmd_options_get_server("key", optlist, server);
 	if (server == NULL || !server->connected)
