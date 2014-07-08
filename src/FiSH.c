@@ -2,10 +2,6 @@
 #include "FiSH.h"
 #include "password.h"
 
-#ifdef S_SPLINT_S
-#include "splint.h"
-#endif
-
 /**
  * Default key for FiSH ini file.
  */
@@ -814,6 +810,8 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 	}
 
+	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
+
 	server = cmd_options_get_server("setkey", optlist, server);
 	if (server == NULL || !server->connected)
 		cmd_param_error(CMDERR_NOT_CONNECTED);
@@ -879,6 +877,8 @@ void cmd_delkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 	}
 
+	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
+
 	server = cmd_options_get_server("delkey", optlist, server);
 	if (server == NULL || !server->connected)
 		cmd_param_error(CMDERR_NOT_CONNECTED);
@@ -888,12 +888,17 @@ void cmd_delkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
 		return;
 
-	deleteIniValue(contactName, "key", iniPath);
-
-	printtext(server, item != NULL ? window_item_get_target(item) : NULL,
-		  MSGLEVEL_CRAP,
-		  "\002FiSH:\002 Key for %s@%s successfully removed!", target,
-		  server->tag);
+	if (deleteIniValue(contactName, "key", iniPath) == 1) {
+		printtext(server, item != NULL ? window_item_get_target(item) : NULL,
+			  MSGLEVEL_CRAP,
+			  "\002FiSH:\002 Key for %s@%s successfully removed!", target,
+			  server->tag);
+	} else {
+		printtext(server, item != NULL ? window_item_get_target(item) : NULL,
+			MSGLEVEL_CRAP,
+			"\002FiSH:\002 No key found for %s@%s", target,
+			server->tag);
+	}
 }
 
 void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
@@ -918,6 +923,8 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 			  "\002FiSH:\002 Please define nick/#channel. Usage: /key [-<server tag>] [<nick | #channel>]");
 		return;
 	}
+
+	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
 
 	server = cmd_options_get_server("key", optlist, server);
 	if (server == NULL || !server->connected)
