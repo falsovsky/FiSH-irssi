@@ -1,7 +1,7 @@
 # FiSH module for irssi
 
 * Based on official from http://fish.secure.la/ (now dead)
-* Uses GMP instead of MIRACL
+* No longer requires GMP/MIRACL
 * Configured and built using autotools+libtool
 * Changed the blow.ini I/O to Glib's GKeyFile
 * Multi-server support
@@ -41,7 +41,6 @@ Also, some commands now allow to define the network.
 * autoconf >= 2.59 - http://www.gnu.org/software/autoconf/
 * automake >= 1.9.6 - http://www.gnu.org/software/automake/
 * GNU libtool - http://www.gnu.org/software/libtool/
-* GNU MP - http://gmplib.org/
 * Glib 2.x - http://www.gtk.org/
 * OpenSSL - http://www.openssl.org/
 * irssi source code - http://irssi.org/
@@ -52,10 +51,18 @@ First download the irssi source code and extract it, for example **/home/jacinto
 Now enter the FiSH-irssi directory and run the following combo.
 <pre>
 # ./autogen.sh
-# ./configure --with-irssi-source=/home/jacinto/irssi-0.8.15 --prefix=/usr
+# ./configure --with-irssi=/home/jacinto/irssi-0.8.15 --prefix=/usr
 # make
 # sudo make install
 </pre>
+
+Alternatively on some distributions you can install the irssi-dev or irssi-devel package and do:
+<pre>
+...
+./configure --with-irssi=/usr/include/irssi --prefix=/usr
+...
+</pre>
+
 ## To run
 
 If you installed the module in the default directory, you just need to run the following command inside irssi to load it:
