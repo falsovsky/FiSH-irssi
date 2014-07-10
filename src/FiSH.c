@@ -50,6 +50,8 @@ int getContactKey(const char *contactPtr, char *theKey)
 int getIniSectionForContact(const SERVER_REC * serverRec,
 			     const char *contactPtr, char *iniSectionKey)
 {
+	char *target;
+
 	ZeroMemory(iniSectionKey, CONTACT_SIZE);
 
 	if (contactPtr == NULL)
@@ -57,10 +59,12 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
 
 	if (iniSectionKey == NULL)
 		return FALSE;
+	
+	target = g_ascii_strdown((gchar*)contactPtr, (gssize)strlen(contactPtr));
 
 	if (serverRec != NULL) {
 		snprintf(iniSectionKey, CONTACT_SIZE, "%s:%s", serverRec->tag,
-			 contactPtr);
+			 target);
 	} else {
 		snprintf(iniSectionKey, CONTACT_SIZE, "%s", contactPtr);
 	}
@@ -810,8 +814,6 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 	}
 
-	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
-
 	server = cmd_options_get_server("setkey", optlist, server);
 	if (server == NULL || !server->connected)
 		cmd_param_error(CMDERR_NOT_CONNECTED);
@@ -877,8 +879,6 @@ void cmd_delkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 	}
 
-	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
-
 	server = cmd_options_get_server("delkey", optlist, server);
 	if (server == NULL || !server->connected)
 		cmd_param_error(CMDERR_NOT_CONNECTED);
@@ -923,8 +923,6 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 			  "\002FiSH:\002 Please define nick/#channel. Usage: /key [-<server tag>] [<nick | #channel>]");
 		return;
 	}
-
-	target = g_ascii_strdown((gchar*)target, (gssize)strlen(target));
 
 	server = cmd_options_get_server("key", optlist, server);
 	if (server == NULL || !server->connected)
