@@ -92,7 +92,11 @@ int key_store_get (key_store_t ctx, const char* contact, char* key)
 {
     char encrypted_key[KEYBUF_SIZE] = { '\0' };
 
-    getIniValue(contact, "key", "", encrypted_key, KEYBUF_SIZE, ctx->filepath);
+    char* low_contact = g_ascii_strdown((gchar*)contact, (gssize)strlen(contact));
+
+    getIniValue(low_contact, "key", "", encrypted_key, KEYBUF_SIZE, ctx->filepath);
+
+    g_free(low_contact);
 
     // don't process, encrypted key not found in ini
     if (strlen(encrypted_key) < 16) return -1;
