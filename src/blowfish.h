@@ -6,7 +6,4 @@
 int decrypt_string(const char *key, const char *str, char *dest, int len);
 int encrypt_string(const char *key, const char *str, char *dest, int len);
 
-int openssl_blowfish_decrypt_string (const char *key, const char *str, char *dest, int len);
-int openssl_blowfish_encrypt_string (const char *key, const char *str, char *dest, int len);
-
 #endif // BLOWFISH_H_
