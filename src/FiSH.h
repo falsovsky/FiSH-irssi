@@ -62,4 +62,4 @@ const char blow_ini[] = "/blow.ini";
 char iniKey[100], iniPath[255];
 char g_myPrivKey[300], g_myPubKey[300];
 
-BOOL keyx_query_created = 0;
+int keyx_query_created = 0;

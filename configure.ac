@@ -36,17 +36,21 @@ AC_ARG_ENABLE([znc-logs],
 )
 
 dnl irssi source directory
-AC_ARG_WITH([irssi-source],
-    [AC_HELP_STRING([--with-irssi-source=DIR],
+AC_ARG_WITH([irssi],
+    [AC_HELP_STRING([--with-irssi=DIR],
         [irssi source directory]),
     ],
     [IRSSI_PATH=${withval}
-        AC_SUBST(IRSSI_PATH)
     ],
-    [AC_MSG_ERROR([To build FiSH you will need the irssi source code, please download it and extract it on a desired location.
-Then re-run this configure script with --with-irssi-source=/path/to/irssi/source.
-eg: ./configure --with-irssi-source=/home/falso/src/irssi-0.8.15])]
+    [AC_MSG_ERROR([To build FiSH you will need the irssi source code or includes, please download it and extract it on a desired location.
+Then re-run this configure script with --with-irssi=/path/to/irssi/includes.
+eg: ./configure --with-irssi=/home/falso/src/irssi-0.8.15 or
+./configure--with-irssi=/usr/include/irssi])]
 )
+
+FISH_IRSSI_INCLUDES="-I${IRSSI_PATH} -I${IRSSI_PATH}/src -I${IRSSI_PATH}/src/fe-common/core \
+	-I${IRSSI_PATH}/src/core"
+AC_SUBST([FISH_IRSSI_INCLUDES])
 
 # Irssi searches for modules in $HOME/.irssi/modules and  $(libdir)/irssi/modules
 # where the value of $(libdir) may depend on your distribution, architecture,
@@ -60,34 +64,6 @@ AC_ARG_WITH([irssi-module-dir],
 
 AC_SUBST(IRSSI_MODULE_DIR)
 
-dnl GMP include directory
-AC_ARG_WITH([gmp_include],
-    [AC_HELP_STRING([--with-gmp-include=DIR],
-        [GMP include directory])
-    ],
-    [CPPFLAGS="-I$withval $CPPFLAGS"]
-)
-dnl GML library directory
-AC_ARG_WITH([gmp_lib],
-    [AC_HELP_STRING([--with-gmp-lib=DIR],
-        [GMP library directory])
-    ],
-    [LDFLAGS="-L$withval $LDFLAGS"]
-)
-dnl GMP install directory
-AC_ARG_WITH([gmp],
-    [AC_HELP_STRING([--with-gmp=DIR],
-        [GMP install directory])],
-    [
-        if test -z "$with_gmp_lib" -a -z "$with_gmp_include" ; then
-            CPPFLAGS="-I$withval/include $CPPFLAGS"
-            LDFLAGS="-L$withval/lib $LDFLAGS"
-        else
-            AC_MSG_FAILURE([Do not use --with-gmp and --with-gmp-include/--with-gmp-lib options simultaneously.])
-        fi
-    ]
-)
-
 dnl check for glib (using pkg-config)
 PKG_CHECK_EXISTS([glib-2.0],
     [
@@ -95,11 +71,6 @@ PKG_CHECK_EXISTS([glib-2.0],
         AC_SUBST(GLIB_CFLAGS)
     ],
     [AC_MSG_ERROR([glib-2.0 is not installed])]
-)
-
-dnl check for gmp
-AC_CHECK_LIB(gmp, __gmpz_init, , [AC_MSG_ERROR(
-    [GNU MP not found, see http://swox.com/gmp])]
 )
 
 dnl load m4 OpenSSL macro

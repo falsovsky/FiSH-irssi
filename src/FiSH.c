@@ -14,10 +14,10 @@ static const char default_iniKey[] = "blowinikey";
  * @param theKey
  * @return 1 if everything ok 0 if not
  */
-BOOL getContactKey(const char *contactPtr, char *theKey)
+int getContactKey(const char *contactPtr, char *theKey)
 {
 	char tmpKey[KEYBUF_SIZE] = "";
-	BOOL bRet = FALSE;
+	int bRet = FALSE;
 
 	getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
 
@@ -47,7 +47,7 @@ BOOL getContactKey(const char *contactPtr, char *theKey)
  * @param iniSectionKey buffer to there the section key is generated
  * @return TRUE if everything ok FALSE if not
  */
-BOOL getIniSectionForContact(const SERVER_REC * serverRec,
+int getIniSectionForContact(const SERVER_REC * serverRec,
 			     const char *contactPtr, char *iniSectionKey)
 {
 	ZeroMemory(iniSectionKey, CONTACT_SIZE);
