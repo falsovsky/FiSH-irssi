@@ -16,16 +16,6 @@ then
     fi
 fi
 
-if [ "$OS" = "OpenBSD" -o "$OS" = "FreeBSD" ];
-then
-    echo "Dont forget to add --with-gmp-include=/usr/local/include --with-gmp-lib=/usr/local/lib to the configure script"
-fi
-
-if [ "$OS" = "NetBSD" ];
-then
-    echo "Dont forget to add --with-gmp-include=/usr/pkg/include --with-gmp-lib=/usr/pkg/lib to the configure script"
-fi
-
 aclocal --force
 
 if [ "$OS" = "Darwin" ];
