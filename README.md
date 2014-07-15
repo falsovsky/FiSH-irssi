@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/falsovsky/FiSH-irssi.svg?branch=master)](https://travis-ci.org/falsovsky/FiSH-irssi)
+
 # FiSH module for irssi
 
 * Based on official from http://fish.secure.la/ (now dead)
