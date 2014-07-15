@@ -1,0 +1,6 @@
+language: c
+compiler:
+  - gcc
+  - clang
+before_install: apt-get install irssi-dev
+script: ./configure --with-irssi=/usr/include/irssi && make 
