@@ -76,7 +76,7 @@ PKG_CHECK_EXISTS([glib-2.0],
 dnl load m4 OpenSSL macro
 m4_include([m4/ax_check_openssl.m4])
 dnl check for OpenSSL 
-PKG_CHECK_MODULES(OPENSSL, [openssl], [], [CHECK_SSL()])
+PKG_CHECK_MODULES(OPENSSL, [openssl], [], [AC_MSG_ERROR([OpenSSL includes not found, please install them (libssl-dev or openssl-devel)])])
 
 dnl Check if we're a little-endian or a big-endian system
 AC_DEFUN([AC_C_ENDIAN],
