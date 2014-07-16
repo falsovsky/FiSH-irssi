@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #include <openssl/blowfish.h>
 #include "blowfish.h"
