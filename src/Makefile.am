@@ -9,7 +9,6 @@ libfish_la_LDFLAGS = -module -avoid-version -shared @OPENSSL_LIBS@
 libfish_la_CFLAGS = $(AM_CFLAGS)
 libfish_la_SOURCES = base64.c \
 				 blowfish.c \
-				 openssl_blowfish.c \
 				 inifile.c \
 				 DH1080.c \
 				 FiSH.c \
