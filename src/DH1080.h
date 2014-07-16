@@ -1,5 +1,5 @@
 #ifndef DH_1080_H_
-#define DH1080_H_
+#define DH_1080_H_
 
 struct dh1080_s;
 typedef struct dh1080_s *dh1080_t;
