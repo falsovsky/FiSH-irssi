@@ -60,6 +60,7 @@ int DH1080_Init(dh1080_t * ctx)
 		return 0;
 	}
 
+	int codes = 0;
 	(*ctx)->dh->p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
 	(*ctx)->dh->g = BN_new(); BN_set_word((*ctx)->dh->g, 2);
 	return DH_check((*ctx)->dh, &codes) && codes == 0;
