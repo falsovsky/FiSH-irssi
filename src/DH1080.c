@@ -15,7 +15,6 @@
 #include <openssl/sha.h>
 #include "DH1080.h"
 #include "base64.h"
-#include "SHA256.h"
 #include "random.h"
 
 #include <stdlib.h>
