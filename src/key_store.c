@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <glib.h>
 
 #define KEYBUF_SIZE (150)
 
