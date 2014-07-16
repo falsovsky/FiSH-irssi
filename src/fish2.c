@@ -2,7 +2,7 @@
 
 #include "fish2.h"
 #include "key_store.h"
-#include "inifile.h"
+#include "settings.h"
 
 #include "fish2/blowcrypt.h"
 #include "fish2/noop.h"
@@ -16,6 +16,7 @@
 
 struct fish2_s {
   key_store_t key_store;
+  settings_t settings;
   char* prefix;
   char* filepath;
 };
@@ -59,11 +60,6 @@ void fish2_deinit (fish2_t ctx)
     free(ctx);
 }
 
-struct settings_t {
-    char name[32];
-    char default_value[32];
-};
-
 static int fish2_get_contact (
     fish2_t ctx,
     const char* server_tag,
@@ -80,76 +76,6 @@ static int fish2_get_contact (
 
     // Should INI fixing be here?
     return 0;
-}
-
-static struct settings_t settings[] = {
-  { "process_outgoing",  "1" },
-  { "process_incoming",  "1" },
-  { "auto_keyxchange",   "1" },
-  { "nicktracker",       "1" },
-  { "mark_broken_block", "1" },
-  { "mark_encrypted",    "1" },
-  { "mark_encrypted",    "" },
-  { "mark_bloken_block", " \002&\002" }
-};
-
-#define isNoChar(c) ((c) == 'n' || (c) == 'N' || (c) == '0')
-
-int fish2_get_setting_bool (
-    fish2_t ctx,
-    int field)
-{
-    char value[32];
-
-    getIniValue(
-        "FiSH",
-        settings[field].name,
-        settings[field].default_value,
-        value,
-        sizeof(value),
-        ctx->filepath);
-
-    return !isNoChar(*value);
-}
-
-int fish2_get_setting_string (
-    fish2_t ctx,
-    int field,
-    char* output,
-    size_t n)
-{
-    getIniValue(
-        "FiSH",
-        settings[field].name,
-        settings[field].default_value,
-        output,
-        n,
-        ctx->filepath);
-
-    return 0;
-}
-
-
-int fish2_get_user_setting_bool (
-    fish2_t ctx,
-    const char* server_tag,
-    const char* target,
-    int field)
-{
-    char contact[CONTACT_SIZE];
-    char value[32];
-
-    fish2_get_contact(ctx, server_tag, target, contact);
-
-    getIniValue(
-        contact,
-        settings[field].name,
-        settings[field].default_value,
-        value,
-        sizeof(value),
-        ctx->filepath);
-
-    return !isNoChar(*value);
 }
 
 int fish2_has_key (
@@ -249,7 +175,7 @@ static int fish2_get_encrypter (
     size_t n,
     struct encrypter_s* encrypter)
 {
-    // getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
+    // TODO(hpeixoto): settings_get_string("plain_prefix")
     if (strncmp(unencrypted, "+p ", strlen("+p ")) == 0) {
         encrypter->func   = &fish2_noop_encrypt;
         encrypter->offset = 4;
@@ -326,27 +252,21 @@ int fish2_mark_encryption (
         return -1;
     }
 
-    if (fish2_get_user_setting_bool(
-            ctx,
-            server_tag,
-            sender,
-            FISH2_MARK_ENCRYPTION) == 1) {
-        fish2_get_setting_string(
-            ctx,
-            FISH2_ENCRYPTION_MARK,
-            encryption_mark,
-            sizeof(encryption_mark));
-    }
+    settings_get_string(
+        ctx->settings,
+        FISH2_SETTINGS_ENCRYPTION_MARK,
+        encryption_mark,
+        sizeof(encryption_mark));
 
     if (broken) {
-      fish2_get_setting_string(
-          ctx,
-          FISH2_BROKEN_BLOCK_MARK,
+      settings_get_string(
+          ctx->settings,
+          FISH2_SETTINGS_BROKEN_BLOCK_MARK,
           broken_block_mark,
           sizeof(broken_block_mark));
     }
 
-    // TODO(hpeixoto): mark could be at the end.
+    // TODO(hpeixoto): mark could be at the end: settings_get_int("mark_position")
     snprintf(
         marked, n,
         "%s%s%s",

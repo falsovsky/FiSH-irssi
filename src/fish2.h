@@ -5,15 +5,6 @@
 
 #include <stddef.h>
 
-#define FISH2_PROCESS_OUTGOING  0
-#define FISH2_PROCESS_INCOMING  1
-#define FISH2_AUTO_KEYEXCHANGE  2
-#define FISH2_NICKTRACKER       3
-#define FISH2_MARK_BROKEN_BLOCK 4
-#define FISH2_MARK_ENCRYPTION   5
-#define FISH2_ENCRYPTION_MARK   6
-#define FISH2_BROKEN_BLOCK_MARK 7
-
 struct fish2_s;
 typedef struct fish2_s* fish2_t;
 
