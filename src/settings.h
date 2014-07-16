@@ -13,11 +13,11 @@
 struct settings_s;
 typedef struct settings_s* settings_t;
 
-int settings_get_bool (
+int fish2_settings_get_bool (
     settings_t ctx,
     int field);
 
-int settings_get_string (
+int fish2_settings_get_string (
     settings_t ctx,
     int field,
     char* output,

@@ -21,6 +21,7 @@ struct fish2_s {
   char* filepath;
 };
 
+// Context management
 int fish2_init (
     fish2_t* ctx,
     const char* filepath)
@@ -37,11 +38,15 @@ int fish2_init (
     return 0;
 }
 
-int fish2_rekey (fish2_t ctx, const char* new_key)
+void fish2_deinit (fish2_t ctx)
 {
-    return key_store_recrypt(ctx->key_store, new_key);
+    key_store_deinit(ctx->key_store);
+    free(ctx->prefix);
+    free(ctx->filepath);
+    free(ctx);
 }
 
+// Master password
 int fish2_has_master_key (fish2_t ctx)
 {
     return key_store_has_master_key(ctx->key_store);
@@ -52,14 +57,35 @@ int fish2_validate_master_key (fish2_t ctx, const char* key)
     return key_store_validate_master_key(ctx->key_store, key);
 }
 
-void fish2_deinit (fish2_t ctx)
+int fish2_rekey (fish2_t ctx, const char* new_key)
 {
-    key_store_deinit(ctx->key_store);
-    free(ctx->prefix);
-    free(ctx->filepath);
-    free(ctx);
+    return key_store_recrypt(ctx->key_store, new_key);
 }
 
+// Settings
+int fish2_get_setting_bool (
+    fish2_t ctx,
+    int field)
+{
+    return fish2_settings_get_bool(
+        ctx->settings,
+        field);
+}
+
+int fish2_get_setting_string (
+    fish2_t ctx,
+    int field,
+    char* output,
+    size_t n)
+{
+    return fish2_settings_get_string(
+        ctx->settings,
+        field,
+        output,
+        n);
+}
+
+// Contact keys
 static int fish2_get_contact (
     fish2_t ctx,
     const char* server_tag,
@@ -252,15 +278,15 @@ int fish2_mark_encryption (
         return -1;
     }
 
-    settings_get_string(
-        ctx->settings,
+    fish2_get_setting_string(
+        ctx,
         FISH2_SETTINGS_ENCRYPTION_MARK,
         encryption_mark,
         sizeof(encryption_mark));
 
     if (broken) {
-      settings_get_string(
-          ctx->settings,
+      fish2_get_setting_string(
+          ctx,
           FISH2_SETTINGS_BROKEN_BLOCK_MARK,
           broken_block_mark,
           sizeof(broken_block_mark));

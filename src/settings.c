@@ -24,7 +24,7 @@ static struct setting_t settings[] = {
 
 #define isNoChar(c) ((c) == 'n' || (c) == 'N' || (c) == '0')
 
-int fish2_get_setting_bool (
+int fish2_settings_get_bool (
     fish2_t ctx,
     int field)
 {
@@ -41,7 +41,7 @@ int fish2_get_setting_bool (
     return !isNoChar(*value);
 }
 
-int fish2_get_setting_string (
+int fish2_settings_get_string (
     fish2_t ctx,
     int field,
     char* output,

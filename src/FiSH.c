@@ -4,6 +4,7 @@
 #include "FiSH.h"
 
 #include "fish2.h"
+#include "settings.h"
 #include "keyx.h"
 #include "irc_helper.h"
 
@@ -61,7 +62,7 @@ int FiSH_encrypt(const SERVER_REC * serverRec,
 		 const char *msgPtr,
 		 const char *target, char *bf_dest, size_t n)
 {
-	if (!fish2_get_setting_bool(fish2_ctx, FISH2_PROCESS_OUTGOING)) {
+	if (!fish2_get_setting_bool(fish2_ctx, FISH2_SETTINGS_PROCESS_OUTGOING)) {
 		return 0;
 	}
 
@@ -83,7 +84,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec,
 {
 	char bf_dest[1000];
 
-	if (!fish2_get_setting_bool(fish2_ctx, FISH2_PROCESS_INCOMING)) {
+	if (!fish2_get_setting_bool(fish2_ctx, FISH2_SETTINGS_PROCESS_INCOMING)) {
 		return 0;
 	}
 
@@ -150,7 +151,7 @@ void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 {
 	char formattedMsg[800] = { '\0' };
 
-	if (!fish2_get_setting_bool(fish2_ctx, FISH2_PROCESS_OUTGOING))
+	if (!fish2_get_setting_bool(fish2_ctx, FISH2_SETTINGS_PROCESS_OUTGOING))
 		return;
 
 	if (fish2_mark_encryption(fish2_ctx,
@@ -731,7 +732,7 @@ void do_auto_keyx(QUERY_REC * query, int automatic)
 	if (keyx_query_created)
 		return;		// query was created by FiSH.
 
-	if (!fish2_get_setting_bool(fish2_ctx, FISH2_AUTO_KEYEXCHANGE))
+	if (!fish2_get_setting_bool(fish2_ctx, FISH2_SETTINGS_AUTO_KEYEXCHANGE))
 		return;
 
 	if (!fish2_has_key(fish2_ctx, query->server->tag, query->name)) {
@@ -746,7 +747,7 @@ void query_nick_changed(QUERY_REC * query, char *orignick)
 {
 	char theKey[KEYBUF_SIZE] = { '\0' };
 
-	if (fish2_get_setting_bool(fish2_ctx, FISH2_NICKTRACKER))
+	if (fish2_get_setting_bool(fish2_ctx, FISH2_SETTINGS_NICKTRACKER))
 		return;
 
 	if (orignick == NULL || strcasecmp(orignick, query->name) == 0)

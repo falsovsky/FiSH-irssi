@@ -38,12 +38,6 @@ int fish2_get_setting_string (
     char* output,
     size_t n);
 
-int fish2_get_user_setting_bool (
-    fish2_t ctx,
-    const char* server_tag,
-    const char* contact,
-    int field);
-
 // Contact keys
 int fish2_has_key (
     fish2_t ctx,
