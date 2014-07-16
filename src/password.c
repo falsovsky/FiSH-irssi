@@ -25,8 +25,7 @@ void key_hash (
     const char* a_key,
     char* a_hash)
 {
-    unsigned char digest[256 / 8];
-    char digest[256/8];
+    unsigned char digest[256 / 8] = {0};
     int i;
 
     memcpy(digest, a_key, sizeof(digest));
@@ -36,4 +35,3 @@ void key_hash (
 
     memcpy(a_hash, digest, sizeof(digest));
 }
-
