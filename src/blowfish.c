@@ -111,10 +111,3 @@ int decrypt_string(const char *key, const char *str, char *dest, int len)
 	*dest++ = 0;
 	return 1;
 }
-
-void encrypt_key(const char* master_key, const char *key, char *encryptedKey)
-{
-	static const char prefix[] = "+OK ";
-	strcpy(encryptedKey, prefix);
-	encrypt_string(iniKey, key, encryptedKey + strlen(prefix), strlen(key));
-}
