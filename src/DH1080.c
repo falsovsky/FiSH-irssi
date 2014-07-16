@@ -69,7 +69,7 @@ int DH1080_Init(dh1080_t * ctx)
 void DH1080_DeInit(dh1080_t ctx)
 {
 	DH_free(ctx->dh);
-	free(ctx)
+	free(ctx);
 }
 
 // verify the Diffie-Hellman public key as described in RFC 2631
