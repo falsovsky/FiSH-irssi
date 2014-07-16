@@ -19,7 +19,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <gmp.h>
 
 #define DH1080_PRIME_BITS	1080
 #define DH1080_PRIME_BYTES	135
