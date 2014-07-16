@@ -3,10 +3,10 @@
 #define DH1080_H_
 
 struct dh1080_s;
-typedef struct dh1080_s* dh1080_t;
+typedef struct dh1080_s *dh1080_t;
 
 // Initializes diffie-hellman exchange structures.
-int DH1080_Init(dh1080_t *ctx);
+int DH1080_Init(dh1080_t * ctx);
 
 // Frees all allocated resources regarding the DH context.
 void DH1080_DeInit(dh1080_t ctx);
@@ -23,4 +23,4 @@ int DH1080_gen(dh1080_t ctx, char *priv_key, char *pub_key);
 //         HisPubKey = the secret key
 int DH1080_comp(dh1080_t ctx, char *MyPrivKey, char *HisPubKey);
 
-#endif // DH_1080_H_
+#endif				// DH_1080_H_
