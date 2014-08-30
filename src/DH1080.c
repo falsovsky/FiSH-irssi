@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#include <openssl/engine.h>
 #include <openssl/sha.h>
 #include "DH1080.h"
 
