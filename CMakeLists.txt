@@ -26,7 +26,7 @@ find_path(irssi_INCLUDE_DIR
 )
 
 if(NOT irssi_INCLUDE_DIR)
-  message(SEND_ERROR "Can't find header.h in ${IRSSI_INCLUDES}\nrun 'cmake -D IRSSI_INCLUDES=/path/to/irssi/includes .'")
+  message(SEND_ERROR "Can't find irssi includes in ${IRSSI_INCLUDES}\nrun 'cmake -D IRSSI_INCLUDES=/path/to/irssi/includes .'")
   return()
 endif()
 
