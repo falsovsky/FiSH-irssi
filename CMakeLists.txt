@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (FiSH-irssi)
+project (FiSH-irssi C)
 
 find_package(PkgConfig REQUIRED)
 
@@ -11,22 +11,21 @@ if(GLIB_PKG_FOUND)
     message(STATUS "Using glib-2.0 ${GLIB_PKG_VERSION}")
 endif()
 
-
 if(OPENSSL_FOUND)
     include_directories(${OPENSSL_INCLUDE_DIRS})
     message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 endif()
 
-set(IRSSI_INCLUDES "/usr/include/irssi" CACHE PATH "path to irssi include files")
+set(IRSSI_PATH "/usr/include/irssi" CACHE PATH "path to irssi include files")
 
-# Include dir
+# Find irssi Include dir
 find_path(irssi_INCLUDE_DIR
   NAMES irssi-config.h src/common.h
-  PATHS ${IRSSI_INCLUDES}
+  PATHS ${IRSSI_PATH} /usr/local/include/irssi
 )
 
 if(NOT irssi_INCLUDE_DIR)
-  message(SEND_ERROR "Can't find irssi includes in ${IRSSI_INCLUDES}\nrun 'cmake -D IRSSI_INCLUDES=/path/to/irssi/includes .'")
+  message(SEND_ERROR "Can't find irssi includes in \nrun 'cmake -D IRSSI_PATH=/path/to/irssi/includes .'")
   return()
 endif()
 
