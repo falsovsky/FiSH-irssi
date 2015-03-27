@@ -17,13 +17,6 @@ if(OPENSSL_FOUND)
     message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 endif()
 
-# configure a header file to pass some of the CMake settings
-# to the source code
-#configure_file (
-#  "${PROJECT_SOURCE_DIR}/src/config.h.in"
-#  "${PROJECT_BINARY_DIR}/src/config.h"
-#  )
-
 set(IRSSI_INCLUDES "/usr/include/irssi" CACHE PATH "path to irssi include files")
 
 # Include dir
@@ -31,6 +24,11 @@ find_path(irssi_INCLUDE_DIR
   NAMES irssi-config.h src/common.h
   PATHS ${IRSSI_INCLUDES}
 )
+
+if(NOT irssi_INCLUDE_DIR)
+  message(SEND_ERROR "Can't find header.h in ${IRSSI_INCLUDES}\nrun 'cmake -D IRSSI_INCLUDES=/path/to/irssi/includes .'")
+  return()
+endif()
 
 include_directories(${irssi_INCLUDE_DIR} ${irssi_INCLUDE_DIR}/src ${irssi_INCLUDE_DIR}/src/fe-common/core ${irssi_INCLUDE_DIR}/src/core)
 
