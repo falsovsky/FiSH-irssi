@@ -4,7 +4,7 @@ project (FiSH-irssi C)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GLIB_PKG REQUIRED glib-2.0)
-pkg_search_module(OPENSSL REQUIRED openssl)
+pkg_check_modules(OPENSSL REQUIRED openssl)
 
 if(GLIB_PKG_FOUND)
     include_directories(${GLIB_PKG_INCLUDE_DIRS})
@@ -16,7 +16,7 @@ if(OPENSSL_FOUND)
     message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 endif()
 
-set(IRSSI_PATH "/usr/include/irssi" CACHE PATH "path to irssi include files")
+set(IRSSI_PATH "/usr/include/irssi" PATH "path to irssi include files")
 
 # Find irssi Include dir
 find_path(irssi_INCLUDE_DIR
@@ -25,7 +25,7 @@ find_path(irssi_INCLUDE_DIR
 )
 
 if(NOT irssi_INCLUDE_DIR)
-  message(SEND_ERROR "Can't find irssi includes in \nrun 'cmake -D IRSSI_PATH=/path/to/irssi/includes .'")
+  message(SEND_ERROR "Could not auto find the irssi include files, please run:\n# cmake -D IRSSI_PATH=/path/to/irssi/includes .")
   return()
 endif()
 
