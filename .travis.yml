@@ -9,8 +9,7 @@ compiler:
   - clang
 before_install:
   - sudo apt-get update -qq 
-  - sudo apt-get install -y irssi-dev libssl-dev
+  - sudo apt-get install -y irssi-dev libssl-dev cmake
 script:
-  - ./autogen.sh
-  - ./configure --with-irssi=/usr/include/irssi
+  - cmake .
   - make 
