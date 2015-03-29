@@ -1,7 +1,6 @@
 #define MODULE_NAME "fish"
 
-#undef HAVE_CONFIG_H
-#include <common.h>
+#include <irssi-config.h>
 
 #include <common.h>
 #include <core/servers.h>
