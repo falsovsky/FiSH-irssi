@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
+INCLUDE(CPack)
+
 project (FiSH-irssi C)
 
 find_package(PkgConfig REQUIRED)
@@ -18,18 +20,18 @@ if(OPENSSL_FOUND)
 endif()
 
 set(IRSSI_PATH "/usr/include/irssi" PATH "path to irssi include files")
-
-# Find irssi Include dir
 find_path(irssi_INCLUDE_DIR
   NAMES irssi-config.h src/common.h
   PATHS ${IRSSI_PATH} /usr/local/include/irssi
 )
 
 if(NOT irssi_INCLUDE_DIR)
-  message(SEND_ERROR "Could not auto find the irssi include files, please run:\n# cmake -D IRSSI_PATH=/path/to/irssi/includes .")
+	message(SEND_ERROR "Could not auto find the irssi include files, please run:\n# cmake -DIRSSI_PATH:PATH=/path/to/irssi/includes .")
   return()
 endif()
 
 include_directories(${irssi_INCLUDE_DIR} ${irssi_INCLUDE_DIR}/src ${irssi_INCLUDE_DIR}/src/fe-common/core ${irssi_INCLUDE_DIR}/src/core)
+
+message(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules\nChange it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
 add_subdirectory (src)
