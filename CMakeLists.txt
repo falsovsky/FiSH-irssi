@@ -37,7 +37,7 @@ message(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irss
 
 add_subdirectory (src)
 
-install(FILES README doc/FiSH-irssi.txt DESTINATION share/doc/FiSH-irssi)
+install(FILES README.md doc/FiSH-irssi.txt DESTINATION share/doc/FiSH-irssi)
 
 set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
 
