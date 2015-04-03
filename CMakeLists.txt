@@ -62,7 +62,7 @@ CONFIGURE_FILE(src/FiSH_version.h.in src/FiSH_version.h)
 
 ADD_SUBDIRECTORY(src)
 
-INSTALL(FILES README.md doc/FiSH-irssi.txt DESTINATION share/doc/FiSH-irssi)
+INSTALL(FILES README.md FiSH-irssi.txt DESTINATION share/doc/FiSH-irssi)
 
 SET(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
 
