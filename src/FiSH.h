@@ -1,6 +1,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "FiSH_version.h"
 #include "inifile.h"
 #include "blowfish.h"
 #include "DH1080.h"

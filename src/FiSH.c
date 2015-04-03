@@ -1186,7 +1186,8 @@ void fish_init(void)
 	settings_add_int_module("fish", "fish", "mark_position", 1);
 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
-		  "FiSH v1.00 - encryption module for irssi loaded! URL: https://github.com/falsovsky/FiSH-irssi\n"
+		  "FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
+		  "URL: https://github.com/falsovsky/FiSH-irssi\n"
 		  "Try /helpfish or /fishhelp for a short command overview");
 
 	module_register("fish", "core");

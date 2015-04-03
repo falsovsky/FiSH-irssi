@@ -47,3 +47,7 @@ CMakeFiles
 Makefile
 cmake_install.cmake
 install_manifest.txt
+
+CPack*
+_CPack_Packages
+src/FiSH_version.h
