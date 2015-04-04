@@ -39,7 +39,7 @@ MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irss
 MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
 STRING(FIND ${irssi_INCLUDE_DIR} ${CMAKE_INSTALL_PREFIX} AIDS)
-IF(NOT 0)
+IF(NOT ${AIDS} EQUAL 0)
 	STRING(REPLACE "/include/irssi" "" IRSSI_PATH ${irssi_INCLUDE_DIR})
 	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_PATH} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
 ENDIF()
