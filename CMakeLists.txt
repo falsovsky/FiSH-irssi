@@ -35,7 +35,14 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(${irssi_INCLUDE_DIR} ${irssi_INCLUDE_DIR}/src ${irssi_INCLUDE_DIR}/src/fe-common/core ${irssi_INCLUDE_DIR}/src/core)
 
-MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules\nChange it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
+MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
+MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
+
+STRING(FIND ${irssi_INCLUDE_DIR} ${CMAKE_INSTALL_PREFIX} AIDS)
+IF(NOT 0)
+	STRING(REPLACE "/include/irssi" "" IRSSI_PATH ${irssi_INCLUDE_DIR})
+	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_PATH} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
+ENDIF()
 
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
 	FIND_PACKAGE(Git)
@@ -46,14 +53,12 @@ IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
 			OUTPUT_VARIABLE "FISH_GIT_REVISION"
 			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		#MESSAGE(STATUS "Git revision: ${GIT_REVISION}")
 		EXECUTE_PROCESS(
 			COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
 			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 			OUTPUT_VARIABLE "FISH_GIT_HASH"
 			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		#MESSAGE(STATUS "Git hash: ${GIT_HASH}")
 		SET(FISH_VERSION r${FISH_GIT_REVISION}-${FISH_GIT_HASH})
 	ENDIF(GIT_FOUND)
 ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
