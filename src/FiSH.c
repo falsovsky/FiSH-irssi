@@ -172,7 +172,6 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 	if (*bf_dest == '\0')
 		return 0;	// don't process, decrypted msg is bad
 
-#ifdef FiSH_USE_IRSSI_RECODE
 	// recode message again, last time it was the encrypted message...
 	if (settings_get_bool("recode") && serverRec != NULL) {
 		recoded = recode_in(serverRec, bf_dest, target);
@@ -182,7 +181,6 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 			g_free(recoded);
 		}
 	}
-#endif
 
 	i = 0;
 	while (bf_dest[i] != 0x0A && bf_dest[i] != 0x0D && bf_dest[i] != '\0')
