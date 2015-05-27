@@ -606,61 +606,80 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
 		  " /setinipw <sekure_blow.ini_password>\n" " /unsetinipw\n");
 }
 
-/* TODO: REWRITE THIS PLZ */
 int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
-		     const char *old_iniKey)
+			const char *old_iniKey)
 {
-	FILE *h_ini = NULL;
-	FILE *h_ini_new = NULL;
-	char *fptr, *ok_ptr, line_buf[1000];
+	char *encrypted_key;
+	GKeyFile *config = g_key_file_new();
+	GError *error = NULL;
+	gsize groups_count = 0;
+	int i;
 	char bfKey[512];
+	char newbfKey[74];
+	char plusOk[78];
+
 	int re_enc = 0;
 
-	h_ini_new = fopen(iniPath_new, "w");
-	h_ini = fopen(iniPath, "r");
-
-	if (h_ini && h_ini_new) {
-		while (!feof(h_ini)) {
-			fptr = fgets(line_buf, sizeof(line_buf) - 2, h_ini);
-			if (fptr) {
-				ok_ptr = strstr(line_buf, "+OK ");
-				if (ok_ptr) {
-					re_enc = 1;
-					strtok(ok_ptr + 4, " \n\r");
-					decrypt_string(old_iniKey, ok_ptr + 4,
-						       bfKey,
-						       strlen(ok_ptr + 4));
-					ZeroMemory(ok_ptr + 4,
-						   strlen(ok_ptr + 4) + 1);
-					encrypt_string(iniKey, bfKey,
-						       ok_ptr + 4,
-						       strlen(bfKey));
-					strcat(line_buf, "\n");
-				}
-				if (fprintf(h_ini_new, "%s", line_buf) < 0) {
-					fclose(h_ini);
-					fclose(h_ini_new);
-					remove(iniPath_new);
-					ZeroMemory(bfKey, sizeof(bfKey));
-					ZeroMemory(line_buf, sizeof(line_buf));
-
-					return -1;
-				}
-			}
-		}
-
-		fclose(h_ini);
-		fclose(h_ini_new);
-		remove(iniPath);
-		rename(iniPath_new, iniPath);
+	g_key_file_load_from_file(config, iniPath, G_KEY_FILE_NONE, &error);
+	if (error != NULL) {
+		g_error_free(error);
+		error = NULL;
+		g_key_file_free(config);
+		return -1;
 	}
 
-	ZeroMemory(bfKey, sizeof(bfKey));
-	ZeroMemory(line_buf, sizeof(line_buf));
+	gchar **groups = g_key_file_get_groups(config, &groups_count);
+
+	for (i = 0; i < groups_count; i++) {
+
+		gsize keys_count = 0;
+		gchar **keys = g_key_file_get_keys(config, groups[i], &keys_count, &error);
+
+		if (error != NULL) {
+			g_error_free(error);
+			error = NULL;
+			continue;
+		}
+
+		int j;
+
+		for (j = 0; j < keys_count; j++) {
+			gchar *value = g_key_file_get_value(config, groups[i], keys[j], &error);
+
+			if (error != NULL) {
+				g_error_free(error);
+				error = NULL;
+				continue;
+			}
+
+			if (strncmp(value, "+OK ", 4) == 0) {
+				re_enc = 1;
+
+				decrypt_string(old_iniKey, value + 4, bfKey, strlen(value + 4));
+				encrypt_string(iniKey, bfKey, newbfKey, strlen(bfKey));
+
+				snprintf(plusOk, 78, "+OK %s", newbfKey);
+
+				setIniValue(groups[i], keys[j], plusOk, iniPath_new);
+
+				ZeroMemory(plusOk, sizeof(plusOk));
+				ZeroMemory(newbfKey, sizeof(newbfKey));
+			}
+
+			g_free(value);
+		}
+
+		g_strfreev(keys);
+	}
+
+	g_strfreev(groups);
+	g_key_file_free(config);
+
+	remove(iniPath);
+	rename(iniPath_new, iniPath);
+
 	return re_enc;
 }
-
-/* TODO: END REWRITE */
 
 void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 {

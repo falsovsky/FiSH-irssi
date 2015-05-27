@@ -9,16 +9,14 @@
  *
  * A normal blow.ini looks something like this:
  * @code
- * [FiSH]
- * plain_prefix="+p "
- * process_incoming=1
- * process_outgoing=1
- *
  * [EFNet:#zbr]
  * key=+OK IxH39/AbJUH/aRUx614KBmA.XkCgI/pV30Q.Fntj81tJF.Z1j3qP91n8Ogs1i.h0/1w2uqO0
  *
  * [EFNet:Jarbas]
  * key=+OK 1m4r7//QR9O10.bHc/J5I54/y31qm0eTQne1ztw170pz8500B16PD0G5C1G0/1gHm/QcANO/
+ *
+ * [FiSH]
+ * ini_password_Hash=kHmWjS7BL+IffmLCJ+JWMj9y5r9mb+yioTm8oE/RmEw
  * @endcode
  */
 

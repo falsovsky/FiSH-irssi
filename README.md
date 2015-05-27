@@ -2,9 +2,6 @@
 
 # FiSH module for irssi
 
-* Based on official from http://fish.secure.la/ (now dead)
-* No longer requires GMP/MIRACL
-
 ## Requirements
 
 * cmake
