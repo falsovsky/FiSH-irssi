@@ -219,7 +219,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
 		 const char *address, const char *target)
 {
-	GString *decrypted = NULL;
+	GString *decrypted;
 	const char *contactPtr, *msg_bak = msg;
 	char contactName[CONTACT_SIZE] = "";
 
@@ -427,7 +427,7 @@ void decrypt_topic(SERVER_REC * server, char *channel, char *topic, char *nick,
 
 	decrypted = g_string_new("");
 	if (FiSH_decrypt(server, topic, channel, decrypted)) {
-		signal_continue(4, server, decrypted->str, nick, address);
+		signal_continue(5, server, channel, decrypted->str, nick, address);
 		ZeroMemory(decrypted->str, decrypted->len);
 	}
 	g_string_free(decrypted, TRUE);
@@ -450,7 +450,7 @@ void decrypt_changed_topic(CHANNEL_REC * chan_rec)
 
 void raw_handler(SERVER_REC * server, char *data)
 {
-	GString *decrypted = NULL;
+	GString *decrypted;
 	char channel[CONTACT_SIZE], *ptr, *ptr_bak;
 	int len;
 
