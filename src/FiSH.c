@@ -114,8 +114,8 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 /*
  * Decrypt a base64 cipher text (using key for target)
  */
-int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
-		 const char *target)
+int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
+		 const char *target, GString* decrypted_msg)
 {
 	char contactName[CONTACT_SIZE] = "";
 	char theKey[KEYBUF_SIZE] = "";
@@ -124,7 +124,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 	char *recoded;
 	int msg_len, i, mark_broken_block = 0, action_found = 0, markPos;
 
-	if (IsNULLorEmpty(msg_ptr) || msg_bak == NULL || IsNULLorEmpty(target))
+	if (IsNULLorEmpty(msg_ptr) || decrypted_msg == NULL || IsNULLorEmpty(target))
 		return 0;
 
 	if (settings_get_bool("process_incoming") == 0)
@@ -210,8 +210,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 		}
 	}
 
-	strncpy(msg_bak, bf_dest, msg_len);	// copy decrypted message back (overwriting the base64 cipher text)
-	msg_bak[msg_len] = '\0';
+	g_string_assign(decrypted_msg, bf_dest);
 	ZeroMemory(bf_dest, sizeof(bf_dest));
 
 	return 1;
@@ -220,6 +219,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr, char *msg_bak,
 void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
 		 const char *address, const char *target)
 {
+	GString *decrypted = NULL;
 	const char *contactPtr, *msg_bak = msg;
 	char contactName[CONTACT_SIZE] = "";
 
@@ -269,14 +269,20 @@ void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
 	} else
 		contactPtr = nick;
 
-	if (FiSH_decrypt(server, msg, msg, contactPtr)) {
-		if (strncmp(msg_bak, "\001ACTION ", 8) == 0) {
+	decrypted = g_string_new("");
+	if (FiSH_decrypt(server, msg, contactPtr, decrypted)) {
+		if (strncmp(decrypted->str, "\001ACTION ", 8) == 0) {
 			// ACTION message found
 			signal_stop();
 			signal_emit("message irc action", 5, server,
-				    msg_bak + 8, nick, address, target);
+					decrypted->str + 8, nick, address, target);
 		}
+		else {
+			signal_continue(5, server, decrypted->str, nick, address, target);
+		}
+		ZeroMemory(decrypted->str, decrypted->len);
 	}
+	g_string_free(decrypted, TRUE);
 }
 
 void encrypt_msg(SERVER_REC * server, char *target, char *msg,
@@ -368,6 +374,7 @@ void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 void decrypt_notice(SERVER_REC * server, char *msg, char *nick, char *address,
 		    char *target)
 {
+	GString *decrypted;
 	char *DH1024warn;
 
 	if (strncmp(msg, "DH1024_", 7) == 0) {
@@ -390,32 +397,60 @@ void decrypt_notice(SERVER_REC * server, char *msg, char *nick, char *address,
 		msg += 11;
 #endif
 
-	FiSH_decrypt(server, msg, msg, ischannel(*target) ? target : nick);
+	decrypted = g_string_new("");
+	if (FiSH_decrypt(server, msg, ischannel(*target) ? target : nick, decrypted)) {
+		signal_continue(5, server, decrypted->str, nick, address, target);
+		ZeroMemory(decrypted->str, decrypted->len);
+	}
+	g_string_free(decrypted, TRUE);
 }
 
 void decrypt_action(SERVER_REC * server, char *msg, char *nick, char *address,
 		    char *target)
 {
+	GString *decrypted;
 	if (target == NULL)
 		return;
 
-	FiSH_decrypt(server, msg, msg, ischannel(*target) ? target : nick);
+	decrypted = g_string_new("");
+	if (FiSH_decrypt(server, msg, ischannel(*target) ? target : nick, decrypted)) {
+		signal_continue(5, server, decrypted->str, nick, address, target);
+		ZeroMemory(decrypted->str, decrypted->len);
+	}
+	g_string_free(decrypted, TRUE);
 }
 
 void decrypt_topic(SERVER_REC * server, char *channel, char *topic, char *nick,
 		   char *address)
 {
-	FiSH_decrypt(server, topic, topic, channel);
+	GString *decrypted;
+
+	decrypted = g_string_new("");
+	if (FiSH_decrypt(server, topic, channel, decrypted)) {
+		signal_continue(4, server, decrypted->str, nick, address);
+		ZeroMemory(decrypted->str, decrypted->len);
+	}
+	g_string_free(decrypted, TRUE);
 }
 
 void decrypt_changed_topic(CHANNEL_REC * chan_rec)
 {
-	FiSH_decrypt(chan_rec->server, chan_rec->topic, chan_rec->topic,
-		     chan_rec->name);
+	GString *decrypted;
+
+	decrypted = g_string_new("");
+	if (FiSH_decrypt(chan_rec->server, chan_rec->topic,
+		     chan_rec->name, decrypted)) {
+		g_free_not_null(chan_rec->topic);
+		chan_rec->topic = g_strdup(decrypted->str);
+		signal_continue(1, chan_rec);
+		ZeroMemory(decrypted->str, decrypted->len);
+	}
+	g_string_free(decrypted, TRUE);
 }
 
 void raw_handler(SERVER_REC * server, char *data)
 {
+	GString *decrypted = NULL;
 	char channel[CONTACT_SIZE], *ptr, *ptr_bak;
 	int len;
 
@@ -452,7 +487,13 @@ void raw_handler(SERVER_REC * server, char *data)
 		return;
 	ptr++;
 
-	FiSH_decrypt(server, ptr, ptr, channel);
+	decrypted = g_string_new("");
+	if (FiSH_decrypt(server, ptr, channel, decrypted)) {
+		g_string_prepend_len(decrypted, data, strlen(data) - strlen(ptr));
+		signal_continue(2, server, decrypted->str);
+		ZeroMemory(decrypted->str, decrypted->len);
+	}
+	g_string_free(decrypted, TRUE);
 }
 
 /*
