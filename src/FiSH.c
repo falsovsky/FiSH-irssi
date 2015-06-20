@@ -633,6 +633,48 @@ void cmd_crypt_topic(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		  "\002FiSH:\002 Usage: /topic+ <your new topic>");
 }
 
+static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
+                                    const char *word, const char *line,
+                                    int *want_space)
+{
+	char *p;
+
+	char *topic;
+	int topic_len;
+
+	const char *mark;
+	int mark_len;
+
+	g_return_if_fail(list != NULL);
+	g_return_if_fail(word != NULL);
+
+	if (*word == '\0' && IS_CHANNEL(window->active)) {
+		topic = g_strdup(CHANNEL(window->active)->topic);
+		if (topic != NULL) {
+			mark = settings_get_str("mark_encrypted");
+			if (!IsNULLorEmpty(mark)) {
+				topic_len = strlen(topic);
+				mark_len = strlen(mark);
+				if (settings_get_int("mark_position") == 0) { // suffix
+					p = topic + (topic_len - mark_len);
+					if (strncmp(p, mark, mark_len) == 0) {
+						*p = '\0'; // Remove mark
+					}
+				}
+				else { // prefix
+					if (strncmp(topic, mark, mark_len) == 0) {
+						g_memmove(topic, topic + mark_len, topic_len - mark_len);
+					}
+				}
+			}
+
+			*list = g_list_append(NULL, topic);
+			signal_stop();
+		}
+	}
+}
+
+
 void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
@@ -1216,6 +1258,8 @@ void fish_init(void)
 
 	signal_add("query created", (SIGNAL_FUNC) do_auto_keyx);
 	signal_add("query nick changed", (SIGNAL_FUNC) query_nick_changed);
+
+	signal_add("complete command topic+", (SIGNAL_FUNC) sig_complete_topic_plus);
 
 	command_bind("topic+", NULL, (SIGNAL_FUNC) cmd_crypt_topic);
 	command_bind("notice+", NULL, (SIGNAL_FUNC) cmd_crypt_notice);
