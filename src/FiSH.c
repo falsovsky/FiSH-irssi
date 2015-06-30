@@ -678,7 +678,8 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
 void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
-		  "\n\002FiSH HELP:\002 For more information read FiSH-irssi.txt :)\n\n"
+		  "\n\002FiSH HELP:\002 For more information read FiSH-irssi.txt :)\n"
+		  "\002NOTE\002: If you have a password defined for blow.ini you will need to first run \002/fishlogin\002\n\n"
 		  " /topic+ <your new topic>\n"
 		  " /notice+ <nick/#channel> <notice message>\n"
 		  " /me+ <your action message>\n"
@@ -1243,9 +1244,6 @@ void setup_fish()
 	command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
 	command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
  
-	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
-	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
- 
 	settings_add_bool_module("fish", "fish", "process_outgoing", 1);
 	settings_add_bool_module("fish", "fish", "process_incoming", 1);
 	settings_add_bool_module("fish", "fish", "auto_keyxchange", 1);
@@ -1257,12 +1255,6 @@ void setup_fish()
 	settings_add_str_module("fish", "fish", "plain_prefix", "+p ");
  
 	settings_add_int_module("fish", "fish", "mark_position", 1);
- 
-	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
-		  "FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
-		  "URL: https://github.com/falsovsky/FiSH-irssi\n"
-		  "Try /helpfish or /fishhelp for a short command overview");
- 
 }
  
 void get_ini_password_hash(int password_size, char* password) {
@@ -1294,7 +1286,7 @@ void authenticated_fish_setup(const char *password, void *rec) {
 	setup_fish();
 }
 
-void cmd_fish_login(const char *data, SERVER_REC * server, WI_ITEM_REC * item) {
+void cmd_fishlogin(const char *data, SERVER_REC * server, WI_ITEM_REC * item) {
 	keyboard_entry_redirect((SIGNAL_FUNC) authenticated_fish_setup,
 			" --> Please enter your blow.ini password: ",
 			ENTRY_REDIRECT_FLAG_HIDDEN, NULL);
@@ -1305,7 +1297,14 @@ void fish_init(void)
 {
 	char iniPasswordHash[50];
 
-	command_bind("fish-login", NULL, (SIGNAL_FUNC) cmd_fish_login);
+        printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
+		"FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
+                 "URL: https://github.com/falsovsky/FiSH-irssi\n"
+                 "Try /helpfish or /fishhelp for a short command overview");
+
+	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
+	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
+	command_bind("fishlogin", NULL, (SIGNAL_FUNC) cmd_fishlogin);
  
         get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
  
@@ -1317,7 +1316,7 @@ void fish_init(void)
                 setup_fish();
         } else {
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
-				"\002FiSH:\002 Current blow.ini is password protected please do \002/fish-login\002 to decode it.");
+				"\002FiSH:\002 Current blow.ini is password protected please do \002/fishlogin\002 to decode it.");
         }
 
 	module_register("fish", "core");
@@ -1354,7 +1353,7 @@ void fish_deinit(void)
 	command_unbind("keyx", (SIGNAL_FUNC) cmd_keyx);
 	command_unbind("setinipw", (SIGNAL_FUNC) cmd_setinipw);
 	command_unbind("unsetinipw", (SIGNAL_FUNC) cmd_unsetinipw);
-	command_unbind("fish-login", (SIGNAL_FUNC) cmd_fish_login);
+	command_unbind("fishlogin", (SIGNAL_FUNC) cmd_fishlogin);
 
 	command_unbind("fishhelp", (SIGNAL_FUNC) cmd_helpfish);
 	command_unbind("helpfish", (SIGNAL_FUNC) cmd_helpfish);
