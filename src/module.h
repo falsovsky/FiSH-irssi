@@ -13,6 +13,8 @@
 #include <core/recode.h>
 #include <fe-common/core/printtext.h>
 #include <fe-common/core/window-items.h>
+#include <fe-common/core/keyboard.h>
+#include <fe-common/irc/module-formats.h>
 #include <irc/core/irc.h>
 #include <irc/core/irc-commands.h>
 #include <irc/core/irc-servers.h>
