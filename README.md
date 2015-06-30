@@ -17,6 +17,17 @@
 # make
 </pre>
 
+To install to /usr instead of /usr/local
+
+<pre>
+# cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .
+# make
+</pre>
+
+Finally run a **make install** as a privileged user (if needed) to install it. 
+
+Irssi looks for the modules in **/usr/lib/irssi/modules** or **/usr/local/lib/irssi/modules**. The install script copies libfish to **$PREFIX/lib/irssi/modules**.
+
 ## To run
 
 If you installed the module in the default directory, you just need to run the following command inside irssi to load it:
