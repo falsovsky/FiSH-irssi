@@ -1286,8 +1286,6 @@ void authenticated_fish_setup(const char *password, void *rec) {
 	if (strcmp(B64digest, iniPasswordHash) != 0) {
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 Wrong blow.ini password entered...");
-		printtext(NULL, NULL, MSGLEVEL_CRAP,
-			  "You must \002/unload fish\002 to try again");
 		return;
 	}
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
@@ -1296,12 +1294,18 @@ void authenticated_fish_setup(const char *password, void *rec) {
 	setup_fish();
 }
 
+void cmd_fish_login(const char *data, SERVER_REC * server, WI_ITEM_REC * item) {
+	keyboard_entry_redirect((SIGNAL_FUNC) authenticated_fish_setup,
+			" --> Please enter your blow.ini password: ",
+			ENTRY_REDIRECT_FLAG_HIDDEN, NULL);
+
+}
 
 void fish_init(void)
 {
-	module_register("fish", "core");
-
 	char iniPasswordHash[50];
+
+	command_bind("fish-login", NULL, (SIGNAL_FUNC) cmd_fish_login);
  
         get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
  
@@ -1312,10 +1316,11 @@ void fish_init(void)
  
                 setup_fish();
         } else {
-		keyboard_entry_redirect((SIGNAL_FUNC) authenticated_fish_setup,
-					" --> Please enter your blow.ini password: ",
-					ENTRY_REDIRECT_FLAG_HIDDEN, NULL);
+		printtext(NULL, NULL, MSGLEVEL_CRAP,
+				"\002FiSH:\002 Current blow.ini is password protected please do \002/fish-login\002 to decode it.");
         }
+
+	module_register("fish", "core");
 }
  
 
