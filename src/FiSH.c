@@ -1354,6 +1354,7 @@ void fish_deinit(void)
 	command_unbind("keyx", (SIGNAL_FUNC) cmd_keyx);
 	command_unbind("setinipw", (SIGNAL_FUNC) cmd_setinipw);
 	command_unbind("unsetinipw", (SIGNAL_FUNC) cmd_unsetinipw);
+	command_unbind("fish-login", (SIGNAL_FUNC) cmd_fish_login);
 
 	command_unbind("fishhelp", (SIGNAL_FUNC) cmd_helpfish);
 	command_unbind("helpfish", (SIGNAL_FUNC) cmd_helpfish);
