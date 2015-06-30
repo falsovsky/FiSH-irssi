@@ -61,7 +61,7 @@ Prefix needed to send an unFiSHed message to an encrypted channel or private mes
 String used to mark a FiSHed message
 > default value is "\002>\002 "
 
-### mark_position (boool)
+### mark_position (boolean)
 Defines if the mark should be a prefix (1) or a suffix (0)
 > default value is 1
 	
