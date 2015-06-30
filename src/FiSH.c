@@ -1211,56 +1211,27 @@ void calculate_password_key_and_hash(const char *a_password,
 	htob64(hash, a_hash, 32);
 }
 
-void fish_init(void)
+void setup_fish()
 {
-	char iniPasswordHash[50], B64digest[50];
-
-	strcpy(iniPath, get_irssi_config());	// path to irssi config file
-	strcpy(strrchr(iniPath, '/'), blow_ini);
-
-	if (DH1080_Init() == FALSE)
-		return;
-
-	getIniValue("FiSH", "ini_password_Hash", "0", iniPasswordHash,
-		    sizeof(iniPasswordHash), iniPath);
-	if (strlen(iniPasswordHash) == 43) {
-		prompt_for_password(iniKey);
-		calculate_password_key_and_hash(iniKey, iniKey, B64digest);
-
-		if (strcmp(B64digest, iniPasswordHash) != 0) {
-			printtext(NULL, NULL, MSGLEVEL_CRAP,
-				  "\002FiSH:\002 Wrong blow.ini password entered, try again...");
-			printtext(NULL, NULL, MSGLEVEL_CRAP,
-				  "\002FiSH module NOT loaded.\002");
-			return;
-		}
-		printtext(NULL, NULL, MSGLEVEL_CRAP,
-			  "\002FiSH:\002 Correct blow.ini password entered, lets go!");
-	} else {
-		strcpy(iniKey, default_iniKey);
-		printtext(NULL, NULL, MSGLEVEL_CRAP,
-			  "\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");
-	}
-
 	signal_add_first("server sendmsg", (SIGNAL_FUNC) encrypt_msg);
 	signal_add_first("message private", (SIGNAL_FUNC) decrypt_msg);
 	signal_add_first("message public", (SIGNAL_FUNC) decrypt_msg);
 	signal_add_first("message irc notice", (SIGNAL_FUNC) decrypt_notice);
 	signal_add_first("message irc action", (SIGNAL_FUNC) decrypt_action);
-
+ 
 	signal_add_first("message own_private", (SIGNAL_FUNC) format_msg);
 	signal_add_first("message own_public", (SIGNAL_FUNC) format_msg);
-
+ 
 	signal_add_first("channel topic changed",
 			 (SIGNAL_FUNC) decrypt_changed_topic);
 	signal_add_first("message topic", (SIGNAL_FUNC) decrypt_topic);
 	signal_add_first("server incoming", (SIGNAL_FUNC) raw_handler);
-
+ 
 	signal_add("query created", (SIGNAL_FUNC) do_auto_keyx);
 	signal_add("query nick changed", (SIGNAL_FUNC) query_nick_changed);
-
+ 
 	signal_add("complete command topic+", (SIGNAL_FUNC) sig_complete_topic_plus);
-
+ 
 	command_bind("topic+", NULL, (SIGNAL_FUNC) cmd_crypt_topic);
 	command_bind("notice+", NULL, (SIGNAL_FUNC) cmd_crypt_notice);
 	command_bind("me+", NULL, (SIGNAL_FUNC) cmd_crypt_action);
@@ -1271,29 +1242,82 @@ void fish_init(void)
 	command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
 	command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
 	command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
-
+ 
 	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
-
+ 
 	settings_add_bool_module("fish", "fish", "process_outgoing", 1);
 	settings_add_bool_module("fish", "fish", "process_incoming", 1);
 	settings_add_bool_module("fish", "fish", "auto_keyxchange", 1);
 	settings_add_bool_module("fish", "fish", "nicktracker", 1);
-
+ 
 	settings_add_str_module("fish", "fish", "mark_broken_block",
 				"\002&\002");
 	settings_add_str_module("fish", "fish", "mark_encrypted", "\002>\002 ");
 	settings_add_str_module("fish", "fish", "plain_prefix", "+p ");
-
+ 
 	settings_add_int_module("fish", "fish", "mark_position", 1);
-
+ 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		  "FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
 		  "URL: https://github.com/falsovsky/FiSH-irssi\n"
 		  "Try /helpfish or /fishhelp for a short command overview");
-
-	module_register("fish", "core");
+ 
 }
+ 
+void get_ini_password_hash(int password_size, char* password) {
+	strcpy(iniPath, get_irssi_config());	// path to irssi config file
+	strcpy(strrchr(iniPath, '/'), blow_ini);
+ 
+	getIniValue("FiSH", "ini_password_Hash", "0", password,
+		    password_size, iniPath);
+ 
+}
+
+
+void authenticated_fish_setup(const char *password, void *rec) {
+	char B64digest[50];
+	char iniPasswordHash[50];
+ 
+        get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
+ 
+	calculate_password_key_and_hash(password, iniKey, B64digest);
+ 
+	if (strcmp(B64digest, iniPasswordHash) != 0) {
+		printtext(NULL, NULL, MSGLEVEL_CRAP,
+			  "\002FiSH:\002 Wrong blow.ini password entered...");
+		printtext(NULL, NULL, MSGLEVEL_CRAP,
+			  "You must \002/unload fish\002 to try again");
+		return;
+	}
+	printtext(NULL, NULL, MSGLEVEL_CRAP,
+		  "\002FiSH:\002 Correct blow.ini password entered, lets go!");
+ 
+	setup_fish();
+}
+
+
+void fish_init(void)
+{
+	module_register("fish", "core");
+
+	char iniPasswordHash[50];
+ 
+        get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
+ 
+        if (strlen(iniPasswordHash) != 43) {
+ 		strcpy(iniKey, default_iniKey);
+		printtext(NULL, NULL, MSGLEVEL_CRAP,
+			  "\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");
+ 
+                setup_fish();
+        } else {
+		keyboard_entry_redirect((SIGNAL_FUNC) authenticated_fish_setup,
+					" --> Please enter your blow.ini password: ",
+					ENTRY_REDIRECT_FLAG_HIDDEN, NULL);
+        }
+}
+ 
 
 void fish_deinit(void)
 {
