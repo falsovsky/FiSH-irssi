@@ -61,7 +61,7 @@ Prefix needed to send an unFiSHed message to an encrypted channel or private mes
 String used to mark a FiSHed message
 > default value is "\002>\002 "
 
-### mark_position (boolean)
+### mark_position (boool)
 Defines if the mark should be a prefix (1) or a suffix (0)
 > default value is 1
 	
@@ -70,18 +70,40 @@ Defines if the mark should be a prefix (1) or a suffix (0)
 
 ## Commands
 	
-### topic+
-### notice+
-### me+
-### setkey
-### delkey
-### key || showkey
-### keyx
-### setinipw
-### unsetinipw
-### fishlogin
-### fishhelp || helpfish
+### /topic+ [message]
+Sets a FiSHed topic in the current channel
 
+### /notice+ [nick/#channel] [message]
+Sends a FiSHed notice to the current window or to target if specified
+
+### /me+ [message]
+Send a FiSHed action to the current window
+
+### /setkey [servertag] [nick/#channel] [key]
+Sets the key used to FiSH the messages for the current window or to the defined target
+
+### /delkey [servertag] [nick/#channel]
+Unsets the key used to FiSH the messages for the current window or to the defined target
+
+### /key [servertag] [nick/#channel] 
+### /showkey [servertag] [nick/#channel]
+Shows the used key to FiSH the messages for the current window or to the defined target
+
+### /keyx
+Forces a DH key exchange in the current window
+
+### /setinipw [password]
+Sets a custom password used to cipher the contents of blow.ini. If this is set its needed to run **/fishlogin** after loading FiSH
+
+### /unsetinipw
+Unsets the custom password used to cipher blow.ini
+
+### /fishlogin
+Reads a blow.ini that is ciphered with a custom password
+
+### /fishhelp
+### /helpfish
+Show a little help inside Irssi
 
 ## Tested on
 * Linux/x86
