@@ -678,8 +678,7 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
 void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
-		  "\n\002FiSH HELP:\002 For more information read FiSH-irssi.txt :)\n"
-		  "\002NOTE\002: If you have a password defined for blow.ini you will need to first run \002/fishlogin\002\n\n"
+		  "\n\002FiSH HELP:\002 For more information read FiSH-irssi.txt :)\n\n"
 		  " /topic+ <your new topic>\n"
 		  " /notice+ <nick/#channel> <notice message>\n"
 		  " /me+ <your action message>\n"
@@ -1277,7 +1276,7 @@ void authenticated_fish_setup(const char *password, void *rec) {
  
 	if (strcmp(B64digest, iniPasswordHash) != 0) {
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
-			  "\002FiSH:\002 Wrong blow.ini password entered...");
+			  "\002FiSH:\002 Wrong blow.ini password entered... Please \002/fishlogin\002 to try again");
 		return;
 	}
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
@@ -1316,7 +1315,8 @@ void fish_init(void)
                 setup_fish();
         } else {
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
-				"\002FiSH:\002 Current blow.ini is password protected please do \002/fishlogin\002 to decode it.");
+				"\002FiSH:\002 Current blow.ini is password protected.");
+		cmd_fishlogin(NULL, NULL, NULL);
         }
 
 	module_register("fish", "core");
