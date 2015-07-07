@@ -1305,6 +1305,9 @@ void fish_init(void)
 	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("fishlogin", NULL, (SIGNAL_FUNC) cmd_fishlogin);
  
+	if (DH1080_Init() == FALSE)
+		return;
+
         get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
  
         if (strlen(iniPasswordHash) != 43) {
