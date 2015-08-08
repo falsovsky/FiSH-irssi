@@ -1,3 +1,5 @@
+CONFIGURE_FILE(FiSH_version.h.in FiSH_version.h)
+
 ADD_LIBRARY(fish MODULE base64.c blowfish.c inifile.c DH1080.c FiSH.c password.c)
 TARGET_LINK_LIBRARIES(fish crypto glib-2.0)
 
