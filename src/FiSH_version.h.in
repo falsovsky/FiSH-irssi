@@ -1,3 +1,11 @@
 #define FISH_GIT_REVISION "${FISH_GIT_REVISION}"
 #define FISH_GIT_HASH "${FISH_GIT_HASH}"
 #define FISH_VERSION "${FISH_VERSION}"
+
+#ifdef IRSSI_NO_ISCHANNEL
+#define ischannel(a) \
+	((a) == '#' || /* normal */ \
+	(a) == '&' || /* local */ \
+	(a) == '!' || /* secure */ \
+	(a) == '+') /* modeless */
+#endif

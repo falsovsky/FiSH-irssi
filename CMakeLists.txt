@@ -37,6 +37,12 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(${irssi_INCLUDE_DIR} ${irssi_INCLUDE_DIR}/src ${irssi_INCLUDE_DIR}/src/fe-common/core ${irssi_INCLUDE_DIR}/src/core)
 
+include(CheckSymbolExists)
+CHECK_SYMBOL_EXISTS(ischannel "irc/core/irc.h" IRSSI_HAS_ISCHANNEL)
+IF(NOT IRSSI_HAS_ISCHANNEL)
+	add_definitions( -DIRSSI_NO_ISCHANNEL=1 )
+ENDIF()
+
 MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
 MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
