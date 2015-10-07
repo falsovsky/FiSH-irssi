@@ -232,7 +232,7 @@ void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
 #endif
 
 	//channel?
-	if (ischannel(*target))
+	if (fish_ischannel(*target))
 		contactPtr = target;
 	else if (strcmp(nick, "-psyBNC") == 0) {	// psyBNC log message found             // <-psyBNC> Nw~Thu Mar 29 15:02:45 :(yourmom!ident@get.se) +OK e3454451hbadA0
 
@@ -398,7 +398,7 @@ void decrypt_notice(SERVER_REC * server, char *msg, char *nick, char *address,
 #endif
 
 	decrypted = g_string_new("");
-	if (FiSH_decrypt(server, msg, ischannel(*target) ? target : nick, decrypted)) {
+	if (FiSH_decrypt(server, msg, fish_ischannel(*target) ? target : nick, decrypted)) {
 		signal_continue(5, server, decrypted->str, nick, address, target);
 		ZeroMemory(decrypted->str, decrypted->len);
 	}
@@ -413,7 +413,7 @@ void decrypt_action(SERVER_REC * server, char *msg, char *nick, char *address,
 		return;
 
 	decrypted = g_string_new("");
-	if (FiSH_decrypt(server, msg, ischannel(*target) ? target : nick, decrypted)) {
+	if (FiSH_decrypt(server, msg, fish_ischannel(*target) ? target : nick, decrypted)) {
 		signal_continue(5, server, decrypted->str, nick, address, target);
 		ZeroMemory(decrypted->str, decrypted->len);
 	}
@@ -603,7 +603,7 @@ void cmd_crypt_topic(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	else
 		goto topic_error;
 
-	if (!ischannel(*target)) {
+	if (!fish_ischannel(*target)) {
 		printtext(server, target, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 Please change to the channel window where you want to set the topic!");
 		goto topic_error;
@@ -1061,7 +1061,7 @@ void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
 		}
 	}
 
-	if (ischannel(*target)) {
+	if (fish_ischannel(*target)) {
 		printtext(server, target, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 KeyXchange does not work for channels!");
 		return;
@@ -1085,7 +1085,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
 	char hisPubKey[300], contactName[CONTACT_SIZE] =
 	    "", encryptedKey[KEYBUF_SIZE] = "";
 
-	if (ischannel(*target) || ischannel(*nick))
+	if (fish_ischannel(*target) || fish_ischannel(*nick))
 		return;		// no KeyXchange for channels...
 	i = strlen(msg);
 	if (i < 191 || i > 195)

@@ -14,6 +14,12 @@
 #define IsNULLorEmpty(psz) (psz==NULL || *psz=='\0')
 #define isNoChar(c) ((c) == 'n' || (c) == 'N' || (c) == '0')
 
+#define fish_ischannel(a) \
+	((a) == '#' || /* normal */ \
+	(a) == '&' || /* local */ \
+	(a) == '!' || /* secure */ \
+	(a) == '+') /* modeless */
+
 // comment this out if you don't use ZNC
 // #define FiSH_DECRYPT_ZNC_LOGS
 
