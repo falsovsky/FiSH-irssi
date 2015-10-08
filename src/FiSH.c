@@ -16,14 +16,27 @@ static const char default_iniKey[] = "blowinikey";
  */
 int getContactKey(const char *contactPtr, char *theKey)
 {
-	char tmpKey[KEYBUF_SIZE] = "";
+	//char tmpKey[KEYBUF_SIZE] = "";
+	char *tmpKey;
 	int bRet = FALSE;
+	int keysize;
+	int lolsize;
+	char debug[500];
 
-	getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
+	keysize = getIniSize(contactPtr, "key", iniPath);
+	tmpKey = (char *) malloc( (keysize - 1) * sizeof(char));
+	
+	//getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
+	lolsize = getIniValue(contactPtr, "key", "", tmpKey, keysize, iniPath);
+
+	sprintf(debug, "%d - %d - %s - %s" , keysize, lolsize, tmpKey, theKey);
+	printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
 
 	// don't process, encrypted key not found in ini
-	if (strlen(tmpKey) < 16)
+	if (strlen(tmpKey) < 16) {
+		free(tmpKey);
 		return FALSE;
+	}
 
 	// encrypted key found
 	if (strncmp(tmpKey, "+OK ", 4) == 0) {
@@ -36,7 +49,8 @@ int getContactKey(const char *contactPtr, char *theKey)
 		bRet = TRUE;
 	}
 
-	ZeroMemory(tmpKey, KEYBUF_SIZE);
+	//ZeroMemory(tmpKey, keysize);
+	free(tmpKey);
 	return bRet;
 }
 
@@ -888,7 +902,10 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC * server,
 void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	GHashTable *optlist;
-	char contactName[CONTACT_SIZE] = "", encryptedKey[150] = "";
+	char contactName[CONTACT_SIZE] = "";
+	char debug[10] = "";
+	char *encryptedKey;
+
 	const char *target, *key;
 	void *free_arg;
 
@@ -931,22 +948,29 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		}
 	}
 
+	sprintf(debug, "data: %d - key: %d", strlen(data), strlen(key));
+	printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
+
+	encryptedKey = (char *) malloc( (strlen(key) * 3) * sizeof(char) );
+
 	encrypt_key((char *)key, encryptedKey);
 
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
 		return;
 
 	if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
-		ZeroMemory(encryptedKey, sizeof(encryptedKey));
+		//ZeroMemory(encryptedKey, sizeof(encryptedKey));
 		printtext(server,
 			  item != NULL ? window_item_get_target(item) : NULL,
 			  MSGLEVEL_CRAP,
 			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 		cmd_params_free(free_arg);
+		free(encryptedKey);
 		return;
 	}
 
-	ZeroMemory(encryptedKey, sizeof(encryptedKey));
+	//ZeroMemory(encryptedKey, sizeof(encryptedKey));
+	free(encryptedKey);
 
 	printtext(server, item != NULL ? window_item_get_target(item) : NULL,
 		  MSGLEVEL_CRAP,
