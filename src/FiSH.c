@@ -888,7 +888,7 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC * server,
 void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	GHashTable *optlist;
-	char contactName[CONTACT_SIZE] = "", encryptedKey[150] = "";
+	char contactName[CONTACT_SIZE] = "", encryptedKey[160] = "";
 	const char *target, *key;
 	void *free_arg;
 
