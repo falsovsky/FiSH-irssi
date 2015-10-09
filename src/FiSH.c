@@ -23,7 +23,8 @@ int getContactKey(const char *contactPtr, char *theKey)
 	//char debug[500];
 
 	keysize = getIniSize(contactPtr, "key", iniPath);
-	tmpKey = (char *) malloc( (keysize - 1) * sizeof(char));
+	//tmpKey = (char *) malloc( (keysize - 1) * sizeof(char));
+	tmpKey = (char *) malloc( (keysize * 2) * sizeof(char));
 	
 	//getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
 	getIniValue(contactPtr, "key", "", tmpKey, keysize, iniPath);
@@ -35,7 +36,7 @@ int getContactKey(const char *contactPtr, char *theKey)
 	//if (strlen(tmpKey) < 16) {
 	if (keysize < 16) {
 		free(tmpKey);
-		return FALSE;
+		return bRet;
 	}
 
 	// encrypted key found
@@ -51,6 +52,7 @@ int getContactKey(const char *contactPtr, char *theKey)
 
 	//ZeroMemory(tmpKey, keysize);
 	free(tmpKey);
+
 	return bRet;
 }
 
