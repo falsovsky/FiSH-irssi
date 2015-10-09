@@ -48,7 +48,7 @@ int getIniValue(const char *section, const char *key, const char *default_value,
 	GKeyFile *key_file;
 	GError *error = NULL;
 	gchar *value = NULL;
-	char debug[500];
+	//char debug[500];
 
 	key_file = g_key_file_new();
 
@@ -59,15 +59,14 @@ int getIniValue(const char *section, const char *key, const char *default_value,
 		// If the record was found...
 		value = g_key_file_get_string(key_file, section, key, &error);
 		if (value != NULL && error == NULL) {
-			sprintf(debug, "'%s'", value);
-			printtext(NULL, NULL, 0x0000001, debug);
+			//sprintf(debug, "'%s'", value);
+			//printtext(NULL, NULL, 0x0000001, debug);
 			
 			strncpy(buffer, value, (size_t) buflen);
-			//buffer[buflen] = '\0';
 			buffer[buflen] = '\0';
 
-			sprintf(debug, "'%s'", buffer);
-			printtext(NULL, NULL, 0x0000001, debug);
+			//sprintf(debug, "'%s'", buffer);
+			//printtext(NULL, NULL, 0x0000001, debug);
 		}
 	}
 
@@ -79,7 +78,8 @@ int getIniValue(const char *section, const char *key, const char *default_value,
 		strncpy(buffer, default_value, (size_t) buflen);
 	}
 
-	return (int)strlen(buffer);
+	//return (int)strlen(buffer);
+	return 0;
 }
 
 int getIniSize(const char *section, const char *key, const char *filepath) {

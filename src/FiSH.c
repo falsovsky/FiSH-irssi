@@ -20,20 +20,20 @@ int getContactKey(const char *contactPtr, char *theKey)
 	char *tmpKey;
 	int bRet = FALSE;
 	int keysize;
-	int lolsize;
-	char debug[500];
+	//char debug[500];
 
 	keysize = getIniSize(contactPtr, "key", iniPath);
 	tmpKey = (char *) malloc( (keysize - 1) * sizeof(char));
 	
 	//getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
-	lolsize = getIniValue(contactPtr, "key", "", tmpKey, keysize, iniPath);
+	getIniValue(contactPtr, "key", "", tmpKey, keysize, iniPath);
 
-	sprintf(debug, "%d - %d - %s - %s" , keysize, lolsize, tmpKey, theKey);
-	printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
+	//sprintf(debug, "%d - %s - %s" , keysize, tmpKey, theKey);
+	//printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
 
 	// don't process, encrypted key not found in ini
-	if (strlen(tmpKey) < 16) {
+	//if (strlen(tmpKey) < 16) {
+	if (keysize < 16) {
 		free(tmpKey);
 		return FALSE;
 	}
@@ -948,8 +948,8 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		}
 	}
 
-	sprintf(debug, "data: %d - key: %d", strlen(data), strlen(key));
-	printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
+	//sprintf(debug, "data: %d - key: %d", strlen(data), strlen(key));
+	//printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
 
 	encryptedKey = (char *) malloc( (strlen(key) * 3) * sizeof(char) );
 
