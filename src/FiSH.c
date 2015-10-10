@@ -917,8 +917,8 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	GHashTable *optlist;
 	char contactName[CONTACT_SIZE] = "";
-	char debug[10] = "";
 	char *encryptedKey;
+	int keysize;
 
 	const char *target, *key;
 	void *free_arg;
@@ -962,10 +962,8 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		}
 	}
 
-	//sprintf(debug, "data: %d - key: %d", strlen(data), strlen(key));
-	//printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
-
-	encryptedKey = (char *) malloc( (strlen(key) * 3) * sizeof(char) );
+	keysize = (strlen(key) * 3) * sizeof(char);
+	encryptedKey = (char *) malloc(keysize);
 
 	encrypt_key((char *)key, encryptedKey);
 
@@ -973,17 +971,17 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		return;
 
 	if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
-		//ZeroMemory(encryptedKey, sizeof(encryptedKey));
 		printtext(server,
 			  item != NULL ? window_item_get_target(item) : NULL,
 			  MSGLEVEL_CRAP,
 			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 		cmd_params_free(free_arg);
+		bzero(encryptedKey, keysize);
 		free(encryptedKey);
 		return;
 	}
 
-	//ZeroMemory(encryptedKey, sizeof(encryptedKey));
+	bzero(encryptedKey, keysize);
 	free(encryptedKey);
 
 	printtext(server, item != NULL ? window_item_get_target(item) : NULL,
