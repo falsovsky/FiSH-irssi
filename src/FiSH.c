@@ -16,25 +16,19 @@ static const char default_iniKey[] = "blowinikey";
  */
 int getContactKey(const char *contactPtr, char *theKey)
 {
-	//char tmpKey[KEYBUF_SIZE] = "";
 	char *tmpKey;
 	int bRet = FALSE;
 	int keysize;
-	//char debug[500];
 
 	keysize = getIniSize(contactPtr, "key", iniPath);
-	//tmpKey = (char *) malloc( (keysize - 1) * sizeof(char));
-	tmpKey = (char *) malloc( (keysize * 2) * sizeof(char));
+	keysize = (keysize * 2) * sizeof(char);
+	tmpKey = (char *) malloc(keysize);
 	
-	//getIniValue(contactPtr, "key", "", tmpKey, KEYBUF_SIZE, iniPath);
 	getIniValue(contactPtr, "key", "", tmpKey, keysize, iniPath);
 
-	//sprintf(debug, "%d - %s - %s" , keysize, tmpKey, theKey);
-	//printtext(NULL, NULL, MSGLEVEL_CRAP, debug);
-
 	// don't process, encrypted key not found in ini
-	//if (strlen(tmpKey) < 16) {
-	if (keysize < 16) {
+	if (strlen(tmpKey) < 16) {
+		bzero(tmpKey, keysize);
 		free(tmpKey);
 		return bRet;
 	}
@@ -50,7 +44,7 @@ int getContactKey(const char *contactPtr, char *theKey)
 		bRet = TRUE;
 	}
 
-	//ZeroMemory(tmpKey, keysize);
+	bzero(tmpKey, keysize);
 	free(tmpKey);
 
 	return bRet;
@@ -103,7 +97,8 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
 int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 		 const char *target, char *bf_dest)
 {
-	char theKey[KEYBUF_SIZE] = "";
+	int keysize;
+	char *theKey;
 	char contactName[CONTACT_SIZE] = "";
 
 	if (IsNULLorEmpty(msgPtr) || bf_dest == NULL || IsNULLorEmpty(target))
@@ -115,14 +110,22 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
 		return 0;
 
-	if (getContactKey(contactName, theKey) == FALSE)
+	keysize = getIniSize(contactName, "key", iniPath);
+	keysize = (keysize * 2) * sizeof(char);
+	theKey = (char *) malloc(keysize);
+
+	if (getContactKey(contactName, theKey) == FALSE) {
+		bzero(theKey, keysize);
+		free(theKey);
 		return 0;
+	}
 
 	strcpy(bf_dest, "+OK ");
 
 	encrypt_string(theKey, msgPtr, bf_dest + 4, strlen(msgPtr));
 
-	ZeroMemory(theKey, KEYBUF_SIZE);
+	bzero(theKey, keysize);
+	free(theKey);
 
 	return 1;
 }
@@ -134,7 +137,8 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 		 const char *target, GString* decrypted_msg)
 {
 	char contactName[CONTACT_SIZE] = "";
-	char theKey[KEYBUF_SIZE] = "";
+	char *theKey;
+	int keysize;
 	char bf_dest[1000] = "";
 	char myMark[20] = "";
 	char *recoded;
@@ -162,8 +166,15 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
 		return 0;
 
-	if (getContactKey(contactName, theKey) == FALSE)
+	keysize = getIniSize(contactName, "key", iniPath);
+	keysize = (keysize * 2) * sizeof(char);
+	theKey = (char *) malloc(keysize);
+
+	if (getContactKey(contactName, theKey) == FALSE) {
+		bzero(theKey, keysize);
+		free(theKey);
 		return 0;
+	}
 
 	// usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
 	if (msg_len >= (int)(sizeof(bf_dest) * 1.5))
@@ -183,7 +194,8 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 	}
 
 	decrypt_string(theKey, msg_ptr, bf_dest, msg_len);
-	ZeroMemory(theKey, KEYBUF_SIZE);
+	bzero(theKey, keysize);
+	free(theKey);
 
 	if (*bf_dest == '\0')
 		return 0;	// don't process, decrypted msg is bad
@@ -1031,7 +1043,9 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
 	GHashTable *optlist;
 	char *target;
-	char contactName[CONTACT_SIZE] = "", theKey[KEYBUF_SIZE] = "";
+	char contactName[CONTACT_SIZE] = "";
+	char *theKey;
+	int keysize;
 	void *free_arg;
 
 	if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_OPTIONS |
@@ -1059,8 +1073,14 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
 		return;
 
+	keysize = getIniSize(contactName, "key", iniPath);
+	keysize = (keysize * 2) * sizeof(char);
+	theKey = (char *) malloc(keysize);
+
 	if (getContactKey(contactName, theKey) == FALSE) {
-		ZeroMemory(theKey, KEYBUF_SIZE);
+		bzero(theKey, keysize);
+		free(theKey);
+
 		printtext(server,
 			  item != NULL ? window_item_get_target(item) : NULL,
 			  MSGLEVEL_CRAP,
@@ -1072,7 +1092,9 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	printtext(server, target, MSGLEVEL_CRAP,
 		  "\002FiSH:\002 Key for %s@%s: %s", target, server->tag,
 		  theKey);
-	ZeroMemory(theKey, KEYBUF_SIZE);
+
+	bzero(theKey, keysize);
+	free(theKey);
 }
 
 void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
@@ -1189,7 +1211,9 @@ void do_auto_keyx(QUERY_REC * query, int automatic)
  */
 void query_nick_changed(QUERY_REC * query, char *orignick)
 {
-	char theKey[KEYBUF_SIZE] = "", contactName[CONTACT_SIZE] = "";
+	char *theKey;
+	int keysize;
+	char contactName[CONTACT_SIZE] = "";
 
 	if (settings_get_bool("nicktracker") == 0)
 		return;
@@ -1201,18 +1225,29 @@ void query_nick_changed(QUERY_REC * query, char *orignick)
 	    FALSE)
 		return;
 
-	if (getContactKey(contactName, theKey) == FALSE)
+	keysize = getIniSize(contactName, "key", iniPath);
+	keysize = (keysize * 2) * sizeof(char);
+	theKey = (char *) malloc(keysize);
+
+	if (getContactKey(contactName, theKey) == FALSE) {
+		bzero(theKey, keysize);
+		free(theKey);
 		return;		// see if there is a key for the old nick
+	}
 
 	if (getIniSectionForContact(query->server, query->name, contactName) ==
-	    FALSE)
+	    FALSE) {
+		bzero(theKey, keysize);
+	    free(theKey);
 		return;
+	}
 
 	if (setIniValue(contactName, "key", theKey, iniPath) == -1)
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 
-	ZeroMemory(theKey, KEYBUF_SIZE);
+	bzero(theKey, keysize);
+	free(theKey);
 }
 
 void prompt_for_password(char *a_output)
