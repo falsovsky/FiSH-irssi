@@ -726,11 +726,14 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
 	GError *error = NULL;
 	gsize groups_count = 0;
 	int i;
-	char bfKey[512];
-	char newbfKey[74];
-	char plusOk[78];
-
 	int re_enc = 0;
+	int newbfKeySize;
+	char *newbfKey;
+	int plusOkSize;
+	char *plusOk;
+	int bfKeySize;
+	char *bfKey;
+
 
 	g_key_file_load_from_file(config, iniPath, G_KEY_FILE_NONE, &error);
 	if (error != NULL) {
@@ -767,15 +770,26 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
 			if (strncmp(value, "+OK ", 4) == 0) {
 				re_enc = 1;
 
+				bfKeySize = strlen(value + 4) * 2 * sizeof(char);
+				bfKey = (char *) malloc(bfKeySize);
 				decrypt_string(old_iniKey, value + 4, bfKey, strlen(value + 4));
+
+				newbfKeySize = strlen(bfKey) * 2 * sizeof(char);
+				newbfKey = (char *) malloc(newbfKeySize);
 				encrypt_string(iniKey, bfKey, newbfKey, strlen(bfKey));
 
-				snprintf(plusOk, 78, "+OK %s", newbfKey);
+				plusOkSize = (strlen(newbfKey) + 4) * 2 * sizeof(char);
+				plusOk = (char *) malloc(plusOkSize);
+				snprintf(plusOk, plusOkSize, "+OK %s", newbfKey);
 
 				setIniValue(groups[i], keys[j], plusOk, iniPath_new);
 
-				ZeroMemory(plusOk, sizeof(plusOk));
-				ZeroMemory(newbfKey, sizeof(newbfKey));
+				bzero(bfKey, bfKeySize);
+				free(bfKey);
+				bzero(newbfKey, newbfKeySize);
+				free(newbfKey);
+				bzero(plusOk, plusOkSize);
+				free(plusOk);
 			}
 
 			g_free(value);
