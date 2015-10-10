@@ -770,15 +770,15 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
 			if (strncmp(value, "+OK ", 4) == 0) {
 				re_enc = 1;
 
-				bfKeySize = strlen(value + 4) * 2 * sizeof(char);
+				bfKeySize = strlen(value + 4) * sizeof(char);
 				bfKey = (char *) malloc(bfKeySize);
 				decrypt_string(old_iniKey, value + 4, bfKey, strlen(value + 4));
 
-				newbfKeySize = strlen(bfKey) * 2 * sizeof(char);
+				newbfKeySize = strlen(bfKey) * sizeof(char);
 				newbfKey = (char *) malloc(newbfKeySize);
 				encrypt_string(iniKey, bfKey, newbfKey, strlen(bfKey));
 
-				plusOkSize = (strlen(newbfKey) + 4) * 2 * sizeof(char);
+				plusOkSize = (strlen(newbfKey) + 4) * sizeof(char);
 				plusOk = (char *) malloc(plusOkSize);
 				snprintf(plusOk, plusOkSize, "+OK %s", newbfKey);
 
