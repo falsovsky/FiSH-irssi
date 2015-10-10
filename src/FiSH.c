@@ -18,17 +18,18 @@ int getContactKey(const char *contactPtr, char *theKey)
 {
 	char *tmpKey;
 	int bRet = FALSE;
-	int keysize;
+	int iniKeySize;
+	int keySize;
 
-	keysize = getIniSize(contactPtr, "key", iniPath);
-	keysize = (keysize * 2) * sizeof(char);
-	tmpKey = (char *) malloc(keysize);
+	iniKeySize = getIniSize(contactPtr, "key", iniPath);
+	keySize = (iniKeySize * 2) * sizeof(char);
+	tmpKey = (char *) malloc(keySize);
 	
-	getIniValue(contactPtr, "key", "", tmpKey, keysize, iniPath);
+	getIniValue(contactPtr, "key", "", tmpKey, iniKeySize, iniPath);
 
 	// don't process, encrypted key not found in ini
 	if (strlen(tmpKey) < 16) {
-		bzero(tmpKey, keysize);
+		bzero(tmpKey, keySize);
 		free(tmpKey);
 		return bRet;
 	}
@@ -44,7 +45,7 @@ int getContactKey(const char *contactPtr, char *theKey)
 		bRet = TRUE;
 	}
 
-	bzero(tmpKey, keysize);
+	bzero(tmpKey, keySize);
 	free(tmpKey);
 
 	return bRet;
@@ -97,7 +98,7 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
 int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 		 const char *target, char *bf_dest)
 {
-	int keysize;
+	int keySize;
 	char *theKey;
 	char contactName[CONTACT_SIZE] = "";
 
@@ -110,12 +111,12 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
 		return 0;
 
-	keysize = getIniSize(contactName, "key", iniPath);
-	keysize = (keysize * 2) * sizeof(char);
-	theKey = (char *) malloc(keysize);
+	keySize = getIniSize(contactName, "key", iniPath);
+	keySize = (keySize * 2) * sizeof(char);
+	theKey = (char *) malloc(keySize);
 
 	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keysize);
+		bzero(theKey, keySize);
 		free(theKey);
 		return 0;
 	}
@@ -124,7 +125,7 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 
 	encrypt_string(theKey, msgPtr, bf_dest + 4, strlen(msgPtr));
 
-	bzero(theKey, keysize);
+	bzero(theKey, keySize);
 	free(theKey);
 
 	return 1;
@@ -138,7 +139,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 {
 	char contactName[CONTACT_SIZE] = "";
 	char *theKey;
-	int keysize;
+	int keySize;
 	char bf_dest[1000] = "";
 	char myMark[20] = "";
 	char *recoded;
@@ -166,12 +167,12 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
 		return 0;
 
-	keysize = getIniSize(contactName, "key", iniPath);
-	keysize = (keysize * 2) * sizeof(char);
-	theKey = (char *) malloc(keysize);
+	keySize = getIniSize(contactName, "key", iniPath);
+	keySize = (keySize * 2) * sizeof(char);
+	theKey = (char *) malloc(keySize);
 
 	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keysize);
+		bzero(theKey, keySize);
 		free(theKey);
 		return 0;
 	}
@@ -194,7 +195,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 	}
 
 	decrypt_string(theKey, msg_ptr, bf_dest, msg_len);
-	bzero(theKey, keysize);
+	bzero(theKey, keySize);
 	free(theKey);
 
 	if (*bf_dest == '\0')
@@ -918,7 +919,7 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	GHashTable *optlist;
 	char contactName[CONTACT_SIZE] = "";
 	char *encryptedKey;
-	int keysize;
+	int keySize;
 
 	const char *target, *key;
 	void *free_arg;
@@ -962,13 +963,16 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		}
 	}
 
-	keysize = (strlen(key) * 3) * sizeof(char);
-	encryptedKey = (char *) malloc(keysize);
+	keySize = (strlen(key) * 3) * sizeof(char);
+	encryptedKey = (char *) malloc(keySize);
 
 	encrypt_key((char *)key, encryptedKey);
 
-	if (getIniSectionForContact(server, target, contactName) == FALSE)
+	if (getIniSectionForContact(server, target, contactName) == FALSE) {
+		bzero(encryptedKey, keySize);
+		free(encryptedKey);
 		return;
+	}
 
 	if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
 		printtext(server,
@@ -976,12 +980,12 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 			  MSGLEVEL_CRAP,
 			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 		cmd_params_free(free_arg);
-		bzero(encryptedKey, keysize);
+		bzero(encryptedKey, keySize);
 		free(encryptedKey);
 		return;
 	}
 
-	bzero(encryptedKey, keysize);
+	bzero(encryptedKey, keySize);
 	free(encryptedKey);
 
 	printtext(server, item != NULL ? window_item_get_target(item) : NULL,
@@ -1043,7 +1047,7 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	char *target;
 	char contactName[CONTACT_SIZE] = "";
 	char *theKey;
-	int keysize;
+	int keySize;
 	void *free_arg;
 
 	if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_OPTIONS |
@@ -1071,12 +1075,12 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
 		return;
 
-	keysize = getIniSize(contactName, "key", iniPath);
-	keysize = (keysize * 2) * sizeof(char);
-	theKey = (char *) malloc(keysize);
+	keySize = getIniSize(contactName, "key", iniPath);
+	keySize = (keySize * 2) * sizeof(char);
+	theKey = (char *) malloc(keySize);
 
 	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keysize);
+		bzero(theKey, keySize);
 		free(theKey);
 
 		printtext(server,
@@ -1091,7 +1095,7 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 		  "\002FiSH:\002 Key for %s@%s: %s", target, server->tag,
 		  theKey);
 
-	bzero(theKey, keysize);
+	bzero(theKey, keySize);
 	free(theKey);
 }
 
@@ -1210,7 +1214,7 @@ void do_auto_keyx(QUERY_REC * query, int automatic)
 void query_nick_changed(QUERY_REC * query, char *orignick)
 {
 	char *theKey;
-	int keysize;
+	int keySize;
 	char contactName[CONTACT_SIZE] = "";
 
 	if (settings_get_bool("nicktracker") == 0)
@@ -1223,19 +1227,19 @@ void query_nick_changed(QUERY_REC * query, char *orignick)
 	    FALSE)
 		return;
 
-	keysize = getIniSize(contactName, "key", iniPath);
-	keysize = (keysize * 2) * sizeof(char);
-	theKey = (char *) malloc(keysize);
+	keySize = getIniSize(contactName, "key", iniPath);
+	keySize = (keySize * 2) * sizeof(char);
+	theKey = (char *) malloc(keySize);
 
 	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keysize);
+		bzero(theKey, keySize);
 		free(theKey);
 		return;		// see if there is a key for the old nick
 	}
 
 	if (getIniSectionForContact(query->server, query->name, contactName) ==
 	    FALSE) {
-		bzero(theKey, keysize);
+		bzero(theKey, keySize);
 	    free(theKey);
 		return;
 	}
@@ -1244,7 +1248,7 @@ void query_nick_changed(QUERY_REC * query, char *orignick)
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 
-	bzero(theKey, keysize);
+	bzero(theKey, keySize);
 	free(theKey);
 }
 
