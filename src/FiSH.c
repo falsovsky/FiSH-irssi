@@ -799,40 +799,63 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 	char B64digest[50] = { '\0' };
 	char key[32] = { '\0' };
 	char hash[32] = { '\0' };
+	char iniPath_new[300];
+	int old_iniKeySize;
+	char *old_iniKey;
+	int new_iniKeySize;
+	char *new_iniKey;
 
-	char new_iniKey[KEYBUF_SIZE], old_iniKey[KEYBUF_SIZE], iniPath_new[300];
-
+	old_iniKeySize = strlen(iniKey) * sizeof(char);
+	old_iniKey = (char *) malloc(old_iniKeySize);
 	strcpy(old_iniKey, iniKey);
 
 	if (iniPW != NULL) {
 		pw_len = strlen(iniPW);
-		if (pw_len < 1 || (size_t) pw_len > sizeof(new_iniKey)) {
+
+		new_iniKeySize = (pw_len * 2) * sizeof(char);
+		new_iniKey = (char *) malloc(new_iniKeySize);
+
+		if (pw_len < 1 || (size_t) pw_len > new_iniKeySize) {
 			printtext(server,
-				  item !=
-				  NULL ? window_item_get_target(item) : NULL,
-				  MSGLEVEL_CRAP,
-				  "\002FiSH:\002 No parameters. Usage: /setinipw <sekure_blow.ini_password>");
+				item !=
+				NULL ? window_item_get_target(item) : NULL,
+				MSGLEVEL_CRAP,
+				"\002FiSH:\002 No parameters. Usage: /setinipw <sekure_blow.ini_password>");
+			bzero(old_iniKey, old_iniKeySize);
+			free(old_iniKey);
+			bzero(new_iniKey, new_iniKeySize);
+			free(new_iniKey);
 			return;
 		}
 
-		if (strfcpy(new_iniKey, (char *)iniPW, sizeof(new_iniKey)) ==
-		    NULL)
+		if (strfcpy(new_iniKey, (char *)iniPW, new_iniKeySize) == NULL) {
+			bzero(old_iniKey, old_iniKeySize);
+			free(old_iniKey);
+			bzero(new_iniKey, new_iniKeySize);
+			free(new_iniKey);
 			return;
+		}
+
 		ZeroMemory(iniPW, pw_len);
 		pw_len = strlen(new_iniKey);
 
 		if (pw_len < 8) {
 			printtext(server,
-				  item !=
-				  NULL ? window_item_get_target(item) : NULL,
-				  MSGLEVEL_CRAP,
-				  "\002FiSH:\002 Password too short, at least 8 characters needed! Usage: /setinipw <sekure_blow.ini_password>");
+				item !=
+				NULL ? window_item_get_target(item) : NULL,
+				MSGLEVEL_CRAP,
+				"\002FiSH:\002 Password too short, at least 8 characters needed! Usage: /setinipw <sekure_blow.ini_password>");
+			bzero(old_iniKey, old_iniKeySize);
+			free(old_iniKey);
+			bzero(new_iniKey, new_iniKeySize);
+			free(new_iniKey);
 			return;
 		}
 
 		key_from_password(new_iniKey, key);
 		htob64(key, B64digest, 32);
-		ZeroMemory(new_iniKey, sizeof(new_iniKey));
+		bzero(new_iniKey, new_iniKeySize);
+		free(new_iniKey);
 		strcpy(iniKey, B64digest);	// this is used for encrypting blow.ini
 	} else {
 		strcpy(iniKey, default_iniKey);	// use default blow.ini key
@@ -849,24 +872,25 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 
 	re_enc = recrypt_ini_file(iniPath, iniPath_new, old_iniKey);
 	if (re_enc < 0) {
-		ZeroMemory(B64digest, sizeof(B64digest));
-		ZeroMemory(old_iniKey, sizeof(old_iniKey));
-
 		printtext(server,
-			  item != NULL ? window_item_get_target(item) : NULL,
-			  MSGLEVEL_CRAP,
-			  "\002FiSH ERROR:\002 Unable to write new blow.ini, probably out of disc space.");
+			item != NULL ? window_item_get_target(item) : NULL,
+			MSGLEVEL_CRAP,
+			"\002FiSH ERROR:\002 Unable to write new blow.ini, probably out of disc space.");
+		ZeroMemory(B64digest, sizeof(B64digest));
+		bzero(old_iniKey, old_iniKeySize);
+		free(old_iniKey);
 		return;
 	} else {
-		ZeroMemory(old_iniKey, sizeof(old_iniKey));
+		bzero(old_iniKey, old_iniKeySize);
+		free(old_iniKey);
 	}
 
 	if (setIniValue("FiSH", "ini_password_Hash", B64digest, iniPath) == -1) {
 		ZeroMemory(B64digest, sizeof(B64digest));
 		printtext(server,
-			  item != NULL ? window_item_get_target(item) : NULL,
-			  MSGLEVEL_CRAP,
-			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
+			item != NULL ? window_item_get_target(item) : NULL,
+			MSGLEVEL_CRAP,
+			"\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 		return;
 	}
 
@@ -874,16 +898,16 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 
 	if (re_enc) {
 		printtext(server,
-			  item != NULL ? window_item_get_target(item) : NULL,
-			  MSGLEVEL_CRAP,
-			  "\002FiSH: Re-encrypted blow.ini\002 with new password.");
+			item != NULL ? window_item_get_target(item) : NULL,
+			MSGLEVEL_CRAP,
+			"\002FiSH: Re-encrypted blow.ini\002 with new password.");
 	}
 
 	if (iniPW != NULL) {
 		printtext(server,
-			  item != NULL ? window_item_get_target(item) : NULL,
-			  MSGLEVEL_CRAP,
-			  "\002FiSH:\002 blow.ini password hash saved.");
+			item != NULL ? window_item_get_target(item) : NULL,
+			MSGLEVEL_CRAP,
+			"\002FiSH:\002 blow.ini password hash saved.");
 	}
 }
 
@@ -1359,10 +1383,10 @@ void fish_init(void)
 {
 	char iniPasswordHash[50];
 
-        printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
+	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		"FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
-                 "URL: https://github.com/falsovsky/FiSH-irssi\n"
-                 "Try /helpfish or /fishhelp for a short command overview");
+		"URL: https://github.com/falsovsky/FiSH-irssi\n"
+		"Try /helpfish or /fishhelp for a short command overview");
 
 	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
@@ -1371,19 +1395,19 @@ void fish_init(void)
 	if (DH1080_Init() == FALSE)
 		return;
 
-        get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
+	get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
  
-        if (strlen(iniPasswordHash) != 43) {
- 		strcpy(iniKey, default_iniKey);
+	if (strlen(iniPasswordHash) != 43) {
+		strcpy(iniKey, default_iniKey);
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
-			  "\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");
+			"\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");
  
-                setup_fish();
-        } else {
+		setup_fish();
+	} else {
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
-				"\002FiSH:\002 Current blow.ini is password protected.");
+			"\002FiSH:\002 Current blow.ini is password protected.");
 		cmd_fishlogin(NULL, NULL, NULL);
-        }
+	}
 
 	module_register("fish", "core");
 }
