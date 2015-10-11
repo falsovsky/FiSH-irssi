@@ -770,15 +770,15 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
 			if (strncmp(value, "+OK ", 4) == 0) {
 				re_enc = 1;
 
-				bfKeySize = strlen(value + 4) * sizeof(char);
+				bfKeySize = (strlen(value) * 2) * sizeof(char);
 				bfKey = (char *) malloc(bfKeySize);
 				decrypt_string(old_iniKey, value + 4, bfKey, strlen(value + 4));
 
-				newbfKeySize = strlen(bfKey) * sizeof(char);
+				newbfKeySize = (strlen(bfKey) * 2)* sizeof(char);
 				newbfKey = (char *) malloc(newbfKeySize);
 				encrypt_string(iniKey, bfKey, newbfKey, strlen(bfKey));
 
-				plusOkSize = (strlen(newbfKey) + 4) * sizeof(char);
+				plusOkSize = (strlen(newbfKey) * 2) * sizeof(char);
 				plusOk = (char *) malloc(plusOkSize);
 				snprintf(plusOk, plusOkSize, "+OK %s", newbfKey);
 
@@ -1358,9 +1358,6 @@ void setup_fish()
 }
  
 void get_ini_password_hash(int password_size, char* password) {
-	strcpy(iniPath, get_irssi_config());	// path to irssi config file
-	strcpy(strrchr(iniPath, '/'), blow_ini);
- 
 	getIniValue("FiSH", "ini_password_Hash", "0", password,
 		    password_size, iniPath);
  
@@ -1368,21 +1365,49 @@ void get_ini_password_hash(int password_size, char* password) {
 
 
 void authenticated_fish_setup(const char *password, void *rec) {
-	char B64digest[50];
-	char iniPasswordHash[50];
+	char *B64digest;
+	int iniPasswordHashSize;
+	char *iniPasswordHash;
+
+	if (strlen(password) == 0) {
+		return;
+	}
+
+	if (iniUsed == 1) {
+		free(iniKey);
+		iniUsed = 0;
+	}
+
+	iniKey = (char *) malloc((strlen(password) * 10) * sizeof(char));
+	iniUsed = 1;
  
-        get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
+	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath) + 1;
+	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
+    get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
  
+	B64digest = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
+
 	calculate_password_key_and_hash(password, iniKey, B64digest);
- 
+
 	if (strcmp(B64digest, iniPasswordHash) != 0) {
+		bzero(iniPasswordHash, iniPasswordHashSize);
+		free(iniPasswordHash);
+		bzero(B64digest, (iniPasswordHashSize * 2) * sizeof(char));
+		free(B64digest);
+
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 Wrong blow.ini password entered... Please \002/fishlogin\002 to try again");
 		return;
 	}
+
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
 		  "\002FiSH:\002 Correct blow.ini password entered, lets go!");
  
+	bzero(iniPasswordHash, iniPasswordHashSize);
+	free(iniPasswordHash);
+	bzero(B64digest, (iniPasswordHashSize * 2) * sizeof(char));
+	free(B64digest);
+
 	setup_fish();
 }
 
@@ -1395,7 +1420,8 @@ void cmd_fishlogin(const char *data, SERVER_REC * server, WI_ITEM_REC * item) {
 
 void fish_init(void)
 {
-	char iniPasswordHash[50];
+	int iniPasswordHashSize;
+	char *iniPasswordHash;
 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		"FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
@@ -1409,9 +1435,18 @@ void fish_init(void)
 	if (DH1080_Init() == FALSE)
 		return;
 
-	get_ini_password_hash(sizeof(iniPasswordHash), iniPasswordHash);
- 
+	strcpy(iniPath, get_irssi_config());	// path to irssi config file
+	strcpy(strrchr(iniPath, '/'), blow_ini);
+
+	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath);
+	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
+
+	get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
+
 	if (strlen(iniPasswordHash) != 43) {
+		iniKey = (char *) malloc((strlen(default_iniKey)* 2) * sizeof(char));
+		iniUsed = 1;
+		//iniKey = realloc(iniKey, strlen(default_iniKey) * sizeof(char));
 		strcpy(iniKey, default_iniKey);
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			"\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");
@@ -1424,6 +1459,8 @@ void fish_init(void)
 	}
 
 	module_register("fish", "core");
+	bzero(iniPasswordHash, iniPasswordHashSize);
+	free(iniPasswordHash);
 }
  
 
@@ -1463,6 +1500,8 @@ void fish_deinit(void)
 	command_unbind("helpfish", (SIGNAL_FUNC) cmd_helpfish);
 
 	DH1080_DeInit();
+
+	//free(iniKey);
 }
 
 /*
