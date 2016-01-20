@@ -1446,12 +1446,7 @@ void fish_init(void)
 	strcpy(strrchr(iniPath, '/'), blow_ini);
 
 	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath);
-
-	if (iniPasswordHashSize > 0) {
-		iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
-	} else {
-		iniPasswordHash = (char *) malloc(sizeof(char));
-	}
+	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
 
 	get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
 
@@ -1472,10 +1467,8 @@ void fish_init(void)
 
 	module_register("fish", "core");
 
-	if (iniPasswordHashSize > 0) {
-		bzero(iniPasswordHash, iniPasswordHashSize);
-		free(iniPasswordHash);
-	}
+	bzero(iniPasswordHash, iniPasswordHashSize);
+	free(iniPasswordHash);
 }
  
 

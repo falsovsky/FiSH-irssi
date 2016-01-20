@@ -78,7 +78,7 @@ int getIniSize(const char *section, const char *key, const char *filepath) {
 	GKeyFile *key_file;
 	GError *error = NULL;
 	gchar *value = NULL;
-	int size = 0;
+	int size = 1;
 
 	key_file = g_key_file_new();
 
