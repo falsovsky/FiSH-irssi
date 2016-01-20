@@ -1446,7 +1446,7 @@ void fish_init(void)
 	strcpy(strrchr(iniPath, '/'), blow_ini);
 
 	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath);
-	if (iniPasswordHash > 0) {
+	if (iniPasswordHashSize > 0) {
 		iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
 		get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
 	}
