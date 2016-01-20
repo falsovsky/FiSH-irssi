@@ -1292,6 +1292,13 @@ void cmd_fishlogin(const char *data, SERVER_REC * server, WI_ITEM_REC * item) {
 
 }
 
+#ifdef IRSSI_ABI_VERSION
+void fish_abicheck(int *version)
+{
+    *version = IRSSI_ABI_VERSION;
+}
+#endif
+
 void fish_init(void)
 {
 	char iniPasswordHash[50];
