@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern char *iniKey;
+extern char iniKey[];
 
 #define ZeroMemory(dest,count) memset((void *)dest, 0, count)
 

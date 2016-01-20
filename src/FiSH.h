@@ -46,9 +46,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
 		     char *target);
 
 const char blow_ini[] = "/blow.ini";
-char iniPath[255];
-char *iniKey = NULL;
-int iniUsed = 0;
+char iniKey[100], iniPath[255];
 char g_myPrivKey[300], g_myPubKey[300];
 
 int keyx_query_created = 0;

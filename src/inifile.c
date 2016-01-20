@@ -59,7 +59,6 @@ int getIniValue(const char *section, const char *key, const char *default_value,
 		value = g_key_file_get_string(key_file, section, key, &error);
 		if (value != NULL && error == NULL) {
 			strncpy(buffer, value, (size_t) buflen);
-			buffer[buflen] = '\0';
 		}
 	}
 
@@ -73,28 +72,6 @@ int getIniValue(const char *section, const char *key, const char *default_value,
 
 	return (int)strlen(buffer);
 }
-
-int getIniSize(const char *section, const char *key, const char *filepath) {
-	GKeyFile *key_file;
-	GError *error = NULL;
-	gchar *value = NULL;
-	int size = 0;
-
-	key_file = g_key_file_new();
-
-	if ((int) g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL) == 1) {
-		value = g_key_file_get_string(key_file, section, key, &error);
-		if (value != NULL && error == NULL) {
-			size = strlen(value);
-		}
-	}
-
-	g_free(value);
-	g_key_file_free(key_file);
-
-	return size;
-}
-
 
 int deleteIniValue(const char *section, const char *key, const char *filepath)
 {
