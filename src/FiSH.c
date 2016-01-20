@@ -1383,7 +1383,7 @@ void authenticated_fish_setup(const char *password, void *rec) {
  
 	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath) + 1;
 	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
-    get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
+	get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
  
 	B64digest = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
 
@@ -1446,9 +1446,10 @@ void fish_init(void)
 	strcpy(strrchr(iniPath, '/'), blow_ini);
 
 	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath);
-	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
-
-	get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
+	if (iniPasswordHash > 0) {
+		iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
+		get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
+	}
 
 	if (strlen(iniPasswordHash) != 43) {
 		iniKey = (char *) malloc((strlen(default_iniKey)* 2) * sizeof(char));
@@ -1466,8 +1467,11 @@ void fish_init(void)
 	}
 
 	module_register("fish", "core");
-	bzero(iniPasswordHash, iniPasswordHashSize);
-	free(iniPasswordHash);
+
+	if (iniPasswordHashSize > 0) {
+		bzero(iniPasswordHash, iniPasswordHashSize);
+		free(iniPasswordHash);
+	}
 }
  
 
