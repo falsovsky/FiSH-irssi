@@ -11,11 +11,17 @@
 #include <core/queries.h>
 #include <core/channels.h>
 #include <core/recode.h>
+#include <core/servers.h>
 #include <fe-common/core/printtext.h>
 #include <fe-common/core/window-items.h>
 #include <fe-common/core/keyboard.h>
 #include <fe-common/irc/module-formats.h>
 #include <irc/core/irc.h>
+
+#ifdef ischannel
+#undef ischannel
+#endif
+
 #include <irc/core/irc-commands.h>
 #include <irc/core/irc-servers.h>
 
