@@ -157,17 +157,17 @@ fish_signal_t signals[] = {
   { 0, "channel topic changed", (SIGNAL_FUNC)fish_recv_topic_change },
   { 0, "message topic", (SIGNAL_FUNC) fish_recv_topic },
   { 0, "server incoming", (SIGNAL_FUNC)fish_recv_raw },
-  { 1, "query nick changed", (SIGNAL_FUNC)fish_recv_query_nick_change },
+//  { 1, "complete command topic+", (SIGNAL_FUNC)sig_complete_topic_plus },
   { 2, "topic+", (SIGNAL_FUNC) fish_cmd_topic },
   { 2, "notice+", (SIGNAL_FUNC) fish_cmd_notice },
   { 2, "me+", (SIGNAL_FUNC) fish_cmd_me },
 
 //  Diffie-Hellman exchange
 //  { 1, "query created", (SIGNAL_FUNC)do_auto_keyx },
-//  { 1, "complete command topic+", (SIGNAL_FUNC)sig_complete_topic_plus },
 //  { 2, "keyx", (SIGNAL_FUNC) cmd_keyx);
 
 // Key management
+  { 1, "query nick changed", (SIGNAL_FUNC)fish_recv_query_nick_change },
 //  { 2, "setkey", (SIGNAL_FUNC) cmd_setkey);
 //  { 2, "delkey", (SIGNAL_FUNC) cmd_delkey);
 //  { 2, "key", (SIGNAL_FUNC) cmd_key);
