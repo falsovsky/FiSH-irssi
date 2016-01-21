@@ -814,6 +814,9 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 	ZeroMemory(hash, sizeof(hash));
 	ZeroMemory(key, sizeof(key));
 
+	// Try to create blow.ini if it doesnt exist
+	open(iniPath, O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR);
+
 	// re-encrypt blow.ini with new password
 	strcpy(iniPath_new, iniPath);
 	strcat(iniPath_new, "_new");
