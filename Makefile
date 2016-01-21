@@ -1,4 +1,4 @@
-SRC = v2/irssi.c v2/fish.c
+SRC = v2/irssi.c v2/fish.c v2/blowfish.c
 OBJ = ${SRC:.c=.o}
 
 IRSSI_PATH = ~/work/contrib/irssi/lixo/include/irssi
