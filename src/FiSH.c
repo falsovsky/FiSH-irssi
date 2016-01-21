@@ -16,37 +16,30 @@ static const char default_iniKey[] = "blowinikey";
  */
 int getContactKey(const char *contactPtr, char *theKey)
 {
-	char *tmpKey;
 	int bRet = FALSE;
-	int iniKeySize;
-	int keySize;
+	struct IniValue iniValue;
 
-	iniKeySize = getIniSize(contactPtr, "key", iniPath);
-	keySize = (iniKeySize * 2) * sizeof(char);
-	tmpKey = (char *) malloc(keySize);
-	
-	getIniValue(contactPtr, "key", "", tmpKey, iniKeySize, iniPath);
+	iniValue = allocateIni(contactPtr, "key", iniPath);
+	getIniValue(contactPtr, "key", "", iniValue.key, iniValue.iniKeySize, iniPath);
 
 	// don't process, encrypted key not found in ini
-	if (strlen(tmpKey) < 16) {
-		bzero(tmpKey, keySize);
-		free(tmpKey);
+	if (strlen(iniValue.key) < 16) {
+		freeIni(iniValue);
 		return bRet;
 	}
 
 	// encrypted key found
-	if (strncmp(tmpKey, "+OK ", 4) == 0) {
+	if (strncmp(iniValue.key, "+OK ", 4) == 0) {
 		if (theKey) {
 			// if it's not just a test, lets decrypt the key
-			decrypt_string((char *)iniKey, tmpKey + 4, theKey,
-				       strlen(tmpKey + 4));
+			decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
+				       strlen(iniValue.key + 4));
 		}
 
 		bRet = TRUE;
 	}
 
-	bzero(tmpKey, keySize);
-	free(tmpKey);
+	freeIni(iniValue);
 
 	return bRet;
 }
@@ -98,9 +91,8 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
 int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 		 const char *target, char *bf_dest)
 {
-	int keySize;
-	char *theKey;
 	char contactName[CONTACT_SIZE] = "";
+	struct IniValue iniValue;
 
 	if (IsNULLorEmpty(msgPtr) || bf_dest == NULL || IsNULLorEmpty(target))
 		return 0;
@@ -111,23 +103,18 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
 		return 0;
 
-	keySize = getIniSize(contactName, "key", iniPath);
-	keySize = (keySize * 2) * sizeof(char);
-	theKey = (char *) malloc(keySize);
+	iniValue = allocateIni(contactName, "key", iniPath);
 
-	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keySize);
-		free(theKey);
+	if (getContactKey(contactName, iniValue.key) == FALSE) {
+		freeIni(iniValue);
 		return 0;
 	}
 
 	strcpy(bf_dest, "+OK ");
 
-	encrypt_string(theKey, msgPtr, bf_dest + 4, strlen(msgPtr));
+	encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
 
-	bzero(theKey, keySize);
-	free(theKey);
-
+	freeIni(iniValue);
 	return 1;
 }
 
@@ -138,8 +125,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 		 const char *target, GString* decrypted_msg)
 {
 	char contactName[CONTACT_SIZE] = "";
-	char *theKey;
-	int keySize;
+	struct IniValue iniValue;
 	char bf_dest[1000] = "";
 	char myMark[20] = "";
 	char *recoded;
@@ -167,13 +153,10 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 	if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
 		return 0;
 
-	keySize = getIniSize(contactName, "key", iniPath);
-	keySize = (keySize * 2) * sizeof(char);
-	theKey = (char *) malloc(keySize);
+	iniValue = allocateIni(contactName, "key", iniPath);
 
-	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keySize);
-		free(theKey);
+	if (getContactKey(contactName, iniValue.key) == FALSE) {
+		freeIni(iniValue);
 		return 0;
 	}
 
@@ -194,9 +177,8 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 			mark_broken_block = 1;
 	}
 
-	decrypt_string(theKey, msg_ptr, bf_dest, msg_len);
-	bzero(theKey, keySize);
-	free(theKey);
+	decrypt_string(iniValue.key, msg_ptr, bf_dest, msg_len);
+	freeIni(iniValue);
 
 	if (*bf_dest == '\0')
 		return 0;	// don't process, decrypted msg is bad
@@ -1084,8 +1066,7 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	GHashTable *optlist;
 	char *target;
 	char contactName[CONTACT_SIZE] = "";
-	char *theKey;
-	int keySize;
+	struct IniValue iniValue;
 	void *free_arg;
 
 	if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_OPTIONS |
@@ -1113,13 +1094,10 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	if (getIniSectionForContact(server, target, contactName) == FALSE)
 		return;
 
-	keySize = getIniSize(contactName, "key", iniPath);
-	keySize = (keySize * 2) * sizeof(char);
-	theKey = (char *) malloc(keySize);
+	iniValue = allocateIni(contactName, "key", iniPath);
 
-	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keySize);
-		free(theKey);
+	if (getContactKey(contactName, iniValue.key) == FALSE) {
+		freeIni(iniValue);
 
 		printtext(server,
 			  item != NULL ? window_item_get_target(item) : NULL,
@@ -1131,10 +1109,9 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
 	printtext(server, target, MSGLEVEL_CRAP,
 		  "\002FiSH:\002 Key for %s@%s: %s", target, server->tag,
-		  theKey);
+		  iniValue.key);
 
-	bzero(theKey, keySize);
-	free(theKey);
+	freeIni(iniValue);
 }
 
 void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
@@ -1251,8 +1228,7 @@ void do_auto_keyx(QUERY_REC * query, int automatic)
  */
 void query_nick_changed(QUERY_REC * query, char *orignick)
 {
-	char *theKey;
-	int keySize;
+	struct IniValue iniValue;
 	char contactName[CONTACT_SIZE] = "";
 
 	if (settings_get_bool("nicktracker") == 0)
@@ -1265,29 +1241,24 @@ void query_nick_changed(QUERY_REC * query, char *orignick)
 	    FALSE)
 		return;
 
-	keySize = getIniSize(contactName, "key", iniPath);
-	keySize = (keySize * 2) * sizeof(char);
-	theKey = (char *) malloc(keySize);
+	iniValue = allocateIni(contactName, "key", iniPath);
 
-	if (getContactKey(contactName, theKey) == FALSE) {
-		bzero(theKey, keySize);
-		free(theKey);
+	if (getContactKey(contactName, iniValue.key) == FALSE) {
+		freeIni(iniValue);
 		return;		// see if there is a key for the old nick
 	}
 
 	if (getIniSectionForContact(query->server, query->name, contactName) ==
 	    FALSE) {
-		bzero(theKey, keySize);
-	    free(theKey);
+		freeIni(iniValue);
 		return;
 	}
 
-	if (setIniValue(contactName, "key", theKey, iniPath) == -1)
+	if (setIniValue(contactName, "key", iniValue.key, iniPath) == -1)
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			  "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
 
-	bzero(theKey, keySize);
-	free(theKey);
+	freeIni(iniValue);
 }
 
 void prompt_for_password(char *a_output)
@@ -1366,8 +1337,7 @@ void get_ini_password_hash(int password_size, char* password) {
 
 void authenticated_fish_setup(const char *password, void *rec) {
 	char *B64digest;
-	int iniPasswordHashSize;
-	char *iniPasswordHash;
+	struct IniValue iniValue;
 
 	if (strlen(password) == 0) {
 		return;
@@ -1381,19 +1351,18 @@ void authenticated_fish_setup(const char *password, void *rec) {
 	iniKey = (char *) malloc((strlen(password) * 10) * sizeof(char));
 	iniUsed = 1;
  
-	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath) + 1;
-	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
-	get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
+	iniValue = allocateIni("FiSH", "ini_password_Hash", iniPath);
+
+	get_ini_password_hash(iniValue.keySize, iniValue.key);
  
-	B64digest = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
+	B64digest = (char *) malloc((iniValue.keySize * 2) * sizeof(char));
 
 	calculate_password_key_and_hash(password, iniKey, B64digest);
 
-	if (strcmp(B64digest, iniPasswordHash) != 0) {
-		bzero(iniPasswordHash, iniPasswordHashSize);
-		free(iniPasswordHash);
-		bzero(B64digest, (iniPasswordHashSize * 2) * sizeof(char));
+	if (strcmp(B64digest, iniValue.key) != 0) {
+		bzero(B64digest, (iniValue.keySize * 2) * sizeof(char));
 		free(B64digest);
+		freeIni(iniValue);
 
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			  "\002FiSH:\002 Wrong blow.ini password entered... Please \002/fishlogin\002 to try again");
@@ -1403,10 +1372,9 @@ void authenticated_fish_setup(const char *password, void *rec) {
 	printtext(NULL, NULL, MSGLEVEL_CRAP,
 		  "\002FiSH:\002 Correct blow.ini password entered, lets go!");
  
-	bzero(iniPasswordHash, iniPasswordHashSize);
-	free(iniPasswordHash);
-	bzero(B64digest, (iniPasswordHashSize * 2) * sizeof(char));
+	bzero(B64digest, (iniValue.keySize * 2) * sizeof(char));
 	free(B64digest);
+	freeIni(iniValue);
 
 	setup_fish();
 }
@@ -1427,8 +1395,9 @@ void fish_abicheck(int *version)
 
 void fish_init(void)
 {
-	int iniPasswordHashSize;
-	char *iniPasswordHash;
+	//int iniPasswordHashSize;
+	//char *iniPasswordHash;
+	struct IniValue iniValue;
 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		"FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
@@ -1445,15 +1414,18 @@ void fish_init(void)
 	strcpy(iniPath, get_irssi_config());	// path to irssi config file
 	strcpy(strrchr(iniPath, '/'), blow_ini);
 
+/*
 	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath);
 	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
+*/
+	iniValue = allocateIni("FiSH", "ini_password_Hash", iniPath);
 
-	get_ini_password_hash(iniPasswordHashSize, iniPasswordHash);
+	get_ini_password_hash(iniValue.keySize, iniValue.key);
 
-	if (strlen(iniPasswordHash) != 43) {
+	if (strlen(iniValue.key) != 43) {
 		iniKey = (char *) malloc((strlen(default_iniKey)* 2) * sizeof(char));
 		iniUsed = 1;
-		//iniKey = realloc(iniKey, strlen(default_iniKey) * sizeof(char));
+
 		strcpy(iniKey, default_iniKey);
 		printtext(NULL, NULL, MSGLEVEL_CRAP,
 			"\002FiSH:\002 Using default password to decrypt blow.ini... Try /setinipw to set a custom password.");
@@ -1467,8 +1439,7 @@ void fish_init(void)
 
 	module_register("fish", "core");
 
-	bzero(iniPasswordHash, iniPasswordHashSize);
-	free(iniPasswordHash);
+	free(iniValue.key);
 }
  
 

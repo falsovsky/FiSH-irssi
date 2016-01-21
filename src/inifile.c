@@ -187,3 +187,19 @@ void writeIniFile(GKeyFile * key_file, const char *filepath)
 
 	g_free(config);
 }
+
+struct IniValue allocateIni(const char *section, const char *key, const char *filepath)
+{
+	struct IniValue iniValue;
+
+	iniValue.iniKeySize = getIniSize(section, key, filepath);
+	iniValue.keySize = (iniValue.iniKeySize * 2) * sizeof(char);
+	iniValue.key = (char *) malloc(iniValue.keySize);
+
+	return iniValue;
+}
+
+void freeIni(struct IniValue iniValue) {
+	bzero(iniValue.key, iniValue.keySize);
+	free(iniValue.key);
+}
