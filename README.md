@@ -88,6 +88,9 @@ FiSH has a few configurations that can be defined via /set on Irssi
 - `/topic+ <message>`
   > Sets a FiSHed topic in the current channel.
 
+- `/topic+ TAB`
+  > Allows to edit a FiSHed topic.
+
 - `/notice+ [nick / #channel] <message>`
   > Sends a FiSHed notice to the current window or to the specified target.
 
