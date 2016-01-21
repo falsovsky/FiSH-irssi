@@ -47,7 +47,7 @@ void fish_recv_message(SERVER_REC *server, char *msg, char *nick, char *address,
 void fish_recv_notice(SERVER_REC *server, char *msg, char *nick, char *address, char *target) {
   const char *who = fish_who(server, target, nick);
 
-	if (strncmp(msg, "DH1080_", 7) == 0) {
+  if (strncmp(msg, "DH1080_", 7) == 0) {
     // handle dh
   } else {
     char *decrypted_msg = fish_decrypt(server->tag, who, msg);
@@ -113,7 +113,7 @@ void fish_cmd_topic(const char *data, SERVER_REC *server, WI_ITEM_REC *item) {
   }
 
   char *encrypted_msg = fish_encrypt(server->tag, channel, data);
-	irc_send_cmdv((IRC_SERVER_REC*)server, "TOPIC %s :%s\n", channel, encrypted_msg);
+  irc_send_cmdv((IRC_SERVER_REC*)server, "TOPIC %s :%s\n", channel, encrypted_msg);
   free(encrypted_msg);
 }
 
@@ -177,7 +177,8 @@ fish_signal_t signals[] = {
 };
 
 void fish_init() {
-  for (int i = 0; i < sizeof(signals)/sizeof(fish_signal_t); i++) {
+  int i;
+  for (i = 0; i < sizeof(signals)/sizeof(fish_signal_t); i++) {
     switch (signals[i].type) {
       case 0:
         signal_add_first(signals[i].name, signals[i].func);
@@ -197,7 +198,8 @@ void fish_init() {
 }
 
 void fish_deinit() {
-  for (int i = 0; i < sizeof(signals)/sizeof(fish_signal_t); i++) {
+  int i;
+  for (i = 0; i < sizeof(signals)/sizeof(fish_signal_t); i++) {
     switch (signals[i].type) {
       case 0:
       case 1:
