@@ -1,5 +1,6 @@
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "FiSH_version.h"
 #include "inifile.h"

@@ -850,8 +850,11 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 
 		key_from_password(new_iniKey, key);
 		htob64(key, B64digest, 32);
-		bzero(new_iniKey, new_iniKeySize);
-		free(new_iniKey);
+
+		free(iniKey);
+		iniKey = (char *) malloc((strlen(B64digest)* 2) * sizeof(char));
+
+
 		strcpy(iniKey, B64digest);	// this is used for encrypting blow.ini
 	} else {
 		strcpy(iniKey, default_iniKey);	// use default blow.ini key
@@ -861,6 +864,12 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 	htob64(hash, B64digest, 32);	// this is used to verify the entered password
 	ZeroMemory(hash, sizeof(hash));
 	ZeroMemory(key, sizeof(key));
+
+	bzero(new_iniKey, new_iniKeySize);
+	free(new_iniKey);
+
+	// Try to create blow.ini if it doesnt exist
+	open(iniPath, O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR);
 
 	// re-encrypt blow.ini with new password
 	strcpy(iniPath_new, iniPath);
@@ -1395,8 +1404,6 @@ void fish_abicheck(int *version)
 
 void fish_init(void)
 {
-	//int iniPasswordHashSize;
-	//char *iniPasswordHash;
 	struct IniValue iniValue;
 
 	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
@@ -1414,10 +1421,6 @@ void fish_init(void)
 	strcpy(iniPath, get_irssi_config());	// path to irssi config file
 	strcpy(strrchr(iniPath, '/'), blow_ini);
 
-/*
-	iniPasswordHashSize = getIniSize("FiSH", "ini_password_Hash", iniPath);
-	iniPasswordHash = (char *) malloc((iniPasswordHashSize * 2) * sizeof(char));
-*/
 	iniValue = allocateIni("FiSH", "ini_password_Hash", iniPath);
 
 	get_ini_password_hash(iniValue.keySize, iniValue.key);
@@ -1480,7 +1483,10 @@ void fish_deinit(void)
 
 	DH1080_DeInit();
 
-	//free(iniKey);
+	if (iniUsed == 1) {
+		free(iniKey);
+		iniUsed = 0;
+	}
 }
 
 /*
