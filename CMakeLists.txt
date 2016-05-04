@@ -24,26 +24,26 @@ if(OPENSSL_FOUND)
 	MESSAGE(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 ENDIF()
 
-SET(IRSSI_PATH "/usr/include/irssi" PATH "path to irssi include files")
-FIND_PATH(irssi_INCLUDE_DIR
+SET(IRSSI_INCLUDE_DIR "/usr/include/irssi" CACHE PATH "Path to irssi include files")
+FIND_PATH(IRSSI_INCLUDE_PATH
 	NAMES irssi-config.h src/common.h
-	PATHS ${IRSSI_PATH} /usr/local/include/irssi
+	PATHS ${IRSSI_INCLUDE_DIR} /usr/local/include/irssi
 	)
 
-IF(NOT irssi_INCLUDE_DIR)
-	MESSAGE(SEND_ERROR "Could not auto find the irssi include files, please run:\n# cmake -DIRSSI_PATH:PATH=/path/to/irssi/includes .")
+IF(NOT IRSSI_INCLUDE_PATH)
+	MESSAGE(SEND_ERROR "Could not auto find the irssi include files in ${IRSSI_INCLUDE_DIR}, please run:\n# cmake -DIRSSI_INCLUDE_DIR:PATH=/path/to/irssi/includes .")
 	RETURN()
 ENDIF()
 
-INCLUDE_DIRECTORIES(${irssi_INCLUDE_DIR} ${irssi_INCLUDE_DIR}/src ${irssi_INCLUDE_DIR}/src/fe-common/core ${irssi_INCLUDE_DIR}/src/core)
+INCLUDE_DIRECTORIES(${IRSSI_INCLUDE_PATH} ${IRSSI_INCLUDE_PATH}/src ${IRSSI_INCLUDE_PATH}/src/fe-common/core ${IRSSI_INCLUDE_PATH}/src/core)
 
 MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
 MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
-STRING(FIND ${irssi_INCLUDE_DIR} ${CMAKE_INSTALL_PREFIX} AIDS)
+STRING(FIND ${IRSSI_INCLUDE_PATH} ${CMAKE_INSTALL_PREFIX} AIDS)
 IF(NOT ${AIDS} EQUAL 0)
-	STRING(REPLACE "/include/irssi" "" IRSSI_PATH ${irssi_INCLUDE_DIR})
-	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_PATH} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
+	STRING(REPLACE "/include/irssi" "" IRSSI_INCLUDE_DIR ${IRSSI_INCLUDE_PATH})
+	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_INCLUDE_DIR} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
 ENDIF()
 
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
