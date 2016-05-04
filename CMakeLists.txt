@@ -11,7 +11,7 @@ INCLUDE (CheckIncludeFiles)
 
 # Look for some headers
 CHECK_INCLUDE_FILES(stdint.h HAVE_STDINT)
-if(NOT DEFINED HAVE_STDINT)
+if(NOT HAVE_STDINT)
     # SunOS 5.8 doesnt have stdint.h but inttypes.h can replace it
     CHECK_INCLUDE_FILES(inttypes.h HAVE_INTTYPES)
 endif()
