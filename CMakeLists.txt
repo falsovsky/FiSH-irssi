@@ -24,7 +24,7 @@ if(OPENSSL_FOUND)
 	MESSAGE(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 ENDIF()
 
-SET(IRSSI_PATH "/usr/include/irssi" PATH "path to irssi include files")
+SET(IRSSI_PATH:PATH "/usr/include/irssi" PATH "path to irssi include files")
 FIND_PATH(irssi_INCLUDE_DIR
 	NAMES irssi-config.h src/common.h
 	PATHS ${IRSSI_PATH} /usr/local/include/irssi
