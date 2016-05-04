@@ -40,11 +40,11 @@ INCLUDE_DIRECTORIES(${IRSSI_INCLUDE_PATH} ${IRSSI_INCLUDE_PATH}/src ${IRSSI_INCL
 MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
 MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
-STRING(FIND ${IRSSI_INCLUDE_PATH} ${CMAKE_INSTALL_PREFIX} AIDS)
-IF(NOT ${AIDS} EQUAL 0)
-	STRING(REPLACE "/include/irssi" "" IRSSI_INCLUDE_DIR ${IRSSI_INCLUDE_PATH})
-	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_INCLUDE_DIR} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
-ENDIF()
+#STRING(FIND ${IRSSI_INCLUDE_PATH} ${CMAKE_INSTALL_PREFIX} AIDS)
+#IF(NOT ${AIDS} EQUAL 0)
+#	STRING(REPLACE "/include/irssi" "" IRSSI_INCLUDE_DIR ${IRSSI_INCLUDE_PATH})
+#	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_INCLUDE_DIR} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
+#ENDIF()
 
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
 	FIND_PACKAGE(Git)
