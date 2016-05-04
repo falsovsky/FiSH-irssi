@@ -7,93 +7,79 @@ SET(VERSION_MINOR 4)
 
 SET(FISH_VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 
+INCLUDE (CheckIncludeFiles)
+
+# Look for some headers
+CHECK_INCLUDE_FILES(stdint.h HAVE_STDINT)
+if(NOT DEFINED HAVE_STDINT)
+    # SunOS 5.8 doesnt have stdint.h but inttypes.h can replace it
+    CHECK_INCLUDE_FILES(inttypes.h HAVE_INTTYPES)
+endif()
+
+# Look for pkg-config
 FIND_PACKAGE(PkgConfig REQUIRED)
 
+# Look for glib2
 PKG_CHECK_MODULES(GLIB_PKG REQUIRED glib-2.0)
-PKG_CHECK_MODULES(OPENSSL REQUIRED openssl)
-
 if(GLIB_PKG_FOUND)
-	INCLUDE_DIRECTORIES(${GLIB_PKG_INCLUDE_DIRS})
-	LINK_DIRECTORIES(${GLIB_PKG_LIBRARY_DIRS})
-	MESSAGE(STATUS "Using glib-2.0 ${GLIB_PKG_VERSION}")
+    INCLUDE_DIRECTORIES(${GLIB_PKG_INCLUDE_DIRS})
+    LINK_DIRECTORIES(${GLIB_PKG_LIBRARY_DIRS})
+    MESSAGE(STATUS "Using glib-2.0 ${GLIB_PKG_VERSION}")
 ENDIF()
 
+# Look for OpenSSL
+PKG_CHECK_MODULES(OPENSSL REQUIRED openssl)
 if(OPENSSL_FOUND)
-	INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIRS})
-	LINK_DIRECTORIES(${OPENSSL_LIBRARY_DIRS})
-	MESSAGE(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+    INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIRS})
+    LINK_DIRECTORIES(${OPENSSL_LIBRARY_DIRS})
+    MESSAGE(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 ENDIF()
 
-SET(IRSSI_INCLUDE_DIR "/usr/include/irssi" CACHE PATH "Path to irssi include files")
+# Sets a variable that the user can set with 
+# cmake -DIRSSI_INCLUDE_DIR:PATH=/path/to/irssi/includes .
+SET(IRSSI_INCLUDE_DIR "" CACHE PATH "Path to irssi include files")
+
+# Tries to find the irssi include files in the most common places,
+# and in the user defined directory
 FIND_PATH(IRSSI_INCLUDE_PATH
-	NAMES irssi-config.h src/common.h
-	PATHS ${IRSSI_INCLUDE_DIR} /usr/local/include/irssi
-	)
+    NAMES irssi-config.h src/common.h
+    PATHS /usr/include/irssi /usr/local/include/irssi ${IRSSI_INCLUDE_DIR}
+)
 
+# Bail out if the required irssi files werent found
 IF(NOT IRSSI_INCLUDE_PATH)
-	MESSAGE(SEND_ERROR "Could not auto find the irssi include files in ${IRSSI_INCLUDE_DIR}, please run:\n# cmake -DIRSSI_INCLUDE_DIR:PATH=/path/to/irssi/includes .")
-	RETURN()
+    MESSAGE(SEND_ERROR "Could not detect the irssi include files. Please run:\n# cmake -DIRSSI_INCLUDE_DIR:PATH=/path/to/irssi/includes .")
+    RETURN()
 ENDIF()
 
+MESSAGE(STATUS "irssi includes were found on ${IRSSI_INCLUDE_PATH}")
+
+# Add the weirdo irssi includes directories
 INCLUDE_DIRECTORIES(${IRSSI_INCLUDE_PATH} ${IRSSI_INCLUDE_PATH}/src ${IRSSI_INCLUDE_PATH}/src/fe-common/core ${IRSSI_INCLUDE_PATH}/src/core)
 
-MESSAGE(STATUS "The module will be installed to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
+MESSAGE(STATUS "The module will be installed by default to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
 MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
-#STRING(FIND ${IRSSI_INCLUDE_PATH} ${CMAKE_INSTALL_PREFIX} AIDS)
-#IF(NOT ${AIDS} EQUAL 0)
-#	STRING(REPLACE "/include/irssi" "" IRSSI_INCLUDE_DIR ${IRSSI_INCLUDE_PATH})
-#	MESSAGE(WARNING "irssi seems to be installed in ${IRSSI_INCLUDE_DIR} and youre installing FiSH to ${CMAKE_INSTALL_PREFIX}, irssi wont be able to find the plugin there")
-#ENDIF()
-
+# Generate a version based on the git version
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
-	FIND_PACKAGE(Git)
-	IF(GIT_FOUND)
-		EXECUTE_PROCESS(
-			COMMAND ${GIT_EXECUTABLE} rev-list --count HEAD
-			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-			OUTPUT_VARIABLE "FISH_GIT_REVISION"
-			ERROR_QUIET
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		EXECUTE_PROCESS(
-			COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-			OUTPUT_VARIABLE "FISH_GIT_HASH"
-			ERROR_QUIET
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		SET(FISH_VERSION r${FISH_GIT_REVISION}-${FISH_GIT_HASH})
-	ENDIF(GIT_FOUND)
+    FIND_PACKAGE(Git)
+    IF(GIT_FOUND)
+        EXECUTE_PROCESS(
+            COMMAND ${GIT_EXECUTABLE} rev-list --count HEAD
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            OUTPUT_VARIABLE "FISH_GIT_REVISION"
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        EXECUTE_PROCESS(
+            COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            OUTPUT_VARIABLE "FISH_GIT_HASH"
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        SET(FISH_VERSION r${FISH_GIT_REVISION}-${FISH_GIT_HASH})
+    ENDIF(GIT_FOUND)
 ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
 
 ADD_SUBDIRECTORY(src)
 
 INSTALL(FILES README.md FiSH-irssi.txt DESTINATION share/doc/FiSH-irssi)
-
-SET(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
-
-IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
-	INCLUDE(InstallRequiredSystemLibraries)
-
-	SET(CPACK_SET_DESTDIR "on")
-	SET(CPACK_PACKAGING_INSTALL_PREFIX "/tmp")
-	SET(CPACK_GENERATOR "DEB;RPM")
-
-
-	SET(CPACK_PACKAGE_DESCRIPTION "FiSH encryption for irssi")
-	SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FiSH encryption for irssi")
-	SET(CPACK_PACKAGE_VENDOR "Pedro de Oliveira")
-	SET(CPACK_PACKAGE_CONTACT "falsovsky@gmail.com")
-	SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${VERSION_MAJOR}.${VERSION_MINOR}")
-	SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${VERSION_MAJOR}.${VERSION_MINOR}")
-
-
-	set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE 1)
-
-	SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.1.3), libssl1.0.0 (>= 1.0.0), libglib2.0-0 (>= 2.24.0), irssi (>= 0.8.13)")
-
-	SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-
-	SET(CPACK_COMPONENTS_ALL Libraries ApplicationData)
-	INCLUDE(CPack)
-
-ENDIF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
