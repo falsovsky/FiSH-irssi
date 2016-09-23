@@ -1245,18 +1245,6 @@ void setup_fish()
 	command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
 	command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
 	command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
- 
-	settings_add_bool_module("fish", "fish", "process_outgoing", 1);
-	settings_add_bool_module("fish", "fish", "process_incoming", 1);
-	settings_add_bool_module("fish", "fish", "auto_keyxchange", 1);
-	settings_add_bool_module("fish", "fish", "nicktracker", 1);
- 
-	settings_add_str_module("fish", "fish", "mark_broken_block",
-				"\002&\002");
-	settings_add_str_module("fish", "fish", "mark_encrypted", "\002>\002 ");
-	settings_add_str_module("fish", "fish", "plain_prefix", "+p ");
- 
-	settings_add_int_module("fish", "fish", "mark_position", 1);
 }
  
 void get_ini_password_hash(int password_size, char* password) {
@@ -1306,14 +1294,24 @@ void fish_init(void)
 {
 	char iniPasswordHash[50];
 
-        printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
+	printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,
 		"FiSH " FISH_VERSION " - encryption module for irssi loaded!\n"
-                 "URL: https://github.com/falsovsky/FiSH-irssi\n"
-                 "Try /helpfish or /fishhelp for a short command overview");
+		"URL: https://github.com/falsovsky/FiSH-irssi\n"
+		"Try /helpfish or /fishhelp for a short command overview");
 
 	command_bind("fishhelp", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("helpfish", NULL, (SIGNAL_FUNC) cmd_helpfish);
 	command_bind("fishlogin", NULL, (SIGNAL_FUNC) cmd_fishlogin);
+
+	settings_add_bool_module("fish", "fish", "process_outgoing", 1);
+	settings_add_bool_module("fish", "fish", "process_incoming", 1);
+	settings_add_bool_module("fish", "fish", "auto_keyxchange", 1);
+	settings_add_bool_module("fish", "fish", "nicktracker", 1);
+	settings_add_str_module("fish", "fish", "mark_broken_block",
+		"\002&\002");
+	settings_add_str_module("fish", "fish", "mark_encrypted", "\002>\002 ");
+	settings_add_str_module("fish", "fish", "plain_prefix", "+p ");
+	settings_add_int_module("fish", "fish", "mark_position", 1);
  
 	if (DH1080_Init() == FALSE)
 		return;
