@@ -1,13 +1,4 @@
 #include "blowfish.h"
-#include "FiSH_version.h"
-#ifdef HAVE_STDINT
-    #include <stdint.h>
-#else
-    #ifdef HAVE_INTTYPES
-        #include <inttypes.h>
-    #endif
-#endif
-#include <openssl/blowfish.h>
 
 const char B64[] =
 "./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -58,7 +49,7 @@ encrypt_string (const char *key, const char *str, char *dest, int len)
     while (len > 0)
     {
         const size_t blocksize = len < 8 ? len : BF_BLOCK;
-        unsigned char block[BF_BLOCK] = { 0 };	/* pad with zero */
+        unsigned char block[BF_BLOCK] = { 0 }; /* pad with zero */
         uint32_t v;
         size_t i;
 

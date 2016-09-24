@@ -1,6 +1,3 @@
-#ifndef PASSWORD_H_
-#define PASSWORD_H_
-
 /*
  * Derives a key from the given function.
  * It uses SHA256 to do so, which means
@@ -17,5 +14,3 @@ void key_from_password(const char *a_password, char *a_key);
  * it always yields a 256 bit hash.
  */
 void key_hash(const char *a_key, char *a_hash);
-
-#endif

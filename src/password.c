@@ -1,11 +1,10 @@
-
 #include <string.h>
 #include <openssl/sha.h>
 #include "password.h"
 
 void key_from_password(const char *a_password, char *a_key)
 {
-    unsigned char digest[256 / 8] = {0};	// SHA 256 uses 256/8 bytes.
+    unsigned char digest[256 / 8] = {0}; // SHA 256 uses 256/8 bytes.
     int i;
 
     SHA256((const unsigned char *)a_password, strlen(a_password), digest);

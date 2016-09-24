@@ -9,11 +9,6 @@
    The calculated secret key is hashed with SHA-256, the result is converted
    to base64 for final use with blowfish. */
 
-#include <openssl/rand.h>
-#include <openssl/bn.h>
-#include <openssl/dh.h>
-#include <openssl/engine.h>
-#include <openssl/sha.h>
 #include "DH1080.h"
 
 // ### new sophie-germain 1080bit prime number ###
