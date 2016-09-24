@@ -42,92 +42,96 @@
  * getIniValue("FiSH", "plain_prefix", "+p ", plainPrefix, sizeof(plainPrefix), iniPath);
  * @endcode
  */
-int getIniValue(const char *section, const char *key, const char *default_value,
-		char *buffer, int buflen, const char *filepath)
+    int
+getIniValue(const char *section, const char *key, const char *default_value,
+        char *buffer, int buflen, const char *filepath)
 {
-	GKeyFile *key_file;
-	GError *error = NULL;
-	gchar *value = NULL;
+    GKeyFile *key_file;
+    GError *error = NULL;
+    gchar *value = NULL;
 
-	key_file = g_key_file_new();
+    key_file = g_key_file_new();
 
-	// If file was read OK...
-	if ((int)
-	    g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
-				      NULL) == 1) {
-		// If the record was found...
-		value = g_key_file_get_string(key_file, section, key, &error);
-		if (value != NULL && error == NULL) {
-			strncpy(buffer, value, (size_t) buflen);
-			buffer[buflen] = '\0';
-		}
-	}
+    // If file was read OK...
+    if ((int)
+            g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
+                NULL) == 1) {
+        // If the record was found...
+        value = g_key_file_get_string(key_file, section, key, &error);
+        if (value != NULL && error == NULL) {
+            strncpy(buffer, value, (size_t) buflen);
+            buffer[buflen] = '\0';
+        }
+    }
 
-	g_free(value);
-	g_key_file_free(key_file);
+    g_free(value);
+    g_key_file_free(key_file);
 
-	// In case of any error...
-	if (error != NULL) {
-		strncpy(buffer, default_value, (size_t) buflen);
-	}
+    // In case of any error...
+    if (error != NULL) {
+        strncpy(buffer, default_value, (size_t) buflen);
+    }
 
-	return (int)strlen(buffer);
+    return (int)strlen(buffer);
 }
 
-int getIniSize(const char *section, const char *key, const char *filepath) {
-	GKeyFile *key_file;
-	GError *error = NULL;
-	gchar *value = NULL;
-	int size = 1;
+int getIniSize(const char *section, const char *key, const char *filepath)
+{
+    GKeyFile *key_file;
+    GError *error = NULL;
+    gchar *value = NULL;
+    int size = 1;
 
-	key_file = g_key_file_new();
+    key_file = g_key_file_new();
 
-	if ((int) g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE, NULL) == 1) {
-		value = g_key_file_get_string(key_file, section, key, &error);
-		if (value != NULL && error == NULL) {
-			size = strlen(value);
-		}
-	}
+    if ((int)
+            g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
+                NULL) == 1) {
+        value = g_key_file_get_string(key_file, section, key, &error);
+        if (value != NULL && error == NULL) {
+            size = strlen(value);
+        }
+    }
 
-	g_free(value);
-	g_key_file_free(key_file);
+    g_free(value);
+    g_key_file_free(key_file);
 
-	return size;
+    return size;
 }
 
 int deleteIniValue(const char *section, const char *key, const char *filepath)
 {
-	GKeyFile *key_file;
-	GError *error = NULL;
-	gsize num_keys = 0;
-	int ret = 0;
-	
-	key_file = g_key_file_new();
+    GKeyFile *key_file;
+    GError *error = NULL;
+    gsize num_keys = 0;
+    int ret = 0;
 
-	// If file was read OK...
-	if ((int)
-	    g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
-				      NULL) == 1) {
-		g_key_file_remove_key(key_file, section, key, &error);
-		if (error == NULL) {
-			// Check if group is empty, if it is, remove it also
-			(void)g_key_file_get_keys(key_file, section, &num_keys,
-						  &error);
-			if (error == NULL && num_keys == 0) {
-				g_key_file_remove_group(key_file, section,
-							NULL);
+    key_file = g_key_file_new();
 
-				writeIniFile(key_file, filepath);
-			}
-			ret = 1;
-		} else {
-			ret = 0;
-		}
-	}
+    // If file was read OK...
+    if ((int)
+            g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
+                NULL) == 1) {
+        g_key_file_remove_key(key_file, section, key, &error);
+        if (error == NULL) {
+            // Check if group is empty, if it is, remove it also
+            (void)g_key_file_get_keys(key_file, section, &num_keys,
+                    &error);
+            if (error == NULL && num_keys == 0) {
+                g_key_file_remove_group(key_file, section,
+                        NULL);
 
-	g_key_file_free(key_file);
-	
-	return ret;
+                writeIniFile(key_file, filepath);
+            }
+            ret = 1;
+        } else {
+            ret = 0;
+        }
+    }
+
+    g_key_file_free(key_file);
+
+    return ret;
 }
 
 /**
@@ -144,61 +148,64 @@ int deleteIniValue(const char *section, const char *key, const char *filepath)
  * setIniValue("FiSH", "plain_prefix", "+zbr ", iniPath);
  * @endcode
  */
-int setIniValue(const char *section, const char *key, const char *value,
-		const char *filepath)
+    int
+setIniValue(const char *section, const char *key, const char *value,
+        const char *filepath)
 {
-	GKeyFile *key_file;
-	GError *error = NULL;
+    GKeyFile *key_file;
+    GError *error = NULL;
 
-	key_file = g_key_file_new();
-	(void)g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
-					NULL);
-	g_key_file_set_string(key_file, section, key, value);
+    key_file = g_key_file_new();
+    (void)g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
+            NULL);
+    g_key_file_set_string(key_file, section, key, value);
 
-	writeIniFile(key_file, filepath);
+    writeIniFile(key_file, filepath);
 
-	g_key_file_free(key_file);
+    g_key_file_free(key_file);
 
-	if (error != NULL) {
-		return -1;
-	}
+    if (error != NULL) {
+        return -1;
+    }
 
-	return 1;
+    return 1;
 }
 
 void writeIniFile(GKeyFile * key_file, const char *filepath)
 {
-	gchar *config = NULL;
-	GError *error = NULL;
-	gsize length = 0;
-	FILE *outfile = NULL;
+    gchar *config = NULL;
+    GError *error = NULL;
+    gsize length = 0;
+    FILE *outfile = NULL;
 
-	// Get the content of the config to a string...
-	config = g_key_file_to_data(key_file, &length, &error);
-	if (error == NULL) {	// If everything is ok...
-		outfile = fopen(filepath, "w");
-		if (outfile != NULL) {
-			(void)fwrite(config, sizeof(gchar), (size_t) length,
-				     outfile);
-			(void)fclose(outfile);
-		}
-	}
+    // Get the content of the config to a string...
+    config = g_key_file_to_data(key_file, &length, &error);
+    if (error == NULL) {	// If everything is ok...
+        outfile = fopen(filepath, "w");
+        if (outfile != NULL) {
+            (void)fwrite(config, sizeof(gchar), (size_t) length,
+                    outfile);
+            (void)fclose(outfile);
+        }
+    }
 
-	g_free(config);
+    g_free(config);
 }
 
-struct IniValue allocateIni(const char *section, const char *key, const char *filepath)
+    struct IniValue
+allocateIni(const char *section, const char *key, const char *filepath)
 {
-	struct IniValue iniValue;
+    struct IniValue iniValue;
 
-	iniValue.iniKeySize = getIniSize(section, key, filepath);
-	iniValue.keySize = (iniValue.iniKeySize * 2) * sizeof(char);
-	iniValue.key = (char *) malloc(iniValue.keySize);
+    iniValue.iniKeySize = getIniSize(section, key, filepath);
+    iniValue.keySize = (iniValue.iniKeySize * 2) * sizeof(char);
+    iniValue.key = (char *)malloc(iniValue.keySize);
 
-	return iniValue;
+    return iniValue;
 }
 
-void freeIni(struct IniValue iniValue) {
-	bzero(iniValue.key, iniValue.keySize);
-	free(iniValue.key);
+void freeIni(struct IniValue iniValue)
+{
+    bzero(iniValue.key, iniValue.keySize);
+    free(iniValue.key);
 }
