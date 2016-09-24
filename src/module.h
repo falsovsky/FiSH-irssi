@@ -28,4 +28,4 @@
 void irssi_redraw(void);
 
 QUERY_REC *irc_query_create(const char *server_tag, const char *nick,
-			    int automatic);
+        int automatic);
