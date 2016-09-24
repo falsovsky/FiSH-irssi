@@ -236,11 +236,6 @@ void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
 	if (msg == NULL || target == NULL || nick == NULL)
 		return;
 
-#ifdef FiSH_DECRYPT_ZNC_LOGS
-	if (IsZNCtimestamp(msg))
-		msg += 11;
-#endif
-
 	//channel?
 	if (server_ischannel(server, target))
 		contactPtr = target;
@@ -402,10 +397,6 @@ void decrypt_notice(SERVER_REC * server, char *msg, char *nick, char *address,
 		DH1080_received(server, msg, nick, address, target);
 		return;
 	}
-#ifdef FiSH_DECRYPT_ZNC_LOGS
-	if (IsZNCtimestamp(msg))
-		msg += 11;
-#endif
 
 	decrypted = g_string_new("");
 	if (FiSH_decrypt(server, msg, server_ischannel(server, target) ? target : nick, decrypted)) {
