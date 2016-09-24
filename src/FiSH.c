@@ -633,9 +633,11 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
             " /me+ <your action message>\n"
             " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
             " /delkey [-<server tag>] [<nick | #channel>]\n"
-            " /key [-<server tag>] [<nick | #channel>]\n"
+            " /key|showkey [-<server tag>] [<nick | #channel>]\n"
             " /keyx [<nick>] (DH1080 KeyXchange)\n"
-            " /setinipw <sekure_blow.ini_password>\n" " /unsetinipw\n");
+            " /setinipw <blow.ini_password>\n"
+            " /unsetinipw\n"
+            " /fishlogin\n");
 }
 
 int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
