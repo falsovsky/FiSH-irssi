@@ -2,4 +2,4 @@
 
 # FiSH module for irssi
 
-[Documenation](https://falsovsky.gitbooks.io/fish-irssi/content/)
+[Documentation](https://falsovsky.gitbooks.io/fish-irssi/content/)
