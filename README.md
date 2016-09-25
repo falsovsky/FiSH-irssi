@@ -2,6 +2,7 @@
 
 # Introduction
 
+<<<<<<< HEAD
 This is an encryption add-on for irssi, it's based on blowfish. It supports private messages and channel encryption. It also includes a secure key-exchange system.
 
 # Requirements
