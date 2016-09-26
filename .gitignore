@@ -50,4 +50,5 @@ install_manifest.txt
 
 CPack*
 _CPack_Packages
-src/FiSH_version.h
+FiSH_version.h
+build

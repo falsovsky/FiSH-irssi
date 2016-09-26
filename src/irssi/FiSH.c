@@ -934,7 +934,7 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     keySize = (strlen(key) * 3) * sizeof(char);
     encryptedKey = (char *) malloc(keySize);
 
-    encrypt_key((char *)key, encryptedKey);
+    encrypt_key(iniKey, (char *)key, encryptedKey);
 
     if (getIniSectionForContact(server, target, contactName) == FALSE) {
         bzero(encryptedKey, keySize);
@@ -1131,7 +1131,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         return;
     signal_stop();
 
-    encrypt_key(hisPubKey, encryptedKey);
+    encrypt_key(iniKey, hisPubKey, encryptedKey);
     ZeroMemory(hisPubKey, sizeof(hisPubKey));
 
     if (getIniSectionForContact(server, nick, contactName) == FALSE)
