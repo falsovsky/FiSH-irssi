@@ -3,8 +3,8 @@
 #define FISH_VERSION "${FISH_VERSION}"
 
 #ifndef HAVE_STDINT
-    #include <stdint.h>
+    #cmakedefine HAVE_STDINT
 #endif
 #ifndef HAVE_INTTYPES
-    #include <inttypes.h>
+    #cmakedefine HAVE_INTTYPES
 #endif
