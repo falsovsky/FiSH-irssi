@@ -116,9 +116,9 @@ decrypt_string (const char *key, const char *str, char *dest, int len)
 }
 
     void
-encrypt_key (char *iniKey, const char *key, char *encryptedKey)
+encrypt_key (const char *key, const char *clearKey, char *encryptedKey)
 {
     static const char prefix[] = "+OK ";
     strcpy (encryptedKey, prefix);
-    encrypt_string (iniKey, key, encryptedKey + strlen (prefix), strlen (key));
+    encrypt_string (key, clearKey, encryptedKey + strlen (prefix), strlen (clearKey));
 }
