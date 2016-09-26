@@ -2,13 +2,6 @@
 #include <stdlib.h>
 #include <openssl/blowfish.h>
 #include "FiSH_version.h"
-#ifdef HAVE_STDINT
-    #include <stdint.h>
-#else
-    #ifdef HAVE_INTTYPES
-        #include <inttypes.h>
-    #endif
-#endif
 
 extern char *iniKey;
 

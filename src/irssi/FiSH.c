@@ -104,6 +104,7 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
     }
 
     strcpy(bf_dest, "+OK ");
+
     encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
 
     freeIni(iniValue);
