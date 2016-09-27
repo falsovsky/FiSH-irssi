@@ -17,10 +17,14 @@ void testPlainKey(const char *plainKey, const char *plainMessage, const char *as
     int plainSize = strlen(plainMessage);
     int cryptedSize;
 
-    cryptedSize = (((((plainSize < 8 ? 8 : plainSize) + 8) & ~(0xf)) + ((plainSize / 8))) / 3 + 1) * 4 + 5;
+    //printf("plainSize: %d\n", plainSize);
+    cryptedSize = ((((plainSize + 8) & ~(0x7)) + ((plainSize / 8))) / 3 + 1) * 4 + 5;
+    //printf("calculatedSize: %d\n", cryptedSize);
 
     cryptedMessage = (char *) malloc(cryptedSize);
+    //cryptedMessage = (char *) malloc(500);
     plainKeyCrypt(plainKey, plainMessage, cryptedMessage);
+    //printf("realSize: %lu\n", strlen(cryptedMessage));
     //printf("%s\n", cryptedMessage);
     assert(strcmp(cryptedMessage, assert) == 0);
 
