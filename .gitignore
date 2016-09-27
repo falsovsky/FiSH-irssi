@@ -50,5 +50,6 @@ install_manifest.txt
 
 CPack*
 _CPack_Packages
-FiSH_version.h
+src/irssi/FiSH_version.h
+src/common/common.h
 build

@@ -1,0 +1,2 @@
+#cmakedefine HAVE_STDINT
+#cmakedefine HAVE_INTTYPES

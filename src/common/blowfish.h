@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/blowfish.h>
-#include "FiSH_version.h"
+#include "common.h"
 
 #ifdef HAVE_STDINT
     #include <stdint.h>
