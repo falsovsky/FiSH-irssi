@@ -24,6 +24,11 @@ The requirements for building FiSH-irssi are:
 ```
 # pkg_add glib2 irssi cmake git
 ```
+## Arch Linux
+
+```
+# pacman -S cmake pkg-config glib2 openssl irssi
+```
 
 # Building
 
@@ -196,6 +201,7 @@ FiSH-irssi has been tested on various OS and arches:
 
 * Linux/x86
 * Linux/sparc
+* Linux/arm
 * OpenBSD/x86
 * OpenBSD/macppc
 * OpenBSD/sgi
