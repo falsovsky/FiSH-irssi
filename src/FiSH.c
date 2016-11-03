@@ -129,8 +129,10 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     if (settings_get_bool("process_incoming") == 0)
         return 0;
 
-    if (strncmp(msg_ptr, "+OK ", 4) == 0) 
+    if (strncmp(msg_ptr, "+OK ", 4) == 0)
         msg_ptr += 4;
+    else if (strncmp(msg_ptr, "mcps ", 5) == 0)
+        msg_ptr += 5;
     else
         return 0; // don't process, blowcrypt-prefix not found
 
