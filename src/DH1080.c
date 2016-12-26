@@ -43,9 +43,18 @@ int DH1080_Init(void)
     g_dh = DH_new();
     if(g_dh) {
         int codes = 0;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         g_dh->p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
         g_dh->g = BN_new(); BN_set_word(g_dh->g, 2);
         return DH_check(g_dh, &codes) && codes == 0;
+#else
+        BIGNUM *p;
+        BIGNUM *g = BN_new();
+        p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
+        BN_set_word(g, 2);
+        DH_set0_pqg(g_dh, p, NULL, g);
+        return DH_check(g_dh, &codes) && codes == 0;
+#endif
     }
     return 0;
 }
@@ -75,6 +84,7 @@ int DH1080_gen(char *priv_key, char *pub_key)
 
     DH_generate_key(dh);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     memset(w, 0, sizeof w);
     n = BN_bn2bin(dh->priv_key, w);
     htob64((char *)w, priv_key, n);
@@ -82,6 +92,18 @@ int DH1080_gen(char *priv_key, char *pub_key)
     memset(w, 0, sizeof w);
     n = BN_bn2bin(dh->pub_key, w);
     htob64((char *)w, pub_key, n);
+#else
+    const BIGNUM **pubkey, **privkey;
+    DH_get0_key(dh, pubkey, privkey);
+
+    memset(w, 0, sizeof w);
+    n = BN_bn2bin(*privkey, w);
+    htob64((char *)w, priv_key, n);
+
+    memset(w, 0, sizeof w);
+    n = BN_bn2bin(*pubkey, w);
+    htob64((char *)w, pub_key, n);
+#endif
 
     OPENSSL_cleanse(w, sizeof w);
     DH_free(dh);
@@ -118,7 +140,13 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
         unsigned char sha256[32] = {0};
 
         len = b64toh(MyPrivKey, (char *)base64_tmp);
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         dh->priv_key = BN_bin2bn(base64_tmp, len, NULL);
+#else
+        BIGNUM *priv_key = BN_bin2bn(base64_tmp, len, NULL);
+        DH_set0_key(dh, NULL, priv_key);
+#endif
         memset(MyPrivKey, 0x20, strlen(MyPrivKey));
 
         len = DH_compute_key(shared_key, pk, dh);
