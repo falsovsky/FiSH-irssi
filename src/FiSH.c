@@ -1065,6 +1065,12 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
 void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
 {
+    if (server == NULL) {
+        printtext(NULL, NULL, MSGLEVEL_CRAP,
+                "\002FiSH:\002 No connection to server.");
+        return;
+    }
+
     if (IsNULLorEmpty(target)) {
         if (item != NULL)
             target = window_item_get_target(item);
