@@ -121,8 +121,8 @@ int deleteIniValue(const char *section, const char *key, const char *filepath)
                 g_key_file_remove_group(key_file, section,
                         NULL);
 
-                writeIniFile(key_file, filepath);
             }
+            writeIniFile(key_file, filepath);
             ret = 1;
         } else {
             ret = 0;
