@@ -18,7 +18,7 @@ int getContactKey(const char *contactPtr, char *theKey)
     int bRet = FALSE;
 
     iniValue = allocateIni(contactPtr, "key", iniPath);
-    getIniValue(contactPtr, "key", "", iniValue.key, iniValue.keySize, iniPath);
+    getIniValue(contactPtr, "key", "", iniValue.key, iniValue.iniKeySize, iniPath);
 
     // don't process, encrypted key not found in ini
     if (strlen(iniValue.key) < 16) {
