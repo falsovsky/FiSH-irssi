@@ -19,7 +19,7 @@ The requirements for building FiSH-irssi are:
 Debian / Ubuntu
 ---------------
 
-    # apt-get install build-essential irssi-dev libssl-dev cmake git
+    # apt-get install build-essential irssi-dev libglib2.0-dev libssl-dev cmake git
 
 OpenBSD
 -------
