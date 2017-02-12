@@ -69,6 +69,7 @@ getIniValue(const char *section, const char *key, const char *default_value,
 
     // In case of any error...
     if (error != NULL) {
+        g_clear_error (&error);
         strncpy(buffer, default_value, (size_t) buflen);
     }
 
@@ -122,9 +123,12 @@ int deleteIniValue(const char *section, const char *key, const char *filepath)
                         NULL);
 
             }
+            if (error != NULL)
+                g_clear_error (&error);
             writeIniFile(key_file, filepath);
             ret = 1;
         } else {
+            g_clear_error (&error);
             ret = 0;
         }
     }
@@ -187,7 +191,7 @@ void writeIniFile(GKeyFile * key_file, const char *filepath)
                     outfile);
             (void)fclose(outfile);
         }
-    }
+    } else g_clear_error (&error);
 
     g_free(config);
 }
