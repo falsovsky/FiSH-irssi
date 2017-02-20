@@ -52,6 +52,7 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
         const char *contactPtr, char *iniSectionKey)
 {
     char *target;
+    size_t i, c;
 
     ZeroMemory(iniSectionKey, CONTACT_SIZE);
 
@@ -63,11 +64,17 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
 
     target = g_ascii_strdown((gchar*)contactPtr, (gssize)strlen(contactPtr));
 
+    // Allows nicks with [ ], replaces them with ( )
+    for(i = 0, c = strlen(target); i < c; i++) {
+        if (target[i] == '[') target[i] = '(';
+        if (target[i] == ']') target[i] = ')';
+    }
+
     if (serverRec != NULL) {
         snprintf(iniSectionKey, CONTACT_SIZE, "%s:%s", serverRec->tag,
                 target);
     } else {
-        snprintf(iniSectionKey, CONTACT_SIZE, "%s", contactPtr);
+        snprintf(iniSectionKey, CONTACT_SIZE, "%s", target);
     }
 
     return TRUE;
