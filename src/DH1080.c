@@ -43,7 +43,7 @@ int DH1080_Init(void)
     g_dh = DH_new();
     if(g_dh) {
         int codes = 0;
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
         g_dh->p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
         g_dh->g = BN_new(); BN_set_word(g_dh->g, 2);
         return DH_check(g_dh, &codes) && codes == 0;
@@ -84,7 +84,7 @@ int DH1080_gen(char *priv_key, char *pub_key)
 
     DH_generate_key(dh);
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
     memset(w, 0, sizeof w);
     n = BN_bn2bin(dh->priv_key, w);
     htob64((char *)w, priv_key, n);
@@ -141,7 +141,7 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
 
         len = b64toh(MyPrivKey, (char *)base64_tmp);
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
         dh->priv_key = BN_bin2bn(base64_tmp, len, NULL);
 #else
         BIGNUM *temp_pub_key = BN_new();
