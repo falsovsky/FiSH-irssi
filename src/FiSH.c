@@ -127,8 +127,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     struct IniValue iniValue;
     char bf_dest[1000] = "";
     char myMark[20] = "";
-    char *recoded;
-    int msg_len, i, mark_broken_block = 0, action_found = 0, markPos;
+    int msg_len, i, mark_broken_block = 0, action_found = 0;
 
     if (IsNULLorEmpty(msg_ptr) || decrypted_msg == NULL || IsNULLorEmpty(target))
         return 0;
@@ -183,7 +182,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 
     // recode message again, last time it was the encrypted message...
     if (settings_get_bool("recode") && serverRec != NULL) {
-        recoded = recode_in(serverRec, bf_dest, target);
+        char *recoded = recode_in(serverRec, bf_dest, target);
         if (recoded) {
             strncpy(bf_dest, recoded, sizeof(bf_dest));
             ZeroMemory(recoded, strlen(recoded));
@@ -209,7 +208,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     // append crypt-mark?
     strncpy(myMark, settings_get_str("mark_encrypted"), sizeof(myMark));
     if (*myMark != '\0') {
-        markPos = settings_get_int("mark_position");
+        int markPos = settings_get_int("mark_position");
         if (markPos == 0 || action_found)
             strcat(bf_dest, myMark); // append mark at the end (default for ACTION messages)
         else { // prefix mark
@@ -292,9 +291,7 @@ void encrypt_msg(SERVER_REC * server, char *target, char *msg,
  */
 void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 {
-    char contactName[CONTACT_SIZE] = "", myMark[20] =
-        "", formattedMsg[800] = "";
-    int i, markPos;
+    char contactName[CONTACT_SIZE] = "", myMark[20] = "";
     char *plainMsg;
 
     if (IsNULLorEmpty(msg) || IsNULLorEmpty(target))
@@ -322,12 +319,13 @@ void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
     // append crypt-mark?
     strncpy(myMark, settings_get_str("mark_encrypted"), sizeof(myMark));
     if (*myMark != '\0') {
+        char formattedMsg[800];
         strcpy(formattedMsg, msg);
-        markPos = settings_get_int("mark_position");
+        int markPos = settings_get_int("mark_position");
         if (markPos == 0)
             strcat(formattedMsg, myMark); //append mark at the end
         else { // prefix mark
-            i = strlen(myMark);
+            int i = strlen(myMark);
             memmove(formattedMsg + i, formattedMsg,
                     strlen(formattedMsg) + 1);
             strncpy(formattedMsg, myMark, i);
@@ -594,13 +592,7 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
         const char *word, const char *line,
         int *want_space)
 {
-    char *p;
-
     char *topic;
-    int topic_len;
-
-    const char *mark;
-    int mark_len;
 
     g_return_if_fail(list != NULL);
     g_return_if_fail(word != NULL);
@@ -608,12 +600,12 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
     if (*word == '\0' && IS_CHANNEL(window->active)) {
         topic = g_strdup(CHANNEL(window->active)->topic);
         if (topic != NULL) {
-            mark = settings_get_str("mark_encrypted");
+            const char *mark = settings_get_str("mark_encrypted");
             if (!IsNULLorEmpty(mark)) {
-                topic_len = strlen(topic);
-                mark_len = strlen(mark);
+                int topic_len = strlen(topic);
+                int mark_len = strlen(mark);
                 if (settings_get_int("mark_position") == 0) { // suffix
-                    p = topic + (topic_len - mark_len);
+                    char *p = topic + (topic_len - mark_len);
                     if (strncmp(p, mark, mark_len) == 0) {
                         *p = '\0'; // Remove mark
                     }
@@ -737,7 +729,7 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
 
 void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 {
-    int pw_len, re_enc = 0;
+    int re_enc = 0;
     char B64digest[50] = { '\0' };
     char key[32] = { '\0' };
     char hash[32] = { '\0' };
@@ -752,7 +744,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
     strcpy(old_iniKey, iniKey);
 
     if (iniPW != NULL) {
-        pw_len = strlen(iniPW);
+        int pw_len = strlen(iniPW);
 
         new_iniKeySize = (pw_len * 2) * sizeof(char);
         new_iniKey = (char *) malloc(new_iniKeySize);
@@ -1462,12 +1454,11 @@ char *strfcpy(char *dest, char *buffer, int destSize)
 char *isPlainPrefix(const char *msg)
 {
     char plainPrefix[20] = "";
-    int i;
 
     strncpy(plainPrefix, settings_get_str("plain_prefix"),
             sizeof(plainPrefix));
     if (*plainPrefix != '\0') {
-        i = strlen(plainPrefix);
+        int i = strlen(plainPrefix);
         if (strncasecmp(msg, plainPrefix, i) == 0)
             return (char *)msg + i;
     }
