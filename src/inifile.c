@@ -161,7 +161,7 @@ setIniValue(const char *section, const char *key, const char *value,
 
     key_file = g_key_file_new();
     (void)g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
-            NULL);
+            error);
     g_key_file_set_string(key_file, section, key, value);
 
     writeIniFile(key_file, filepath);
@@ -177,7 +177,7 @@ setIniValue(const char *section, const char *key, const char *value,
 
 void writeIniFile(GKeyFile * key_file, const char *filepath)
 {
-    gchar *config = NULL;
+    gchar *config;
     GError *error = NULL;
     gsize length = 0;
     FILE *outfile = NULL;
