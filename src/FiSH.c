@@ -229,8 +229,7 @@ void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
         const char *address, const char *target)
 {
     GString *decrypted;
-    const char *contactPtr, *msg_bak = msg;
-    char contactName[CONTACT_SIZE] = "";
+    const char *contactPtr;
 
     if (msg == NULL || target == NULL || nick == NULL)
         return;
@@ -652,7 +651,6 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
 int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
         const char *old_iniKey)
 {
-    char *encrypted_key;
     GKeyFile *config = g_key_file_new();
     GError *error = NULL;
     gsize groups_count = 0;
