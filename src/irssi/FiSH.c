@@ -795,6 +795,8 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
         iniKey = (char *) malloc((strlen(B64digest)* 2) * sizeof(char));
 
         strcpy(iniKey, B64digest); // this is used for encrypting blow.ini
+        bzero(new_iniKey, new_iniKeySize);
+        free(new_iniKey);
     } else {
         strcpy(iniKey, default_iniKey); // use default blow.ini key
     }
@@ -803,9 +805,6 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
     htob64(hash, B64digest, 32); // this is used to verify the entered password
     ZeroMemory(hash, sizeof(hash));
     ZeroMemory(key, sizeof(key));
-
-    bzero(new_iniKey, new_iniKeySize);
-    free(new_iniKey);
 
     // Try to create blow.ini if it doesnt exist
     open(iniPath, O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR);
