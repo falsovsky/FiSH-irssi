@@ -169,7 +169,7 @@ setIniValue(const char *section, const char *key, const char *value,
     g_key_file_free(key_file);
 
     if (error != NULL) {
-        return -1;
+        g_clear_error(&error);
     }
 
     return 1;
