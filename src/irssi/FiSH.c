@@ -30,7 +30,7 @@ int getContactKey(const char *contactPtr, char *theKey)
     if (strncmp(iniValue.key, "+OK ", 4) == 0) {
         if (theKey) {
             // if it's not just a test, lets decrypt the key
-            decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
+            decrypt_string(iniKey, iniValue.key + 4, theKey,
                     strlen(iniValue.key + 4));
         }
 
@@ -221,8 +221,7 @@ void decrypt_msg(SERVER_REC * server, char *msg, const char *nick,
         const char *address, const char *target)
 {
     GString *decrypted;
-    const char *contactPtr, *msg_bak = msg;
-    char contactName[CONTACT_SIZE] = "";
+    const char *contactPtr;
 
     if (msg == NULL || target == NULL || nick == NULL)
         return;
@@ -330,8 +329,6 @@ void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 
         ZeroMemory(formattedMsg, sizeof(formattedMsg));
     }
-
-    return;
 }
 
 /*
@@ -641,94 +638,6 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
             " /fishlogin\n");
 }
 
-int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
-        const char *old_iniKey)
-{
-    char *encrypted_key;
-    GKeyFile *config = g_key_file_new();
-    GError *error = NULL;
-    gsize groups_count = 0;
-    int i;
-    int re_enc = 0;
-    int newbfKeySize;
-    char *newbfKey;
-    int plusOkSize;
-    char *plusOk;
-    int bfKeySize;
-    char *bfKey;
-
-    g_key_file_load_from_file(config, iniPath, G_KEY_FILE_NONE, &error);
-    if (error != NULL) {
-        g_error_free(error);
-        error = NULL;
-        g_key_file_free(config);
-        return -1;
-    }
-
-    gchar **groups = g_key_file_get_groups(config, &groups_count);
-
-    for (i = 0; i < groups_count; i++) {
-
-        gsize keys_count = 0;
-        gchar **keys = g_key_file_get_keys(config, groups[i], &keys_count, &error);
-
-        if (error != NULL) {
-            g_error_free(error);
-            error = NULL;
-            continue;
-        }
-
-        int j;
-
-        for (j = 0; j < keys_count; j++) {
-            gchar *value = g_key_file_get_value(config, groups[i], keys[j], &error);
-
-            if (error != NULL) {
-                g_error_free(error);
-                error = NULL;
-                continue;
-            }
-
-            if (strncmp(value, "+OK ", 4) == 0) {
-                re_enc = 1;
-
-                bfKeySize = (strlen(value) * 2) * sizeof(char);
-                bfKey = (char *) malloc(bfKeySize);
-                decrypt_string(old_iniKey, value + 4, bfKey, strlen(value + 4));
-
-                newbfKeySize = (strlen(bfKey) * 2)* sizeof(char);
-                newbfKey = (char *) malloc(newbfKeySize);
-                encrypt_string(iniKey, bfKey, newbfKey, strlen(bfKey));
-
-                plusOkSize = (strlen(newbfKey) * 2) * sizeof(char);
-                plusOk = (char *) malloc(plusOkSize);
-                snprintf(plusOk, plusOkSize, "+OK %s", newbfKey);
-
-                setIniValue(groups[i], keys[j], plusOk, iniPath_new);
-
-                bzero(bfKey, bfKeySize);
-                free(bfKey);
-                bzero(newbfKey, newbfKeySize);
-                free(newbfKey);
-                bzero(plusOk, plusOkSize);
-                free(plusOk);
-            }
-
-            g_free(value);
-        }
-
-        g_strfreev(keys);
-    }
-
-    g_strfreev(groups);
-    g_key_file_free(config);
-
-    remove(iniPath);
-    rename(iniPath_new, iniPath);
-
-    return re_enc;
-}
-
 void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 {
     int pw_len, re_enc = 0;
@@ -813,7 +722,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
     strcpy(iniPath_new, iniPath);
     strcat(iniPath_new, "_new");
 
-    re_enc = recrypt_ini_file(iniPath, iniPath_new, old_iniKey);
+    re_enc = cryptIni(iniPath, iniPath_new, old_iniKey, iniKey);
     if (re_enc < 0) {
         printtext(server,
                 item != NULL ? window_item_get_target(item) : NULL,
@@ -990,7 +899,7 @@ void cmd_delkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     if (server == NULL || !server->connected)
         cmd_param_error(CMDERR_NOT_CONNECTED);
 
-    target = (char *)g_strchomp(target);
+    target = g_strchomp(target);
 
     if (getIniSectionForContact(server, target, contactName) == FALSE)
         return;
@@ -1036,7 +945,7 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     if (server == NULL || !server->connected)
         cmd_param_error(CMDERR_NOT_CONNECTED);
 
-    target = (char *)g_strchomp(target);
+    target = g_strchomp(target);
 
     if (getIniSectionForContact(server, target, contactName) == FALSE)
         return;

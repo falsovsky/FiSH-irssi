@@ -69,6 +69,7 @@ getIniValue(const char *section, const char *key, const char *default_value,
 
     // In case of any error...
     if (error != NULL) {
+        g_error_free(error);
         strncpy(buffer, default_value, (size_t) buflen);
     }
 
@@ -157,7 +158,7 @@ setIniValue(const char *section, const char *key, const char *value,
 
     key_file = g_key_file_new();
     (void)g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
-            NULL);
+                                    &error);
     g_key_file_set_string(key_file, section, key, value);
 
     writeIniFile(key_file, filepath);
@@ -165,6 +166,7 @@ setIniValue(const char *section, const char *key, const char *value,
     g_key_file_free(key_file);
 
     if (error != NULL) {
+        g_error_free(error);
         return -1;
     }
 
@@ -208,4 +210,95 @@ void freeIni(struct IniValue iniValue)
 {
     bzero(iniValue.key, iniValue.keySize);
     free(iniValue.key);
+}
+
+int cryptIni(const char *iniPath, const char *iniPath_new,
+                     const char *iniKey_old, const char *iniKey)
+{
+    GKeyFile *config = g_key_file_new();
+    GError *error = NULL;
+    int newKeySize, oldKeySize, plusOkSize, result = 0;
+    char *newKey, *oldKey, *plusOk;
+
+    /* Try to read the file */
+    g_key_file_load_from_file(config, iniPath, G_KEY_FILE_NONE, &error);
+    if (error != NULL) {
+        g_error_free(error);
+        error = NULL;
+        g_key_file_free(config);
+        return -1;
+    }
+
+    /* Get a list of all the groups */
+    int groupIndex;
+    gsize groupsSize = 0;
+    gchar **groups = g_key_file_get_groups(config, &groupsSize);
+    /* Iterate over all the groups */
+    for (groupIndex = 0; groupIndex < groupsSize; groupIndex++) {
+        /* Get a list of all the keys */
+        gsize keysCount = 0;
+        gchar **keys = g_key_file_get_keys(config, groups[groupIndex], &keysCount, &error);
+
+        if (error != NULL) {
+            g_error_free(error);
+            error = NULL;
+            continue;
+        }
+
+        /* Iterate over all the keys */
+        int keysIndex;
+        for (keysIndex = 0; keysIndex < keysCount; keysIndex++) {
+
+            /* Get key value */
+            gchar *value = g_key_file_get_value(config, groups[groupIndex], keys[keysIndex], &error);
+
+            if (error != NULL) {
+                g_error_free(error);
+                error = NULL;
+                continue;
+            }
+
+            if (strncmp(value, "+OK ", 4) == 0) {
+                result = 1;
+
+                /* Decrypt value using iniKey_old */
+                oldKeySize = (strlen(value) * 2) * sizeof(char);
+                oldKey = (char *) malloc(oldKeySize);
+                decrypt_string(iniKey_old, value + 4, oldKey, strlen(value + 4));
+
+                /* Encrypt value using iniKey */
+                newKeySize = (strlen(oldKey) * 2)* sizeof(char);
+                newKey = (char *) malloc(newKeySize);
+                encrypt_string(iniKey, oldKey, newKey, strlen(oldKey));
+
+                /* Prefix "+OK " to value */
+                plusOkSize = (strlen(newKey) * 2) * sizeof(char);
+                plusOk = (char *) malloc(plusOkSize);
+                snprintf(plusOk, plusOkSize, "+OK %s", newKey);
+
+                /* Set value on iniPath_new */
+                setIniValue(groups[groupIndex], keys[keysIndex], plusOk, iniPath_new);
+
+                bzero(oldKey, oldKeySize);
+                free(oldKey);
+                bzero(newKey, newKeySize);
+                free(newKey);
+                bzero(plusOk, plusOkSize);
+                free(plusOk);
+            }
+
+            g_free(value);
+        }
+
+        g_strfreev(keys);
+    }
+
+    g_strfreev(groups);
+    g_key_file_free(config);
+
+    /* Delete original file and rename the new one */
+    remove(iniPath);
+    rename(iniPath_new, iniPath);
+
+    return result;
 }

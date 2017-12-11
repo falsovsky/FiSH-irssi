@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
+#include "blowfish.h"
 
 struct IniValue {
     char *key;
@@ -20,3 +21,5 @@ void writeIniFile(GKeyFile * key_file, const char *filepath);
 struct IniValue allocateIni(const char *section, const char *key,
         const char *filepath);
 void freeIni(struct IniValue iniValue);
+int cryptIni(const char *iniPath, const char *iniPath_new,
+             const char *iniKey_old, const char *iniKey);
