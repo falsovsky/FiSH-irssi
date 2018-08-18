@@ -1283,6 +1283,12 @@ void authenticated_fish_setup(const char *password, void *rec) {
 
     iniValue = allocateIni("FiSH", "ini_password_Hash", iniPath);
 
+    // Verify if the key really exists
+    if (iniValue.iniKeySize == 1) {
+        printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH:\002 No password set for blow.ini");
+        return;
+    }
+
     get_ini_password_hash(iniValue.keySize, iniValue.key);
 
     B64digest = (char *) malloc((iniValue.keySize * 2) * sizeof(char));
