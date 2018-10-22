@@ -7,4 +7,4 @@ if (APPLE)
 	SET_TARGET_PROPERTIES(fish PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
 
-INSTALL(TARGETS fish LIBRARY DESTINATION lib/irssi/modules)
+INSTALL(TARGETS fish LIBRARY DESTINATION irssi/modules)
