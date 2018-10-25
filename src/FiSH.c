@@ -1226,6 +1226,23 @@ void calculate_password_key_and_hash(const char *a_password,
     htob64(hash, a_hash, 32);
 }
 
+/**
+ * Iterate over all channels and send the "channel topic changed" signal to it
+ * If any of them if FiSHed and you have the key, the topicbar will be updated
+ */
+void refresh_topics()
+{
+    GSList *list;
+
+	list = g_slist_copy(channels);
+	while (list != NULL) {
+		CHANNEL_REC *rec = list->data;
+
+		signal_emit("channel topic changed", 1, rec);
+		list = g_slist_remove(list, list->data);
+	}
+}
+
 void setup_fish()
 {
     signal_add_first("server sendmsg", (SIGNAL_FUNC) encrypt_msg);
@@ -1257,6 +1274,8 @@ void setup_fish()
     command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
     command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
     command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
+
+    refresh_topics();
 }
 
 void get_ini_password_hash(int password_size, char* password) {
