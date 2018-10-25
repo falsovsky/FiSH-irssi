@@ -1228,7 +1228,7 @@ void calculate_password_key_and_hash(const char *a_password,
 
 /**
  * Iterate over all channels and send the "channel topic changed" signal to it
- * If any of them if FiSHed and you have the key, the topicbar will be updated
+ * If any of them is FiSHed and you have the key, the topicbar will be updated
  */
 void refresh_topics()
 {
