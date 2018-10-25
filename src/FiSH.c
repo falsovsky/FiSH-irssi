@@ -1234,12 +1234,12 @@ void refresh_topics()
 {
     GSList *list;
 
-    list = g_slist_copy(channels);
+    list = channels;
     while (list != NULL) {
         CHANNEL_REC *rec = list->data;
 
         signal_emit("channel topic changed", 1, rec);
-        list = g_slist_remove(list, list->data);
+        list = g_slist_next(list);
     }
 }
 
