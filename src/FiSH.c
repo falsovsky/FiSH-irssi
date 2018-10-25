@@ -1234,12 +1234,9 @@ void refresh_topics()
 {
     GSList *list;
 
-    list = channels;
-    while (list != NULL) {
+    for (list = channels; list != NULL; list = g_slist_next(list)) {
         CHANNEL_REC *rec = list->data;
-
         signal_emit("channel topic changed", 1, rec);
-        list = g_slist_next(list);
     }
 }
 
