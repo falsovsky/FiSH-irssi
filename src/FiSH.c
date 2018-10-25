@@ -1234,13 +1234,13 @@ void refresh_topics()
 {
     GSList *list;
 
-	list = g_slist_copy(channels);
-	while (list != NULL) {
-		CHANNEL_REC *rec = list->data;
+    list = g_slist_copy(channels);
+    while (list != NULL) {
+        CHANNEL_REC *rec = list->data;
 
-		signal_emit("channel topic changed", 1, rec);
-		list = g_slist_remove(list, list->data);
-	}
+        signal_emit("channel topic changed", 1, rec);
+        list = g_slist_remove(list, list->data);
+    }
 }
 
 void setup_fish()
