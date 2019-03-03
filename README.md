@@ -29,6 +29,10 @@ The requirements for building FiSH-irssi are:
 ```
 # pacman -S cmake pkg-config glib2 openssl irssi
 ```
+## CentOS
+```
+yum install gcc pkgconfig cmake irssi irssi-devel openssl openssl-devel glib2 glib2-devel
+```
 
 # Building
 
