@@ -30,8 +30,14 @@ int getContactKey(const char *contactPtr, char *theKey)
     if (strncmp(iniValue.key, "+OK ", 4) == 0) {
         if (theKey) {
             // if it's not just a test, lets decrypt the key
-            decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
-                    strlen(iniValue.key + 4));
+
+            if (iniValue.cbc == 1) {
+                decrypt_string_cbc((char *)iniKey, iniValue.key + 4, theKey,
+                        strlen(iniValue.key + 4));
+            } else {
+                decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
+                        strlen(iniValue.key + 4));
+            }
         }
 
         bRet = TRUE;
@@ -111,7 +117,11 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
     }
 
     strcpy(bf_dest, "+OK ");
-    encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
+    if (iniValue.cbc == 1) {
+        encrypt_string_cbc(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
+    } else {
+        encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
+    }
 
     freeIni(iniValue);
     return 1;
@@ -142,18 +152,28 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     else
         return 0; // don't process, blowcrypt-prefix not found
 
+    // Strip the * from the CBC mode
+    if (strncmp(msg_ptr, "*", 1) == 0) {
+        msg_ptr++;
+    }
+
     // Verify base64 string
     msg_len = strlen(msg_ptr);
-    if ((strspn(msg_ptr, B64) != (size_t) msg_len) || (msg_len < 12))
+    if ((strspn(msg_ptr, B64) != (size_t) msg_len) || (msg_len < 12)) {
+        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL1");
         return 0;
+    }
 
-    if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
+    if (getIniSectionForContact(serverRec, target, contactName) == FALSE) {
+        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL2");
         return 0;
+    }
 
     iniValue = allocateIni(contactName, "key", iniPath);
 
     if (getContactKey(contactName, iniValue.key) == FALSE) {
         freeIni(iniValue);
+        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL3");
         return 0;
     }
 
@@ -174,11 +194,18 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
             mark_broken_block = 1;
     }
 
-    decrypt_string(iniValue.key, msg_ptr, bf_dest, msg_len);
+    if (iniValue.cbc == 1) {
+        decrypt_string_cbc(iniValue.key, msg_ptr, bf_dest, msg_len);
+    } else {
+        decrypt_string(iniValue.key, msg_ptr, bf_dest, msg_len);
+    }
+
     freeIni(iniValue);
 
-    if (*bf_dest == '\0')
+    if (*bf_dest == '\0') {
+        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL4");
         return 0; // don't process, decrypted msg is bad
+    }
 
     // recode message again, last time it was the encrypted message...
     if (settings_get_bool("recode") && serverRec != NULL) {
@@ -874,6 +901,24 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC * server,
             "\002FiSH:\002 Changed back to default blow.ini password, you won't have to enter it on start-up anymore!");
 }
 
+int detect_mode(const char *key)
+{
+    char mode[3];
+    int BLOWFISH_ECB = 0;
+    int BLOWFISH_CBC = 1;
+
+    if (strlen(key) > 4) {
+        strncpy(mode, key, sizeof(mode));
+        mode[3] = '\0';
+
+        if (strcmp(mode, "cbc") == 0) {
+            return BLOWFISH_CBC;
+        }
+    }
+
+    return BLOWFISH_ECB;
+}
+
 /**
  * Sets the key for a nick / channel in a server
  * @param data command
@@ -886,6 +931,7 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     char contactName[CONTACT_SIZE] = "";
     char *encryptedKey;
     int keySize;
+    int mode = 0;
 
     const char *target, *key;
     void *free_arg;
@@ -931,8 +977,13 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
     keySize = (strlen(key) * 3) * sizeof(char);
     encryptedKey = (char *) malloc(keySize);
+    mode = detect_mode(key);
 
-    encrypt_key((char *)key, encryptedKey);
+    if (mode == 1) {
+        encrypt_key((char *)key + 4, encryptedKey);
+    } else {
+        encrypt_key((char *)key, encryptedKey);
+    }
 
     if (getIniSectionForContact(server, target, contactName) == FALSE) {
         bzero(encryptedKey, keySize);
@@ -949,6 +1000,12 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
         bzero(encryptedKey, keySize);
         free(encryptedKey);
         return;
+    }
+
+    if (mode == 1) {
+        setIniValue(contactName, "cbc", "1", iniPath);
+    } else {
+        setIniValue(contactName, "cbc", "0", iniPath);
     }
 
     bzero(encryptedKey, keySize);

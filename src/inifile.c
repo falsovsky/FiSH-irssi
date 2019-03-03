@@ -200,10 +200,17 @@ void writeIniFile(GKeyFile * key_file, const char *filepath)
 allocateIni(const char *section, const char *key, const char *filepath)
 {
     struct IniValue iniValue;
+    char mode[1];
 
     iniValue.iniKeySize = getIniSize(section, key, filepath);
     iniValue.keySize = (iniValue.iniKeySize * 2) * sizeof(char);
     iniValue.key = (char *)malloc(iniValue.keySize);
+    iniValue.cbc = 0;
+
+    getIniValue(section, "cbc", "0", mode, sizeof(mode), filepath);
+    if (strcmp(mode, "1") == 0) {
+        iniValue.cbc = 1;
+    }
 
     return iniValue;
 }
