@@ -973,10 +973,8 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     mode = detect_mode(key);
 
     if (mode == 1) {
-        printtext(server, item != NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP, "CBC %s", (char *)key + 4);
         encrypt_key((char *)key + 4, encryptedKey);
     } else {
-        printtext(server, item != NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP, "EBC %s", (char *)key);
         encrypt_key((char *)key, encryptedKey);
     }
 
