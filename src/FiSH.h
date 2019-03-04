@@ -5,6 +5,7 @@
 #include "FiSH_version.h"
 #include "inifile.h"
 #include "blowfish.h"
+#include "blowfish_cbc.h"
 #include "DH1080.h"
 #include "module.h"
 #include "password.h"

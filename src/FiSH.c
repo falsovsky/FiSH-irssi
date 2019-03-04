@@ -29,15 +29,8 @@ int getContactKey(const char *contactPtr, char *theKey)
     // encrypted key found
     if (strncmp(iniValue.key, "+OK ", 4) == 0) {
         if (theKey) {
-            // if it's not just a test, lets decrypt the key
-
-            if (iniValue.cbc == 1) {
-                decrypt_string_cbc((char *)iniKey, iniValue.key + 4, theKey,
-                        strlen(iniValue.key + 4));
-            } else {
-                decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
-                        strlen(iniValue.key + 4));
-            }
+            decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
+                    strlen(iniValue.key + 4));
         }
 
         bRet = TRUE;
@@ -116,10 +109,11 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
         return 0;
     }
 
-    strcpy(bf_dest, "+OK ");
     if (iniValue.cbc == 1) {
-        encrypt_string_cbc(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
+        strcpy(bf_dest, "+OK *");
+        encrypt_string_cbc(iniValue.key, msgPtr, bf_dest + 5, strlen(msgPtr));
     } else {
+        strcpy(bf_dest, "+OK ");
         encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
     }
 
@@ -138,6 +132,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     char bf_dest[1000] = "";
     char myMark[20] = "";
     int msg_len, i, mark_broken_block = 0, action_found = 0;
+    int mode = 0;
 
     if (IsNULLorEmpty(msg_ptr) || decrypted_msg == NULL || IsNULLorEmpty(target))
         return 0;
@@ -154,26 +149,26 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 
     // Strip the * from the CBC mode
     if (strncmp(msg_ptr, "*", 1) == 0) {
+        mode = 1;
         msg_ptr++;
     }
 
-    // Verify base64 string
     msg_len = strlen(msg_ptr);
-    if ((strspn(msg_ptr, B64) != (size_t) msg_len) || (msg_len < 12)) {
-        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL1");
-        return 0;
-    }
 
-    if (getIniSectionForContact(serverRec, target, contactName) == FALSE) {
-        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL2");
+    // Verify base64 string - only for ECB
+    if (mode == 0 && (strspn(msg_ptr, B64) != (size_t) msg_len))
         return 0;
-    }
+
+    if (msg_len < 12)
+        return 0;
+
+    if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
+        return 0;
 
     iniValue = allocateIni(contactName, "key", iniPath);
 
     if (getContactKey(contactName, iniValue.key) == FALSE) {
         freeIni(iniValue);
-        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL3");
         return 0;
     }
 
@@ -183,7 +178,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 
     // block-align blowcrypt strings if truncated by IRC server (each block is 12 chars long)
     // such a truncated block is destroyed and not needed anymore
-    if (msg_len != (msg_len / 12) * 12) {
+    if ((mode == 0) && (msg_len != (msg_len / 12) * 12)) {
         msg_len = (msg_len / 12) * 12;
         msg_ptr[msg_len] = '\0';
         strncpy(myMark, settings_get_str("mark_broken_block"),
@@ -202,10 +197,8 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 
     freeIni(iniValue);
 
-    if (*bf_dest == '\0') {
-        //printtext(serverRec, target, MSGLEVEL_CRAP, "FAIL4");
+    if (*bf_dest == '\0')
         return 0; // don't process, decrypted msg is bad
-    }
 
     // recode message again, last time it was the encrypted message...
     if (settings_get_bool("recode") && serverRec != NULL) {
@@ -903,12 +896,12 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC * server,
 
 int detect_mode(const char *key)
 {
-    char mode[3];
+    char mode[4];
     int BLOWFISH_ECB = 0;
     int BLOWFISH_CBC = 1;
 
     if (strlen(key) > 4) {
-        strncpy(mode, key, sizeof(mode));
+        strncpy(mode, key, 3);
         mode[3] = '\0';
 
         if (strcmp(mode, "cbc") == 0) {
@@ -980,8 +973,10 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     mode = detect_mode(key);
 
     if (mode == 1) {
+        printtext(server, item != NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP, "CBC %s", (char *)key + 4);
         encrypt_key((char *)key + 4, encryptedKey);
     } else {
+        printtext(server, item != NULL ? window_item_get_target(item) : NULL, MSGLEVEL_CRAP, "EBC %s", (char *)key);
         encrypt_key((char *)key, encryptedKey);
     }
 
