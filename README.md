@@ -174,9 +174,9 @@ Unsets the key used to FiSH the messages for the current window or to the specif
 Shows the used key to FiSH the messages for the current window or to the specified target. The key will appear in the target window.
 
 ```
-/keyx
+/keyx [-ecb] [nick]
 ```
-Forces a DH key exchange in the current window.
+Forces a DH key exchange in the current window or to the specified target. The default mode is CBC, use "-ecb" to use ECB Mode.
 
 ```
 /setinipw <password>

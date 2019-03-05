@@ -654,7 +654,7 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
             " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
             " /delkey [-<server tag>] [<nick | #channel>]\n"
             " /key|showkey [-<server tag>] [<nick | #channel>]\n"
-            " /keyx [<nick>] (DH1080 KeyXchange)\n"
+            " /keyx [-ecb] [<nick>]\n"
             " /setinipw <blow.ini_password>\n"
             " /unsetinipw\n"
             " /fishlogin\n");
@@ -1110,22 +1110,33 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     freeIni(iniValue);
 }
 
-void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
+void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
+    GHashTable *optlist;
+    char *target;
+    void *free_arg;
+    int ecb = 0;
+
     if (server == NULL) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
                 "\002FiSH:\002 No connection to server.");
         return;
     }
 
+    if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_GETREST | PARAM_FLAG_OPTIONS,
+	        "keyx", &optlist, &target))
+        return;
+
+    ecb = g_hash_table_lookup(optlist, "ecb") != NULL;
+    cmd_params_free(free_arg);
+
+    if (item != NULL && IsNULLorEmpty(target))
+        target = (char *)window_item_get_target(item);
+
     if (IsNULLorEmpty(target)) {
-        if (item != NULL)
-            target = window_item_get_target(item);
-        else {
-            printtext(NULL, NULL, MSGLEVEL_CRAP,
-                    "\002FiSH:\002 Please define nick/#channel. Usage: /keyx <nick/#channel>");
-            return;
-        }
+        printtext(NULL, NULL, MSGLEVEL_CRAP,
+                "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb] <nick>");
+        return;
     }
 
     if (server_ischannel(server, target)) {
@@ -1134,16 +1145,17 @@ void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
         return;
     }
 
+    target = (char *)g_strchomp(target);
+
     DH1080_gen(g_myPrivKey, g_myPubKey);
 
-    /* BIG TODO: FIGURE OUT HOW TO SEND NON CBC DH1080 */
-    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s %s", target,
-            "DH1080_INIT", g_myPubKey, "CBC");
+    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s%s", target,
+            "DH1080_INIT", g_myPubKey, ecb == 0 ? " CBC" : "");
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
-            "\002FiSH:\002 Sent my DH1080 public key to %s, waiting for reply ...",
-            target);
+            "\002FiSH:\002 Sent my DH1080 public key to %s@%s (%s), waiting for reply ...",
+            target, server->tag, ecb == 1 ? "ECB" : "CBC");
 }
 
 void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
@@ -1187,8 +1199,8 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         }
 
         printtext(server, nick, MSGLEVEL_CRAP,
-                "\002FiSH:\002 Received DH1080 public key from %s, sending mine...",
-                nick);
+                "\002FiSH:\002 Received DH1080 public key from %s@%s (%s), sending mine...",
+                nick, server->tag, mode == 0 ? "ECB" : "CBC");
 
         DH1080_gen(g_myPrivKey, g_myPubKey);
 
@@ -1245,7 +1257,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
     ZeroMemory(encryptedKey, KEYBUF_SIZE);
 
     printtext(server, nick, MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s successfully set!", nick);
+            "\002FiSH:\002 Key for %s@%s (%s) successfully set!", nick, server->tag, mode == 0 ? "ECB" : "CBC");
 }
 
 /*
@@ -1363,6 +1375,7 @@ void setup_fish()
     command_bind("key", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("showkey", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
+    command_set_options("keyx", "-ecb");
     command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
     command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
 
