@@ -1006,8 +1006,8 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s@%s successfully set!", target,
-            server->tag);
+            "\002FiSH:\002 Key for %s@%s (%s) successfully set!", target,
+            server->tag, mode == 1 ? "CBC" : "ECB");
 
     cmd_params_free(free_arg);
 }
@@ -1104,8 +1104,8 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     }
 
     printtext(server, target, MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s@%s: %s", target, server->tag,
-            iniValue.key);
+            "\002FiSH:\002 Key for %s@%s: %s (%s)", target, server->tag,
+            iniValue.key, iniValue.cbc == 1 ? "CBC" : "ECB");
 
     freeIni(iniValue);
 }
