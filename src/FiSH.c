@@ -1136,8 +1136,9 @@ void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
 
     DH1080_gen(g_myPrivKey, g_myPubKey);
 
-    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s", target,
-            "DH1080_INIT", g_myPubKey);
+    /* BIG TODO: FIGURE OUT HOW TO SEND NON CBC DH1080 */
+    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s %s", target,
+            "DH1080_INIT", g_myPubKey, "CBC");
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
@@ -1151,16 +1152,32 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
     int i;
     char hisPubKey[300], contactName[CONTACT_SIZE] =
         "", encryptedKey[KEYBUF_SIZE] = "";
+    int mode = 0;
 
     if (server_ischannel(server, target) || server_ischannel(server, nick))
         return; // no KeyXchange for channels...
+
     i = strlen(msg);
-    if (i < 191 || i > 195)
+
+    if (i < 191 || i > 199)
         return;
 
     if (strncmp(msg, "DH1080_INIT ", 12) == 0) {
-        strcpy(hisPubKey, msg + 12);
-        if (strspn(hisPubKey, B64ABC) != strlen(hisPubKey))
+
+        // Check for CBC at the end
+        if (strcmp(msg + i - 3, "CBC") == 0) {
+            mode = 1;
+        }
+
+        if (mode == 0) {
+            strcpy(hisPubKey, msg + 12);
+        } else {
+            // Strip the " CBC" at the end
+            strncpy(hisPubKey, msg + 12, i - 12 - 4);
+        }
+
+        // This check only applies to ECB
+        if ((mode == 0) && (strspn(hisPubKey, B64ABC) != strlen(hisPubKey)))
             return;
 
         if (query_find(server, nick) == NULL) { // query window not found, lets create one
@@ -1174,12 +1191,32 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
                 nick);
 
         DH1080_gen(g_myPrivKey, g_myPubKey);
-        irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s",
-                nick, "DH1080_FINISH", g_myPubKey);
-    } else if (strncmp(msg, "DH1080_FINISH ", 14) == 0)
-        strcpy(hisPubKey, msg + 14);
-    else
+
+        if (mode == 0) {
+            irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s",
+                    nick, "DH1080_FINISH", g_myPubKey);
+        } else {
+            irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s %s",
+                    nick, "DH1080_FINISH", g_myPubKey, "CBC");
+        }
+    } else if (strncmp(msg, "DH1080_FINISH ", 14) == 0) {
+
+        i = strlen(msg);
+
+        // Check for CBC at the end
+        if (strcmp(msg + i - 3, "CBC") == 0) {
+            mode = 1;
+        }
+
+        if (mode == 0) {
+            strcpy(hisPubKey, msg + 14);
+        } else {
+            // Strip the " CBC" at the end
+            strncpy(hisPubKey, msg + 14, i - 14 - 4);
+        }
+    } else {
         return;
+    }
 
     if (DH1080_comp(g_myPrivKey, hisPubKey) == 0)
         return;
@@ -1193,6 +1230,13 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
 
     if (setIniValue(contactName, "key", encryptedKey, iniPath) == -1) {
         ZeroMemory(encryptedKey, KEYBUF_SIZE);
+        printtext(server, nick, MSGLEVEL_CRAP,
+                "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
+        return;
+    }
+
+    // Remember to use CBC mode
+    if ((mode == 1) && (setIniValue(contactName, "cbc", "1", iniPath) == -1)) {
         printtext(server, nick, MSGLEVEL_CRAP,
                 "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
