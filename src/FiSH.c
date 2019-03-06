@@ -1163,32 +1163,40 @@ fail:
 void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         char *target)
 {
-    int i;
-    char hisPubKey[300], contactName[CONTACT_SIZE] =
-        "", encryptedKey[KEYBUF_SIZE] = "";
+    int msg_len;
+    char hisPubKey[300];
+    char contactName[CONTACT_SIZE] = "";
+    char encryptedKey[KEYBUF_SIZE] = "";
+    // 0 for ECB, 1 for CBC
     int mode = 0;
+    // Length of "DH1080_INIT "
+    const unsigned int DH1080_INIT_LEN = 12;
+    // Length of "DH1080_FINISH "
+    const unsigned int DH1080_FINISH_LEN = 14;
+    // Length of " CBC"
+    const unsigned int CBC_SUFFIX_LEN = 4;
 
     if (server_ischannel(server, target) || server_ischannel(server, nick))
         return; // no KeyXchange for channels...
 
-    i = strlen(msg);
+    msg_len = strlen(msg);
 
-    if (i < 191 || i > 199)
+    if (msg_len < 191 || msg_len > 199)
         return;
 
-    if (strncmp(msg, "DH1080_INIT ", 12) == 0) {
+    if (strncmp(msg, "DH1080_INIT ", DH1080_INIT_LEN) == 0) {
 
         // Check for CBC at the end
-        if (strcmp(msg + i - 3, "CBC") == 0) {
+        if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, " CBC") == 0) {
             mode = 1;
         }
 
         if (mode == 0) {
-            strcpy(hisPubKey, msg + 12);
+            strcpy(hisPubKey, msg + DH1080_INIT_LEN);
         } else {
             // Strip the " CBC" at the end
-            strncpy(hisPubKey, msg + 12, i - 12 - 4);
-            hisPubKey[i - 12 - 4] = '\0';
+            strncpy(hisPubKey, msg + DH1080_INIT_LEN, msg_len - DH1080_INIT_LEN - CBC_SUFFIX_LEN);
+            hisPubKey[msg_len - DH1080_INIT_LEN - CBC_SUFFIX_LEN] = '\0';
         }
 
         // This check only applies to ECB
@@ -1214,21 +1222,21 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
             irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s %s",
                     nick, "DH1080_FINISH", g_myPubKey, "CBC");
         }
-    } else if (strncmp(msg, "DH1080_FINISH ", 14) == 0) {
+    } else if (strncmp(msg, "DH1080_FINISH ", DH1080_FINISH_LEN) == 0) {
 
-        i = strlen(msg);
+        msg_len = strlen(msg);
 
         // Check for CBC at the end
-        if (strcmp(msg + i - 3, "CBC") == 0) {
+        if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, " CBC") == 0) {
             mode = 1;
         }
 
         if (mode == 0) {
-            strcpy(hisPubKey, msg + 14);
+            strcpy(hisPubKey, msg + DH1080_FINISH_LEN);
         } else {
             // Strip the " CBC" at the end
-            strncpy(hisPubKey, msg + 14, i - 14 - 4);
-            hisPubKey[i - 14 - 4] = '\0';
+            strncpy(hisPubKey, msg + DH1080_FINISH_LEN, msg_len - DH1080_FINISH_LEN - CBC_SUFFIX_LEN);
+            hisPubKey[msg_len - DH1080_FINISH_LEN - CBC_SUFFIX_LEN] = '\0';
         }
     } else {
         return;
