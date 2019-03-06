@@ -1147,8 +1147,8 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
     DH1080_gen(g_myPrivKey, g_myPubKey);
 
-    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s%s", target,
-            "DH1080_INIT", g_myPubKey, ecb == 0 ? " CBC" : "");
+    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s%s%s", target,
+            DH1080_INIT, g_myPubKey, ecb == 0 ? CBC_SUFFIX : "");
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
@@ -1169,12 +1169,9 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
     char encryptedKey[KEYBUF_SIZE] = "";
     // 0 for ECB, 1 for CBC
     int mode = 0;
-    // Length of "DH1080_INIT "
-    const unsigned int DH1080_INIT_LEN = 12;
-    // Length of "DH1080_FINISH "
-    const unsigned int DH1080_FINISH_LEN = 14;
-    // Length of " CBC"
-    const unsigned int CBC_SUFFIX_LEN = 4;
+    const unsigned int DH1080_INIT_LEN = strlen(DH1080_INIT);
+    const unsigned int DH1080_FINISH_LEN = strlen(DH1080_FINISH);
+    const unsigned int CBC_SUFFIX_LEN = strlen(CBC_SUFFIX);
 
     if (server_ischannel(server, target) || server_ischannel(server, nick))
         return; // no KeyXchange for channels...
@@ -1184,7 +1181,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
     if (msg_len < 191 || msg_len > 199)
         return;
 
-    if (strncmp(msg, "DH1080_INIT ", DH1080_INIT_LEN) == 0) {
+    if (strncmp(msg, DH1080_INIT, DH1080_INIT_LEN) == 0) {
 
         // Check for CBC at the end
         if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, " CBC") == 0) {
@@ -1215,19 +1212,15 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
 
         DH1080_gen(g_myPrivKey, g_myPubKey);
 
-        if (mode == 0) {
-            irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s",
-                    nick, "DH1080_FINISH", g_myPubKey);
-        } else {
-            irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s %s",
-                    nick, "DH1080_FINISH", g_myPubKey, "CBC");
-        }
-    } else if (strncmp(msg, "DH1080_FINISH ", DH1080_FINISH_LEN) == 0) {
+        irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s%s%s",
+                nick, DH1080_FINISH, g_myPubKey, mode == 1 ? CBC_SUFFIX : "");
+
+    } else if (strncmp(msg, DH1080_FINISH, DH1080_FINISH_LEN) == 0) {
 
         msg_len = strlen(msg);
 
         // Check for CBC at the end
-        if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, " CBC") == 0) {
+        if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, CBC_SUFFIX) == 0) {
             mode = 1;
         }
 
