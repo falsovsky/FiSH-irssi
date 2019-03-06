@@ -18,7 +18,7 @@ int getContactKey(const char *contactPtr, char *theKey)
     int bRet = FALSE;
 
     iniValue = allocateIni(contactPtr, "key", iniPath);
-    getIniValue(contactPtr, "key", "", iniValue.key, iniValue.iniKeySize, iniPath);
+    getIniValue(contactPtr, "key", "", iniValue.key, iniValue.keySize, iniPath);
 
     // don't process, encrypted key not found in ini
     if (strlen(iniValue.key) < 16) {
@@ -32,7 +32,6 @@ int getContactKey(const char *contactPtr, char *theKey)
             decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
                     strlen(iniValue.key + 4));
         }
-
         bRet = TRUE;
     }
 
@@ -711,15 +710,15 @@ int recrypt_ini_file(const char *iniPath, const char *iniPath_new,
                 re_enc = 1;
 
                 bfKeySize = (strlen(value) * 2) * sizeof(char);
-                bfKey = (char *) malloc(bfKeySize);
+                bfKey = (char *) calloc(bfKeySize, sizeof(char));
                 decrypt_string(old_iniKey, value + 4, bfKey, strlen(value + 4));
 
                 newbfKeySize = (strlen(bfKey) * 2)* sizeof(char);
-                newbfKey = (char *) malloc(newbfKeySize);
+                newbfKey = (char *) calloc(newbfKeySize, sizeof(char));
                 encrypt_string(iniKey, bfKey, newbfKey, strlen(bfKey));
 
                 plusOkSize = (strlen(newbfKey) * 2) * sizeof(char);
-                plusOk = (char *) malloc(plusOkSize);
+                plusOk = (char *) calloc(plusOkSize, sizeof(char));
                 snprintf(plusOk, plusOkSize, "+OK %s", newbfKey);
 
                 setIniValue(groups[i], keys[j], plusOk, iniPath_new);
@@ -760,14 +759,14 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
     char *new_iniKey;
 
     old_iniKeySize = strlen(iniKey) * sizeof(char);
-    old_iniKey = (char *) malloc(old_iniKeySize);
+    old_iniKey = (char *) calloc(old_iniKeySize + 1, sizeof(char));
     strcpy(old_iniKey, iniKey);
 
     if (iniPW != NULL) {
-        int pw_len = strlen(iniPW);
+        size_t pw_len = strlen(iniPW);
 
-        new_iniKeySize = (pw_len * 2) * sizeof(char);
-        new_iniKey = (char *) malloc(new_iniKeySize);
+        new_iniKeySize = pw_len * 2 + 1;
+        new_iniKey = (char *) calloc(new_iniKeySize, sizeof(char));
 
         if (pw_len < 1 || (size_t) pw_len > new_iniKeySize) {
             printtext(server,
@@ -810,7 +809,7 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
         htob64(key, B64digest, 32);
 
         free(iniKey);
-        iniKey = (char *) malloc((strlen(B64digest)* 2) * sizeof(char));
+        iniKey = (char *) calloc(strlen(B64digest) * 2, sizeof(char));
 
         strcpy(iniKey, B64digest); // this is used for encrypting blow.ini
 
@@ -969,7 +968,7 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     }
 
     keySize = (strlen(key) * 3) * sizeof(char);
-    encryptedKey = (char *) malloc(keySize);
+    encryptedKey = (char *) calloc(keySize, sizeof(char));
     mode = detect_mode(key);
 
     if (mode == 1) {
@@ -1112,23 +1111,22 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
 void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
-    GHashTable *optlist;
-    char *target;
-    void *free_arg;
+    GHashTable *optlist = NULL;
+    char *target = NULL;
+    void *free_arg = NULL;
     int ecb = 0;
 
     if (server == NULL) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
                 "\002FiSH:\002 No connection to server.");
-        return;
+        goto fail;
     }
 
     if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_GETREST | PARAM_FLAG_OPTIONS,
 	        "keyx", &optlist, &target))
-        return;
+        goto fail;
 
     ecb = g_hash_table_lookup(optlist, "ecb") != NULL;
-    cmd_params_free(free_arg);
 
     if (item != NULL && IsNULLorEmpty(target))
         target = (char *)window_item_get_target(item);
@@ -1136,13 +1134,13 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     if (IsNULLorEmpty(target)) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
                 "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb] <nick>");
-        return;
+        goto fail;
     }
 
     if (server_ischannel(server, target)) {
         printtext(server, target, MSGLEVEL_CRAP,
                 "\002FiSH:\002 KeyXchange does not work for channels!");
-        return;
+        goto fail;
     }
 
     target = (char *)g_strchomp(target);
@@ -1156,6 +1154,10 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
             MSGLEVEL_CRAP,
             "\002FiSH:\002 Sent my DH1080 public key to %s@%s (%s), waiting for reply ...",
             target, server->tag, ecb == 1 ? "ECB" : "CBC");
+fail:
+    if(free_arg) {
+        cmd_params_free(free_arg);
+    }
 }
 
 void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
@@ -1186,6 +1188,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         } else {
             // Strip the " CBC" at the end
             strncpy(hisPubKey, msg + 12, i - 12 - 4);
+            hisPubKey[i - 12 - 4] = '\0';
         }
 
         // This check only applies to ECB
@@ -1225,6 +1228,7 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         } else {
             // Strip the " CBC" at the end
             strncpy(hisPubKey, msg + 14, i - 14 - 4);
+            hisPubKey[i - 14 - 4] = '\0';
         }
     } else {
         return;
@@ -1401,7 +1405,7 @@ void authenticated_fish_setup(const char *password, void *rec) {
         iniUsed = 0;
     }
 
-    iniKey = (char *) malloc((strlen(password) * 10) * sizeof(char));
+    iniKey = (char *) calloc((strlen(password) * 10), sizeof(char));
     iniUsed = 1;
 
     iniValue = allocateIni("FiSH", "ini_password_Hash", iniPath);
@@ -1414,7 +1418,7 @@ void authenticated_fish_setup(const char *password, void *rec) {
 
     get_ini_password_hash(iniValue.keySize, iniValue.key);
 
-    B64digest = (char *) malloc((iniValue.keySize * 2) * sizeof(char));
+    B64digest = (char *) calloc((iniValue.keySize * 2), sizeof(char));
 
     calculate_password_key_and_hash(password, iniKey, B64digest);
 
@@ -1486,7 +1490,7 @@ void fish_init(void)
     get_ini_password_hash(iniValue.keySize, iniValue.key);
 
     if (strlen(iniValue.key) != 43) {
-        iniKey = (char *) malloc((strlen(default_iniKey)* 2) * sizeof(char));
+        iniKey = (char *) calloc((strlen(default_iniKey)* 2), sizeof(char));
         iniUsed = 1;
 
         strcpy(iniKey, default_iniKey);
