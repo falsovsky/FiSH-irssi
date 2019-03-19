@@ -132,6 +132,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     char myMark[20] = "";
     int msg_len, i, mark_broken_block = 0, action_found = 0;
     int mode = 0;
+    int cbc_ret = 0;
 
     if (IsNULLorEmpty(msg_ptr) || decrypted_msg == NULL || IsNULLorEmpty(target))
         return 0;
@@ -189,9 +190,18 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     }
 
     if (iniValue.cbc == 1) {
-        decrypt_string_cbc(iniValue.key, msg_ptr, bf_dest, msg_len);
+        cbc_ret = decrypt_string_cbc(iniValue.key, msg_ptr, bf_dest, msg_len);
     } else {
         decrypt_string(iniValue.key, msg_ptr, bf_dest, msg_len);
+    }
+
+    if (cbc_ret == -1) {
+        strncpy(myMark, settings_get_str("mark_broken_block"),
+                sizeof(myMark));
+        if (*myMark == '\0' || isNoChar(*myMark))
+            mark_broken_block = 0;
+        else
+            mark_broken_block = 1;
     }
 
     freeIni(iniValue);

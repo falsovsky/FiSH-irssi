@@ -96,7 +96,8 @@ decrypt_string_cbc (const char *key, const char *str, char *dest, int len)
     while ((inlen = BIO_read(l_b64, block, sizeof(block))) > 0)
     {
         if(inlen != BF_BLOCK) {
-            goto fail;
+            ret *= -1;
+            break;
         }
 
         BF_cbc_encrypt(block, block, BF_BLOCK, &bf_key, ivec, BF_DECRYPT);
@@ -107,7 +108,7 @@ decrypt_string_cbc (const char *key, const char *str, char *dest, int len)
     *dest++ = 0;
     // get rid of first 8 bytes
     memmove(dest_begin, dest_begin + BF_BLOCK, strlen(dest_begin + BF_BLOCK) + 1);
-    ret = 1;
+    ret *= -1;
 fail:
     if(l_b64) {
         BIO_free_all(l_b64);
