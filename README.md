@@ -2,7 +2,7 @@
 
 # Introduction
 
-This is an encryption add-on for irssi, it's based on blowfish. It supports private messages and channel encryption. It also includes a secure key-exchange system.
+This is an encryption add-on for irssi, it's based on blowfish. It supports private messages and channel encryption in **ECB** and **CBC** modes. It also includes a secure key-exchange system.
 
 # Requirements
 
@@ -161,7 +161,7 @@ Send a FiSHed action to the current window.
 ```
 /setkey [servertag] [nick / #channel] <key>
 ```
-Sets the key used to FiSH the messages for the current window or to the specified target.
+Sets the key used to FiSH the messages for the current window or to the specified target. To use CBC mode, prefix the key with "cbc:".
 
 ```
 /delkey [servertag] [nick/#channel]
@@ -174,9 +174,9 @@ Unsets the key used to FiSH the messages for the current window or to the specif
 Shows the used key to FiSH the messages for the current window or to the specified target. The key will appear in the target window.
 
 ```
-/keyx
+/keyx [-ecb] [nick]
 ```
-Forces a DH key exchange in the current window.
+Forces a DH key exchange in the current window or to the specified target. The default mode is CBC, use "-ecb" to use ECB Mode.
 
 ```
 /setinipw <password>
