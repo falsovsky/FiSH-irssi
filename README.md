@@ -19,17 +19,20 @@ The requirements for building FiSH-irssi are:
 ```
 # apt-get install build-essential irssi-dev libglib2.0-dev libssl-dev cmake git
 ```
+
 ## OpenBSD
 
 ```
 # pkg_add glib2 irssi cmake git
 ```
+
 ## Arch Linux
 
 ```
 # pacman -S cmake pkg-config glib2 openssl irssi
 ```
-## CentOS
+
+## CentOS / Fedora
 ```
 yum install gcc pkgconfig cmake irssi irssi-devel openssl openssl-devel glib2 glib2-devel
 ```
