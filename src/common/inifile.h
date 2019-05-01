@@ -8,6 +8,7 @@ struct IniValue {
     char *key;
     int iniKeySize;
     int keySize;
+    int cbc;
 };
 
 int setIniValue(const char *section, const char *key, const char *value,

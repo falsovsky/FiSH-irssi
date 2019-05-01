@@ -3,11 +3,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(FiSH-irssi C)
 
 SET(VERSION_MAJOR 1)
-SET(VERSION_MINOR 4)
+SET(VERSION_MINOR 5)
 
 SET(FISH_VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 
 INCLUDE (CheckIncludeFiles)
+INCLUDE (GNUInstallDirs)
 
 # Look for some headers
 CHECK_INCLUDE_FILES(stdint.h HAVE_STDINT)
@@ -57,7 +58,7 @@ MESSAGE(STATUS "irssi includes were found on ${IRSSI_INCLUDE_PATH}")
 # Add the weirdo irssi includes directories
 INCLUDE_DIRECTORIES(${IRSSI_INCLUDE_PATH} ${IRSSI_INCLUDE_PATH}/src ${IRSSI_INCLUDE_PATH}/src/fe-common/core ${IRSSI_INCLUDE_PATH}/src/core)
 
-MESSAGE(STATUS "The module will be installed by default to ${CMAKE_INSTALL_PREFIX}/lib/irssi/modules")
+MESSAGE(STATUS "The module will be installed by default to ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/irssi/modules")
 MESSAGE(STATUS "You can change it with 'cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .'")
 
 # Generate a version based on the git version

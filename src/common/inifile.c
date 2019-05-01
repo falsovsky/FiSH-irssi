@@ -46,9 +46,12 @@
 getIniValue(const char *section, const char *key, const char *default_value,
         char *buffer, int buflen, const char *filepath)
 {
-    GKeyFile *key_file;
+    GKeyFile *key_file = NULL;
     GError *error = NULL;
     gchar *value = NULL;
+
+    if(buflen <= 0) return -1;
+    buffer[0] = 0;
 
     key_file = g_key_file_new();
 
@@ -60,7 +63,7 @@ getIniValue(const char *section, const char *key, const char *default_value,
         value = g_key_file_get_string(key_file, section, key, &error);
         if (value != NULL && error == NULL) {
             strncpy(buffer, value, (size_t) buflen);
-            buffer[buflen] = '\0';
+            buffer[buflen-1] = '\0';
         }
     }
 
@@ -69,8 +72,9 @@ getIniValue(const char *section, const char *key, const char *default_value,
 
     // In case of any error...
     if (error != NULL) {
-        g_error_free(error);
+        g_clear_error (&error);
         strncpy(buffer, default_value, (size_t) buflen);
+        buffer[buflen-1] = '\0';
     }
 
     return (int)strlen(buffer);
@@ -122,10 +126,13 @@ int deleteIniValue(const char *section, const char *key, const char *filepath)
                 g_key_file_remove_group(key_file, section,
                         NULL);
 
-                writeIniFile(key_file, filepath);
             }
+            if (error != NULL)
+                g_clear_error (&error);
+            writeIniFile(key_file, filepath);
             ret = 1;
         } else {
+            g_clear_error (&error);
             ret = 0;
         }
     }
@@ -158,7 +165,7 @@ setIniValue(const char *section, const char *key, const char *value,
 
     key_file = g_key_file_new();
     (void)g_key_file_load_from_file(key_file, filepath, G_KEY_FILE_NONE,
-                                    &error);
+            &error);
     g_key_file_set_string(key_file, section, key, value);
 
     writeIniFile(key_file, filepath);
@@ -166,7 +173,7 @@ setIniValue(const char *section, const char *key, const char *value,
     g_key_file_free(key_file);
 
     if (error != NULL) {
-        g_error_free(error);
+        g_clear_error(&error);
         return -1;
     }
 
@@ -175,7 +182,7 @@ setIniValue(const char *section, const char *key, const char *value,
 
 void writeIniFile(GKeyFile * key_file, const char *filepath)
 {
-    gchar *config = NULL;
+    gchar *config;
     GError *error = NULL;
     gsize length = 0;
     FILE *outfile = NULL;
@@ -189,7 +196,7 @@ void writeIniFile(GKeyFile * key_file, const char *filepath)
                     outfile);
             (void)fclose(outfile);
         }
-    }
+    } else g_clear_error (&error);
 
     g_free(config);
 }
@@ -198,10 +205,17 @@ void writeIniFile(GKeyFile * key_file, const char *filepath)
 allocateIni(const char *section, const char *key, const char *filepath)
 {
     struct IniValue iniValue;
+    char mode[2] = {0};
 
     iniValue.iniKeySize = getIniSize(section, key, filepath);
-    iniValue.keySize = (iniValue.iniKeySize * 2) * sizeof(char);
-    iniValue.key = (char *)malloc(iniValue.keySize);
+    iniValue.keySize = iniValue.iniKeySize * 2 + 1;
+    iniValue.key = (char *)calloc(iniValue.keySize, sizeof(char));
+    iniValue.cbc = 0;
+
+    getIniValue(section, "cbc", "0", mode, sizeof(mode), filepath);
+    if (strcmp(mode, "1") == 0) {
+        iniValue.cbc = 1;
+    }
 
     return iniValue;
 }

@@ -53,3 +53,4 @@ _CPack_Packages
 src/irssi/FiSH_version.h
 src/common/common.h
 build
+src/tests/test1

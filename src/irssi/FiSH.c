@@ -18,7 +18,7 @@ int getContactKey(const char *contactPtr, char *theKey)
     int bRet = FALSE;
 
     iniValue = allocateIni(contactPtr, "key", iniPath);
-    getIniValue(contactPtr, "key", "", iniValue.key, iniValue.iniKeySize, iniPath);
+    getIniValue(contactPtr, "key", "", iniValue.key, iniValue.keySize, iniPath);
 
     // don't process, encrypted key not found in ini
     if (strlen(iniValue.key) < 16) {
@@ -29,11 +29,9 @@ int getContactKey(const char *contactPtr, char *theKey)
     // encrypted key found
     if (strncmp(iniValue.key, "+OK ", 4) == 0) {
         if (theKey) {
-            // if it's not just a test, lets decrypt the key
-            decrypt_string(iniKey, iniValue.key + 4, theKey,
+            decrypt_string((char *)iniKey, iniValue.key + 4, theKey,
                     strlen(iniValue.key + 4));
         }
-
         bRet = TRUE;
     }
 
@@ -52,6 +50,7 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
         const char *contactPtr, char *iniSectionKey)
 {
     char *target;
+    size_t i, c;
 
     ZeroMemory(iniSectionKey, CONTACT_SIZE);
 
@@ -63,11 +62,17 @@ int getIniSectionForContact(const SERVER_REC * serverRec,
 
     target = g_ascii_strdown((gchar*)contactPtr, (gssize)strlen(contactPtr));
 
+    // Allows nicks with [ ], replaces them with ( )
+    for(i = 0, c = strlen(target); i < c; i++) {
+        if (target[i] == '[') target[i] = '(';
+        if (target[i] == ']') target[i] = ')';
+    }
+
     if (serverRec != NULL) {
         snprintf(iniSectionKey, CONTACT_SIZE, "%s:%s", serverRec->tag,
                 target);
     } else {
-        snprintf(iniSectionKey, CONTACT_SIZE, "%s", contactPtr);
+        snprintf(iniSectionKey, CONTACT_SIZE, "%s", target);
     }
 
     return TRUE;
@@ -103,9 +108,13 @@ int FiSH_encrypt(const SERVER_REC * serverRec, const char *msgPtr,
         return 0;
     }
 
-    strcpy(bf_dest, "+OK ");
-
-    encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
+    if (iniValue.cbc == 1) {
+        strcpy(bf_dest, "+OK *");
+        encrypt_string_cbc(iniValue.key, msgPtr, bf_dest + 5, strlen(msgPtr));
+    } else {
+        strcpy(bf_dest, "+OK ");
+        encrypt_string(iniValue.key, msgPtr, bf_dest + 4, strlen(msgPtr));
+    }
 
     freeIni(iniValue);
     return 1;
@@ -121,8 +130,9 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     struct IniValue iniValue;
     char bf_dest[1000] = "";
     char myMark[20] = "";
-    char *recoded;
-    int msg_len, i, mark_broken_block = 0, action_found = 0, markPos;
+    int msg_len, i, mark_broken_block = 0, action_found = 0;
+    int mode = 0;
+    int cbc_ret = 0;
 
     if (IsNULLorEmpty(msg_ptr) || decrypted_msg == NULL || IsNULLorEmpty(target))
         return 0;
@@ -130,14 +140,26 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     if (settings_get_bool("process_incoming") == 0)
         return 0;
 
-    if (strncmp(msg_ptr, "+OK ", 4) == 0) 
+    if (strncmp(msg_ptr, "+OK ", 4) == 0)
         msg_ptr += 4;
+    else if (strncmp(msg_ptr, "mcps ", 5) == 0)
+        msg_ptr += 5;
     else
         return 0; // don't process, blowcrypt-prefix not found
 
-    // Verify base64 string
+    // Strip the * from the CBC mode
+    if (strncmp(msg_ptr, "*", 1) == 0) {
+        mode = 1;
+        msg_ptr++;
+    }
+
     msg_len = strlen(msg_ptr);
-    if ((strspn(msg_ptr, B64) != (size_t) msg_len) || (msg_len < 12))
+
+    // Verify base64 string - only for ECB
+    if (mode == 0 && (strspn(msg_ptr, B64) != (size_t) msg_len))
+        return 0;
+
+    if (msg_len < 12)
         return 0;
 
     if (getIniSectionForContact(serverRec, target, contactName) == FALSE)
@@ -156,7 +178,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 
     // block-align blowcrypt strings if truncated by IRC server (each block is 12 chars long)
     // such a truncated block is destroyed and not needed anymore
-    if (msg_len != (msg_len / 12) * 12) {
+    if ((mode == 0) && (msg_len != (msg_len / 12) * 12)) {
         msg_len = (msg_len / 12) * 12;
         msg_ptr[msg_len] = '\0';
         strncpy(myMark, settings_get_str("mark_broken_block"),
@@ -167,7 +189,21 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
             mark_broken_block = 1;
     }
 
-    decrypt_string(iniValue.key, msg_ptr, bf_dest, msg_len);
+    if (iniValue.cbc == 1) {
+        cbc_ret = decrypt_string_cbc(iniValue.key, msg_ptr, bf_dest, msg_len);
+    } else {
+        decrypt_string(iniValue.key, msg_ptr, bf_dest, msg_len);
+    }
+
+    if (cbc_ret == -1) {
+        strncpy(myMark, settings_get_str("mark_broken_block"),
+                sizeof(myMark));
+        if (*myMark == '\0' || isNoChar(*myMark))
+            mark_broken_block = 0;
+        else
+            mark_broken_block = 1;
+    }
+
     freeIni(iniValue);
 
     if (*bf_dest == '\0')
@@ -175,7 +211,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
 
     // recode message again, last time it was the encrypted message...
     if (settings_get_bool("recode") && serverRec != NULL) {
-        recoded = recode_in(serverRec, bf_dest, target);
+        char *recoded = recode_in(serverRec, bf_dest, target);
         if (recoded) {
             strncpy(bf_dest, recoded, sizeof(bf_dest));
             ZeroMemory(recoded, strlen(recoded));
@@ -201,7 +237,7 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     // append crypt-mark?
     strncpy(myMark, settings_get_str("mark_encrypted"), sizeof(myMark));
     if (*myMark != '\0') {
-        markPos = settings_get_int("mark_position");
+        int markPos = settings_get_int("mark_position");
         if (markPos == 0 || action_found)
             strcat(bf_dest, myMark); // append mark at the end (default for ACTION messages)
         else { // prefix mark
@@ -284,9 +320,7 @@ void encrypt_msg(SERVER_REC * server, char *target, char *msg,
  */
 void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
 {
-    char contactName[CONTACT_SIZE] = "", myMark[20] =
-        "", formattedMsg[800] = "";
-    int i, markPos;
+    char contactName[CONTACT_SIZE] = "", myMark[20] = "";
     char *plainMsg;
 
     if (IsNULLorEmpty(msg) || IsNULLorEmpty(target))
@@ -314,12 +348,13 @@ void format_msg(SERVER_REC * server, char *msg, char *target, char *orig_target)
     // append crypt-mark?
     strncpy(myMark, settings_get_str("mark_encrypted"), sizeof(myMark));
     if (*myMark != '\0') {
+        char formattedMsg[800];
         strcpy(formattedMsg, msg);
-        markPos = settings_get_int("mark_position");
+        int markPos = settings_get_int("mark_position");
         if (markPos == 0)
             strcat(formattedMsg, myMark); //append mark at the end
         else { // prefix mark
-            i = strlen(myMark);
+            int i = strlen(myMark);
             memmove(formattedMsg + i, formattedMsg,
                     strlen(formattedMsg) + 1);
             strncpy(formattedMsg, myMark, i);
@@ -584,13 +619,7 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
         const char *word, const char *line,
         int *want_space)
 {
-    char *p;
-
     char *topic;
-    int topic_len;
-
-    const char *mark;
-    int mark_len;
 
     g_return_if_fail(list != NULL);
     g_return_if_fail(word != NULL);
@@ -598,12 +627,12 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
     if (*word == '\0' && IS_CHANNEL(window->active)) {
         topic = g_strdup(CHANNEL(window->active)->topic);
         if (topic != NULL) {
-            mark = settings_get_str("mark_encrypted");
+            const char *mark = settings_get_str("mark_encrypted");
             if (!IsNULLorEmpty(mark)) {
-                topic_len = strlen(topic);
-                mark_len = strlen(mark);
+                int topic_len = strlen(topic);
+                int mark_len = strlen(mark);
                 if (settings_get_int("mark_position") == 0) { // suffix
-                    p = topic + (topic_len - mark_len);
+                    char *p = topic + (topic_len - mark_len);
                     if (strncmp(p, mark, mark_len) == 0) {
                         *p = '\0'; // Remove mark
                     }
@@ -632,7 +661,7 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
             " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
             " /delkey [-<server tag>] [<nick | #channel>]\n"
             " /key|showkey [-<server tag>] [<nick | #channel>]\n"
-            " /keyx [<nick>] (DH1080 KeyXchange)\n"
+            " /keyx [-ecb] [<nick>]\n"
             " /setinipw <blow.ini_password>\n"
             " /unsetinipw\n"
             " /fishlogin\n");
@@ -640,7 +669,7 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
 
 void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
 {
-    int pw_len, re_enc = 0;
+    int re_enc = 0;
     char B64digest[50] = { '\0' };
     char key[32] = { '\0' };
     char hash[32] = { '\0' };
@@ -651,14 +680,14 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
     char *new_iniKey;
 
     old_iniKeySize = strlen(iniKey) * sizeof(char);
-    old_iniKey = (char *) malloc(old_iniKeySize);
+    old_iniKey = (char *) calloc(old_iniKeySize + 1, sizeof(char));
     strcpy(old_iniKey, iniKey);
 
     if (iniPW != NULL) {
-        pw_len = strlen(iniPW);
+        size_t pw_len = strlen(iniPW);
 
-        new_iniKeySize = (pw_len * 2) * sizeof(char);
-        new_iniKey = (char *) malloc(new_iniKeySize);
+        new_iniKeySize = pw_len * 2 + 1;
+        new_iniKey = (char *) calloc(new_iniKeySize, sizeof(char));
 
         if (pw_len < 1 || (size_t) pw_len > new_iniKeySize) {
             printtext(server,
@@ -701,9 +730,10 @@ void cmd_setinipw(const char *iniPW, SERVER_REC * server, WI_ITEM_REC * item)
         htob64(key, B64digest, 32);
 
         free(iniKey);
-        iniKey = (char *) malloc((strlen(B64digest)* 2) * sizeof(char));
+        iniKey = (char *) calloc(strlen(B64digest) * 2, sizeof(char));
 
         strcpy(iniKey, B64digest); // this is used for encrypting blow.ini
+
         bzero(new_iniKey, new_iniKeySize);
         free(new_iniKey);
     } else {
@@ -784,6 +814,24 @@ static void cmd_unsetinipw(const char *arg, SERVER_REC * server,
             "\002FiSH:\002 Changed back to default blow.ini password, you won't have to enter it on start-up anymore!");
 }
 
+int detect_mode(const char *key)
+{
+    char mode[4];
+    int BLOWFISH_ECB = 0;
+    int BLOWFISH_CBC = 1;
+
+    if (strlen(key) > 4) {
+        strncpy(mode, key, 3);
+        mode[3] = '\0';
+
+        if (strcmp(mode, "cbc") == 0) {
+            return BLOWFISH_CBC;
+        }
+    }
+
+    return BLOWFISH_ECB;
+}
+
 /**
  * Sets the key for a nick / channel in a server
  * @param data command
@@ -796,6 +844,7 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     char contactName[CONTACT_SIZE] = "";
     char *encryptedKey;
     int keySize;
+    int mode = 0;
 
     const char *target, *key;
     void *free_arg;
@@ -840,9 +889,14 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     }
 
     keySize = (strlen(key) * 3) * sizeof(char);
-    encryptedKey = (char *) malloc(keySize);
+    encryptedKey = (char *) calloc(keySize, sizeof(char));
+    mode = detect_mode(key);
 
-    encrypt_key(iniKey, (char *)key, encryptedKey);
+    if (mode == 1) {
+        encrypt_key(iniKey, (char *)key + 4, encryptedKey);
+    } else {
+        encrypt_key(iniKey, (char *)key, encryptedKey);
+    }
 
     if (getIniSectionForContact(server, target, contactName) == FALSE) {
         bzero(encryptedKey, keySize);
@@ -861,13 +915,19 @@ void cmd_setkey(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
         return;
     }
 
+    if (mode == 1) {
+        setIniValue(contactName, "cbc", "1", iniPath);
+    } else {
+        setIniValue(contactName, "cbc", "0", iniPath);
+    }
+
     bzero(encryptedKey, keySize);
     free(encryptedKey);
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s@%s successfully set!", target,
-            server->tag);
+            "\002FiSH:\002 Key for %s@%s (%s) successfully set!", target,
+            server->tag, mode == 1 ? "CBC" : "ECB");
 
     cmd_params_free(free_arg);
 }
@@ -964,57 +1024,101 @@ void cmd_key(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     }
 
     printtext(server, target, MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s@%s: %s", target, server->tag,
-            iniValue.key);
+            "\002FiSH:\002 Key for %s@%s: %s (%s)", target, server->tag,
+            iniValue.key, iniValue.cbc == 1 ? "CBC" : "ECB");
 
     freeIni(iniValue);
 }
 
-void cmd_keyx(const char *target, SERVER_REC * server, WI_ITEM_REC * item)
+void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
+    GHashTable *optlist = NULL;
+    char *target = NULL;
+    void *free_arg = NULL;
+    int ecb = 0;
+
+    if (server == NULL) {
+        printtext(NULL, NULL, MSGLEVEL_CRAP,
+                "\002FiSH:\002 No connection to server.");
+        goto fail;
+    }
+
+    if (!cmd_get_params(data, &free_arg, 1 | PARAM_FLAG_GETREST | PARAM_FLAG_OPTIONS,
+	        "keyx", &optlist, &target))
+        goto fail;
+
+    ecb = g_hash_table_lookup(optlist, "ecb") != NULL;
+
+    if (item != NULL && IsNULLorEmpty(target))
+        target = (char *)window_item_get_target(item);
+
     if (IsNULLorEmpty(target)) {
-        if (item != NULL)
-            target = window_item_get_target(item);
-        else {
-            printtext(NULL, NULL, MSGLEVEL_CRAP,
-                    "\002FiSH:\002 Please define nick/#channel. Usage: /keyx <nick/#channel>");
-            return;
-        }
+        printtext(NULL, NULL, MSGLEVEL_CRAP,
+                "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb] <nick>");
+        goto fail;
     }
 
     if (server_ischannel(server, target)) {
         printtext(server, target, MSGLEVEL_CRAP,
                 "\002FiSH:\002 KeyXchange does not work for channels!");
-        return;
+        goto fail;
     }
+
+    target = (char *)g_strchomp(target);
 
     DH1080_gen(g_myPrivKey, g_myPubKey);
 
-    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s", target,
-            "DH1080_INIT", g_myPubKey);
+    irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s%s%s", target,
+            DH1080_INIT, g_myPubKey, ecb == 0 ? CBC_SUFFIX : "");
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
-            "\002FiSH:\002 Sent my DH1080 public key to %s, waiting for reply ...",
-            target);
+            "\002FiSH:\002 Sent my DH1080 public key to %s@%s (%s), waiting for reply ...",
+            target, server->tag, ecb == 1 ? "ECB" : "CBC");
+fail:
+    if(free_arg) {
+        cmd_params_free(free_arg);
+    }
 }
 
 void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         char *target)
 {
-    int i;
-    char hisPubKey[300], contactName[CONTACT_SIZE] =
-        "", encryptedKey[KEYBUF_SIZE] = "";
+    int msg_len;
+    char hisPubKey[300];
+    char contactName[CONTACT_SIZE] = "";
+    char encryptedKey[KEYBUF_SIZE] = "";
+    // 0 for ECB, 1 for CBC
+    int mode = 0;
+    const unsigned int DH1080_INIT_LEN = strlen(DH1080_INIT);
+    const unsigned int DH1080_FINISH_LEN = strlen(DH1080_FINISH);
+    const unsigned int CBC_SUFFIX_LEN = strlen(CBC_SUFFIX);
 
     if (server_ischannel(server, target) || server_ischannel(server, nick))
         return; // no KeyXchange for channels...
-    i = strlen(msg);
-    if (i < 191 || i > 195)
+
+    msg_len = strlen(msg);
+
+    if (msg_len < 191 || msg_len > 199)
         return;
 
-    if (strncmp(msg, "DH1080_INIT ", 12) == 0) {
-        strcpy(hisPubKey, msg + 12);
-        if (strspn(hisPubKey, B64ABC) != strlen(hisPubKey))
+    if (strncmp(msg, DH1080_INIT, DH1080_INIT_LEN) == 0) {
+
+        // Check for CBC at the end
+        if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, " CBC") == 0) {
+            mode = 1;
+        }
+
+        if (mode == 0) {
+            strcpy(hisPubKey, msg + DH1080_INIT_LEN);
+        } else {
+            // Strip the " CBC" at the end
+            strncpy(hisPubKey, msg + DH1080_INIT_LEN, msg_len - DH1080_INIT_LEN - CBC_SUFFIX_LEN);
+            hisPubKey[msg_len - DH1080_INIT_LEN - CBC_SUFFIX_LEN] = '\0';
+        }
+
+        // This check only applies to ECB
+        if ((mode == 0) && (strspn(hisPubKey, B64ABC) != strlen(hisPubKey)))
             return;
 
         if (query_find(server, nick) == NULL) { // query window not found, lets create one
@@ -1024,16 +1128,33 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         }
 
         printtext(server, nick, MSGLEVEL_CRAP,
-                "\002FiSH:\002 Received DH1080 public key from %s, sending mine...",
-                nick);
+                "\002FiSH:\002 Received DH1080 public key from %s@%s (%s), sending mine...",
+                nick, server->tag, mode == 0 ? "ECB" : "CBC");
 
         DH1080_gen(g_myPrivKey, g_myPubKey);
-        irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s %s",
-                nick, "DH1080_FINISH", g_myPubKey);
-    } else if (strncmp(msg, "DH1080_FINISH ", 14) == 0)
-        strcpy(hisPubKey, msg + 14);
-    else
+
+        irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s%s%s",
+                nick, DH1080_FINISH, g_myPubKey, mode == 1 ? CBC_SUFFIX : "");
+
+    } else if (strncmp(msg, DH1080_FINISH, DH1080_FINISH_LEN) == 0) {
+
+        msg_len = strlen(msg);
+
+        // Check for CBC at the end
+        if (strcmp(msg + msg_len - CBC_SUFFIX_LEN, CBC_SUFFIX) == 0) {
+            mode = 1;
+        }
+
+        if (mode == 0) {
+            strcpy(hisPubKey, msg + DH1080_FINISH_LEN);
+        } else {
+            // Strip the " CBC" at the end
+            strncpy(hisPubKey, msg + DH1080_FINISH_LEN, msg_len - DH1080_FINISH_LEN - CBC_SUFFIX_LEN);
+            hisPubKey[msg_len - DH1080_FINISH_LEN - CBC_SUFFIX_LEN] = '\0';
+        }
+    } else {
         return;
+    }
 
     if (DH1080_comp(g_myPrivKey, hisPubKey) == 0)
         return;
@@ -1052,10 +1173,17 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         return;
     }
 
+    // Remember to use CBC mode
+    if ((mode == 1) && (setIniValue(contactName, "cbc", "1", iniPath) == -1)) {
+        printtext(server, nick, MSGLEVEL_CRAP,
+                "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
+        return;
+    }
+
     ZeroMemory(encryptedKey, KEYBUF_SIZE);
 
     printtext(server, nick, MSGLEVEL_CRAP,
-            "\002FiSH:\002 Key for %s successfully set!", nick);
+            "\002FiSH:\002 Key for %s@%s (%s) successfully set!", nick, server->tag, mode == 0 ? "ECB" : "CBC");
 }
 
 /*
@@ -1130,6 +1258,20 @@ void calculate_password_key_and_hash(const char *a_password,
     htob64(hash, a_hash, 32);
 }
 
+/**
+ * Iterate over all channels and send the "channel topic changed" signal to it
+ * If any of them is FiSHed and you have the key, the topicbar will be updated
+ */
+void refresh_topics()
+{
+    GSList *list;
+
+    for (list = channels; list != NULL; list = g_slist_next(list)) {
+        CHANNEL_REC *rec = list->data;
+        signal_emit("channel topic changed", 1, rec);
+    }
+}
+
 void setup_fish()
 {
     signal_add_first("server sendmsg", (SIGNAL_FUNC) encrypt_msg);
@@ -1159,8 +1301,11 @@ void setup_fish()
     command_bind("key", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("showkey", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
+    command_set_options("keyx", "-ecb");
     command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
     command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
+
+    refresh_topics();
 }
 
 void get_ini_password_hash(int password_size, char* password) {
@@ -1182,14 +1327,20 @@ void authenticated_fish_setup(const char *password, void *rec) {
         iniUsed = 0;
     }
 
-    iniKey = (char *) malloc((strlen(password) * 10) * sizeof(char));
+    iniKey = (char *) calloc((strlen(password) * 10), sizeof(char));
     iniUsed = 1;
 
     iniValue = allocateIni("FiSH", "ini_password_Hash", iniPath);
 
+    // Verify if the key really exists
+    if (iniValue.iniKeySize == 1) {
+        printtext(NULL, NULL, MSGLEVEL_CRAP, "\002FiSH:\002 No password set for blow.ini");
+        return;
+    }
+
     get_ini_password_hash(iniValue.keySize, iniValue.key);
 
-    B64digest = (char *) malloc((iniValue.keySize * 2) * sizeof(char));
+    B64digest = (char *) calloc((iniValue.keySize * 2), sizeof(char));
 
     calculate_password_key_and_hash(password, iniKey, B64digest);
 
@@ -1261,7 +1412,7 @@ void fish_init(void)
     get_ini_password_hash(iniValue.keySize, iniValue.key);
 
     if (strlen(iniValue.key) != 43) {
-        iniKey = (char *) malloc((strlen(default_iniKey)* 2) * sizeof(char));
+        iniKey = (char *) calloc((strlen(default_iniKey)* 2), sizeof(char));
         iniUsed = 1;
 
         strcpy(iniKey, default_iniKey);
@@ -1358,12 +1509,11 @@ char *strfcpy(char *dest, char *buffer, int destSize)
 char *isPlainPrefix(const char *msg)
 {
     char plainPrefix[20] = "";
-    int i;
 
     strncpy(plainPrefix, settings_get_str("plain_prefix"),
             sizeof(plainPrefix));
     if (*plainPrefix != '\0') {
-        i = strlen(plainPrefix);
+        int i = strlen(plainPrefix);
         if (strncasecmp(msg, plainPrefix, i) == 0)
             return (char *)msg + i;
     }
