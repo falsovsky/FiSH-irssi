@@ -1,26 +1,8 @@
-env:
-  global:
-   # The next declration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "oSOhAGR5V+6634um23AD2INFXxylMgx2kpqHy4ZTplxtprL75nHZ1FE/3j5zlrgCkReK5zPTgm73oDY+pVkGtQaQK01vWDfuxniCRdqoX1mYS6Ypdxc/niSLkE4coF9J1Pv0s94bKyJazyaN7C3FcKGT6uDpSdGFkDVj1/O1o2DmTWXM9VloULVNdUewwZBcONpiOaP2weFNBR/dN+i3QWmYoC9A4uzvSI1kL2beZsXspzdHGLdRnjjzAmyhQn74vTZA9MNKZuh22jX9qoFNY6ZGdzVwQ7g5y7dLHWtq4qtRvn/Xit0ez6O5RaWHTPvaJnlcZbM0ailytRGdFBKn5Jf/t4gS7vrI9YftdeIoW6ieUrWiyBg0y1vo2L+MmsCVjx2HcKzG4uYI2Zw9d+3z0vvdXepctlXjnJr3VcO5Lq0ymIHYkWzTdYecEfnHDvqcn2P8YFL/TFssypkBqcTZrAgBr9ssZ85yfx7OhW47441K6CVTkrqi8/1IfTGMWq2fUAN0jS9Ghwe+mAr1fQGAmJChv//jFMwkdZAqrDONm1BV0NPh7X5nk99ny6MVerUtYPJcX2MwljBPP1iRB2q4d2E6g38StF21dc0WED1JnVGHSEnLFenEswlWTq+m0jBswWKt8WbDRyY82ps2+9VcnBrJEcPsWb6E9YGzfH6z1w4="
-
-before_install:
-  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-
-addons:
-  coverity_scan:
-    project:
-      name: "falsovsky/FiSH-irssi"
-      description: "irssi FiSH plugin"
-    notification_email: falsovsky@gmail.com
-    build_command_prepend: "cmake ."
-    build_command: "make"
-    branch_pattern: coverity_scan
-
 branches:
   only:
     - master
     - testing
+    - coverity_scan
 language: 
   - c
 compiler:
