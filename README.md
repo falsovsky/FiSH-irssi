@@ -2,7 +2,9 @@
 
 # Introduction
 
-This is an encryption add-on for irssi, it's based on blowfish. It supports private messages and channel encryption in **ECB** and **CBC** modes. It also includes a secure key-exchange system.
+FiSH is an encryption add-on module for [irssi](https://irssi.org/).
+Uses the [Blowfish cipher](https://en.wikipedia.org/wiki/Blowfish_(cipher)) to encrypt private and public messages in **ECB** or **CBC** modes, using a specified key.
+It also includes a secure Diffie-Hellman key exchange for private chat.
 
 # Requirements
 
@@ -14,7 +16,7 @@ The requirements for building FiSH-irssi are:
 * OpenSSL
 * irssi (with includes)
 
-## Debian / Ubuntu
+## Debian - Ubuntu
 
 ```
 # apt-get install build-essential irssi-dev libglib2.0-dev libssl-dev cmake git
@@ -26,16 +28,24 @@ The requirements for building FiSH-irssi are:
 # pkg_add glib2 irssi cmake git
 ```
 
+## FreeBSD
+
+* [Official package](https://www.freshports.org/irc/irssi-fish/)
+
 ## Arch Linux
 
 ```
 # pacman -S cmake pkg-config glib2 openssl irssi
 ```
 
-## CentOS / Fedora
+* [AUR package](https://aur.archlinux.org/packages/fish-irssi-git/)
+
+## CentOS - Fedora
 ```
 yum install gcc pkgconfig cmake irssi irssi-devel openssl openssl-devel glib2 glib2-devel
 ```
+
+* @duritong [copr repository](https://copr.fedorainfracloud.org/coprs/duritong/irssi-fish/) with binary packages
 
 # Building
 
@@ -164,7 +174,7 @@ Send a FiSHed action to the current window.
 ```
 /setkey [servertag] [nick / #channel] <key>
 ```
-Sets the key used to FiSH the messages for the current window or to the specified target. To use CBC mode, prefix the key with "cbc:".
+Sets the key used to FiSH the messages for the current window or to the specified target. To use CBC mode, prefix the key with ```cbc:```.
 
 ```
 /delkey [servertag] [nick/#channel]
@@ -179,7 +189,7 @@ Shows the used key to FiSH the messages for the current window or to the specifi
 ```
 /keyx [-ecb] [nick]
 ```
-Forces a DH key exchange in the current window or to the specified target. The default mode is CBC, use "-ecb" to use ECB Mode.
+Forces a DH key exchange in the current window or to the specified target. The default mode is CBC, use the ```-ecb``` parameter to force ECB mode.
 
 ```
 /setinipw <password>
@@ -200,7 +210,6 @@ Used to ask again for the blow.ini password if the user inserts an invalid passw
 /fishhelp|helpfish
 ```
 Show a little help inside irssi.
-
 
 # Tested
 
