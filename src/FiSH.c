@@ -1165,7 +1165,11 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
     if ((mode == -1) && (getIniSectionForContact(server, target, contactName))) {
         iniValue = allocateIni(contactName, "key", iniPath);
-        mode = iniValue.cbc;
+        if (iniValue.iniKeySize == 1) {
+            mode = 1;
+        } else {
+            mode = iniValue.cbc;
+        }
         freeIni(iniValue);
     }
 
