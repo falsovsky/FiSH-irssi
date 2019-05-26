@@ -663,7 +663,7 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
             " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
             " /delkey [-<server tag>] [<nick | #channel>]\n"
             " /key|showkey [-<server tag>] [<nick | #channel>]\n"
-            " /keyx [-ecb] [<nick>]\n"
+            " /keyx [-ecb|-cbc] [<nick>]\n"
             " /setinipw <blow.ini_password>\n"
             " /unsetinipw\n"
             " /fishlogin\n");
@@ -1124,7 +1124,9 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     GHashTable *optlist = NULL;
     char *target = NULL;
     void *free_arg = NULL;
-    int ecb = 0;
+    int mode = -1;
+    char contactName[CONTACT_SIZE] = "";
+    struct IniValue iniValue;
 
     if (server == NULL) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
@@ -1136,14 +1138,20 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	        "keyx", &optlist, &target))
         goto fail;
 
-    ecb = g_hash_table_lookup(optlist, "ecb") != NULL;
+    if (g_hash_table_lookup(optlist, "ecb") != NULL) {
+        mode = 0;
+    }
+
+    if (g_hash_table_lookup(optlist, "cbc") != NULL) {
+        mode = 1;
+    }
 
     if (item != NULL && IsNULLorEmpty(target))
         target = (char *)window_item_get_target(item);
 
     if (IsNULLorEmpty(target)) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
-                "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb] <nick>");
+                "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb|-cbc] <nick>");
         goto fail;
     }
 
@@ -1155,15 +1163,25 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
     target = (char *)g_strchomp(target);
 
+    if ((mode == -1) && (getIniSectionForContact(server, target, contactName))) {
+        iniValue = allocateIni(contactName, "key", iniPath);
+        if (iniValue.iniKeySize == 1) {
+            mode = 1;
+        } else {
+            mode = iniValue.cbc;
+        }
+        freeIni(iniValue);
+    }
+
     DH1080_gen(g_myPrivKey, g_myPubKey);
 
     irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s%s%s", target,
-            DH1080_INIT, g_myPubKey, ecb == 0 ? CBC_SUFFIX : "");
+            DH1080_INIT, g_myPubKey, mode == 1 ? CBC_SUFFIX : "");
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
             "\002FiSH:\002 Sent my DH1080 public key to %s@%s (%s), waiting for reply ...",
-            target, server->tag, ecb == 1 ? "ECB" : "CBC");
+            target, server->tag, mode == 1 ? "CBC" : "ECB");
 fail:
     if(free_arg) {
         cmd_params_free(free_arg);
@@ -1262,8 +1280,8 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         return;
     }
 
-    // Remember to use CBC mode
-    if ((mode == 1) && (setIniValue(contactName, "cbc", "1", iniPath) == -1)) {
+    // Remember mode
+    if (setIniValue(contactName, "cbc", mode == 0 ? "0" : "1", iniPath) == -1) {
         printtext(server, nick, MSGLEVEL_CRAP,
                 "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
@@ -1390,7 +1408,7 @@ void setup_fish()
     command_bind("key", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("showkey", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
-    command_set_options("keyx", "-ecb");
+    command_set_options("keyx", "-ecb -cbc");
     command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
     command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
 
