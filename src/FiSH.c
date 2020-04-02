@@ -641,7 +641,7 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
                 }
                 else { // prefix
                     if (strncmp(topic, mark, mark_len) == 0) {
-                        g_memmove(topic, topic + mark_len, topic_len - mark_len);
+                        memmove(topic, topic + mark_len, topic_len - mark_len + 1);
                     }
                 }
             }
