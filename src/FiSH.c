@@ -480,6 +480,24 @@ void raw_handler(SERVER_REC * server, char *data)
     g_string_free(decrypted, TRUE);
 }
 
+static char *mark_crypted(const char *original) {
+    const char * mark = settings_get_str("mark_encrypted");
+    if(mark == NULL || *mark == '\0') {
+        return strdup(original);
+    }
+
+    // 0 for suffix, anything else for prefix
+    const int mark_position = settings_get_int("mark_position");
+
+    const size_t new_len = strlen(original) + strlen(mark) + 1;
+    char * new = (char *) calloc(new_len, sizeof(char));
+
+    snprintf(new, new_len, "%s%s", mark_position == 0 ? original : mark,
+                                   mark_position == 0 ? mark : original);
+
+    return new;
+}
+
 /*
  * /notice+ <nick/#channel> <notice message>
  */
@@ -488,6 +506,7 @@ void cmd_crypt_notice(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     char bf_dest[1000] = "", *msg;
     const char *target;
     void *free_arg = NULL;
+    char *marked;
 
     if (data == NULL || (strlen(data) < 3))
         goto notice_error;
@@ -518,8 +537,11 @@ void cmd_crypt_notice(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s\n", target,
             bf_dest);
 
-    signal_emit("message irc own_notice", 3, server, msg, target);
+    marked = mark_crypted(msg);
+
+    signal_emit("message irc own_notice", 3, server, marked, target);
     cmd_params_free(free_arg);
+    free(marked);
     return;
 
 notice_error:
@@ -537,6 +559,7 @@ void cmd_crypt_action(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
     char bf_dest[1000] = "";
     const char *target;
+    char *marked;
 
     if (data == NULL || (strlen(data) < 2))
         goto action_error;
@@ -564,7 +587,10 @@ void cmd_crypt_action(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     irc_send_cmdv((IRC_SERVER_REC *) server,
             "PRIVMSG %s :\001ACTION %s\001\n", target, bf_dest);
 
-    signal_emit("message irc own_action", 3, server, data, target);
+    marked = mark_crypted(data);
+
+    signal_emit("message irc own_action", 3, server, marked, target);
+    free(marked);
     return;
 
 action_error:
