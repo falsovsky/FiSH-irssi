@@ -173,8 +173,10 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     }
 
     // usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
-    if (msg_len >= (int)(sizeof(bf_dest) * 1.5))
-        msg_ptr[(int)(sizeof(bf_dest) * 1.5) - 20] = '\0';
+    if (msg_len >= (int)(FiSH_div_ceil(sizeof(bf_dest), 3) * 4)) {
+        msg_ptr[(int)(FiSH_div_ceil(sizeof(bf_dest), 3) * 4) - 20] = '\0';
+        msg_len = strlen(msg_ptr); /* Update msg_len after re-setting the null terminator */
+    }
 
     // block-align blowcrypt strings if truncated by IRC server (each block is 12 chars long)
     // such a truncated block is destroyed and not needed anymore
