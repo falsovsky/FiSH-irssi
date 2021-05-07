@@ -174,7 +174,6 @@ setIniValue(const char *section, const char *key, const char *value,
 
     if (error != NULL) {
         g_clear_error(&error);
-        return -1;
     }
 
     return 1;

@@ -20,8 +20,8 @@ addons:
 branches:
   only:
     - master
-    - refactoring
-    - cbc
+    - testing
+    - coverity_scan
 language: 
   - c
 compiler:

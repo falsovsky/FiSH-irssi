@@ -5,6 +5,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
+//#include "FiSH_version.h"
 #ifdef HAVE_STDINT
     #include <stdint.h>
 #else

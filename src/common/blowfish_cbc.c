@@ -87,7 +87,7 @@ decrypt_string_cbc (const char *key, const char *str, char *dest, int len)
         goto fail;
     }
     BIO_set_flags(l_b64, BIO_FLAGS_BASE64_NO_NL);
-    BIO *l_mem = BIO_new_mem_buf(str, len);
+    BIO *l_mem = BIO_new_mem_buf((char *)str, len);
     if(!l_mem) {
         goto fail;
     }

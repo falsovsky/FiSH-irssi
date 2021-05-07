@@ -173,8 +173,10 @@ int FiSH_decrypt(const SERVER_REC * serverRec, char *msg_ptr,
     }
 
     // usually a received message does not exceed 512 chars, but we want to prevent evil buffer overflow
-    if (msg_len >= (int)(sizeof(bf_dest) * 1.5))
-        msg_ptr[(int)(sizeof(bf_dest) * 1.5) - 20] = '\0';
+    if (msg_len >= (int)(FiSH_div_ceil(sizeof(bf_dest), 3) * 4)) {
+        msg_ptr[(int)(FiSH_div_ceil(sizeof(bf_dest), 3) * 4) - 20] = '\0';
+        msg_len = strlen(msg_ptr); /* Update msg_len after re-setting the null terminator */
+    }
 
     // block-align blowcrypt strings if truncated by IRC server (each block is 12 chars long)
     // such a truncated block is destroyed and not needed anymore
@@ -478,6 +480,24 @@ void raw_handler(SERVER_REC * server, char *data)
     g_string_free(decrypted, TRUE);
 }
 
+static char *mark_crypted(const char *original) {
+    const char * mark = settings_get_str("mark_encrypted");
+    if(mark == NULL || *mark == '\0') {
+        return strdup(original);
+    }
+
+    // 0 for suffix, anything else for prefix
+    const int mark_position = settings_get_int("mark_position");
+
+    const size_t new_len = strlen(original) + strlen(mark) + 1;
+    char * new = (char *) calloc(new_len, sizeof(char));
+
+    snprintf(new, new_len, "%s%s", mark_position == 0 ? original : mark,
+                                   mark_position == 0 ? mark : original);
+
+    return new;
+}
+
 /*
  * /notice+ <nick/#channel> <notice message>
  */
@@ -486,6 +506,7 @@ void cmd_crypt_notice(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     char bf_dest[1000] = "", *msg;
     const char *target;
     void *free_arg = NULL;
+    char *marked;
 
     if (data == NULL || (strlen(data) < 3))
         goto notice_error;
@@ -516,8 +537,11 @@ void cmd_crypt_notice(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s\n", target,
             bf_dest);
 
-    signal_emit("message irc own_notice", 3, server, msg, target);
+    marked = mark_crypted(msg);
+
+    signal_emit("message irc own_notice", 3, server, marked, target);
     cmd_params_free(free_arg);
+    free(marked);
     return;
 
 notice_error:
@@ -535,6 +559,7 @@ void cmd_crypt_action(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
     char bf_dest[1000] = "";
     const char *target;
+    char *marked;
 
     if (data == NULL || (strlen(data) < 2))
         goto action_error;
@@ -562,7 +587,10 @@ void cmd_crypt_action(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     irc_send_cmdv((IRC_SERVER_REC *) server,
             "PRIVMSG %s :\001ACTION %s\001\n", target, bf_dest);
 
-    signal_emit("message irc own_action", 3, server, data, target);
+    marked = mark_crypted(data);
+
+    signal_emit("message irc own_action", 3, server, marked, target);
+    free(marked);
     return;
 
 action_error:
@@ -639,7 +667,7 @@ static void sig_complete_topic_plus(GList **list, WINDOW_REC *window,
                 }
                 else { // prefix
                     if (strncmp(topic, mark, mark_len) == 0) {
-                        g_memmove(topic, topic + mark_len, topic_len - mark_len);
+                        memmove(topic, topic + mark_len, topic_len - mark_len + 1);
                     }
                 }
             }
@@ -661,7 +689,7 @@ void cmd_helpfish(const char *arg, SERVER_REC * server, WI_ITEM_REC * item)
             " /setkey [-<server tag>] [<nick | #channel>] <key>\n"
             " /delkey [-<server tag>] [<nick | #channel>]\n"
             " /key|showkey [-<server tag>] [<nick | #channel>]\n"
-            " /keyx [-ecb] [<nick>]\n"
+            " /keyx [-ecb|-cbc] [<nick>]\n"
             " /setinipw <blow.ini_password>\n"
             " /unsetinipw\n"
             " /fishlogin\n");
@@ -1035,7 +1063,9 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
     GHashTable *optlist = NULL;
     char *target = NULL;
     void *free_arg = NULL;
-    int ecb = 0;
+    int mode = -1;
+    char contactName[CONTACT_SIZE] = "";
+    struct IniValue iniValue;
 
     if (server == NULL) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
@@ -1047,14 +1077,20 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 	        "keyx", &optlist, &target))
         goto fail;
 
-    ecb = g_hash_table_lookup(optlist, "ecb") != NULL;
+    if (g_hash_table_lookup(optlist, "ecb") != NULL) {
+        mode = 0;
+    }
+
+    if (g_hash_table_lookup(optlist, "cbc") != NULL) {
+        mode = 1;
+    }
 
     if (item != NULL && IsNULLorEmpty(target))
         target = (char *)window_item_get_target(item);
 
     if (IsNULLorEmpty(target)) {
         printtext(NULL, NULL, MSGLEVEL_CRAP,
-                "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb] <nick>");
+                "\002FiSH:\002 Please define nick/#channel. Usage: /keyx [-ecb|-cbc] <nick>");
         goto fail;
     }
 
@@ -1066,15 +1102,27 @@ void cmd_keyx(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 
     target = (char *)g_strchomp(target);
 
+    if ((mode == -1) && (getIniSectionForContact(server, target, contactName))) {
+        iniValue = allocateIni(contactName, "key", iniPath);
+        if (iniValue.iniKeySize == 1) {
+            mode = 1;
+        } else {
+            mode = iniValue.cbc;
+        }
+        freeIni(iniValue);
+    }
+
+    target = (char *)g_strchomp(target);
+
     DH1080_gen(g_myPrivKey, g_myPubKey);
 
     irc_send_cmdv((IRC_SERVER_REC *) server, "NOTICE %s :%s%s%s", target,
-            DH1080_INIT, g_myPubKey, ecb == 0 ? CBC_SUFFIX : "");
+            DH1080_INIT, g_myPubKey, mode == 1 ? CBC_SUFFIX : "");
 
     printtext(server, item != NULL ? window_item_get_target(item) : NULL,
             MSGLEVEL_CRAP,
             "\002FiSH:\002 Sent my DH1080 public key to %s@%s (%s), waiting for reply ...",
-            target, server->tag, ecb == 1 ? "ECB" : "CBC");
+            target, server->tag, mode == 1 ? "CBC" : "ECB");
 fail:
     if(free_arg) {
         cmd_params_free(free_arg);
@@ -1173,8 +1221,8 @@ void DH1080_received(SERVER_REC * server, char *msg, char *nick, char *address,
         return;
     }
 
-    // Remember to use CBC mode
-    if ((mode == 1) && (setIniValue(contactName, "cbc", "1", iniPath) == -1)) {
+    // Remember mode
+    if (setIniValue(contactName, "cbc", mode == 0 ? "0" : "1", iniPath) == -1) {
         printtext(server, nick, MSGLEVEL_CRAP,
                 "\002FiSH ERROR:\002 Unable to write to blow.ini, probably out of space or permission denied.");
         return;
@@ -1301,7 +1349,7 @@ void setup_fish()
     command_bind("key", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("showkey", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
-    command_set_options("keyx", "-ecb");
+    command_set_options("keyx", "-ecb -cbc");
     command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
     command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
 
