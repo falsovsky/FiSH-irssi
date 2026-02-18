@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/blowfish.h>
+#include <openssl/evp.h>
 #include "FiSH_version.h"
 #ifdef HAVE_STDINT
     #include <stdint.h>
@@ -11,6 +11,8 @@
 #endif
 
 extern char *iniKey;
+
+#define BF_BLOCK 8
 
 #define ZeroMemory(dest,count) memset((void *)dest, 0, count)
 

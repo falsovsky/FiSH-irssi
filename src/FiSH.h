@@ -1,6 +1,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <openssl/provider.h>
 
 #include "FiSH_version.h"
 #include "inifile.h"

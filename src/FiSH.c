@@ -505,7 +505,8 @@ static char *mark_crypted(const char *original) {
  */
 void cmd_crypt_notice(const char *data, SERVER_REC * server, WI_ITEM_REC * item)
 {
-    char bf_dest[1000] = "", *msg;
+    char bf_dest[1000] = "";
+    const char *msg;
     const char *target;
     void *free_arg = NULL;
     char *marked;
@@ -1515,6 +1516,9 @@ void fish_abicheck(int *version)
 
 void fish_init(void)
 {
+    OSSL_PROVIDER_load(NULL, "legacy");
+    OSSL_PROVIDER_load(NULL, "default");
+
     struct IniValue iniValue;
 
     printtext(NULL, NULL, MSGLEVEL_CLIENTNOTICE,

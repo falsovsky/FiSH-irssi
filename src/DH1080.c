@@ -12,7 +12,7 @@
 #include "DH1080.h"
 
 // ### new sophie-germain 1080bit prime number ###
-static const unsigned char prime1080[DH1080_PRIME_BYTES] = 
+static const unsigned char prime1080[DH1080_PRIME_BYTES] =
 {
     0xFB, 0xE1, 0x02, 0x2E, 0x23, 0xD2, 0x13, 0xE8, 0xAC, 0xFA, 0x9A, 0xE8,
     0xB9, 0xDF, 0xAD, 0xA3, 0xEA,
@@ -32,43 +32,91 @@ static const unsigned char prime1080[DH1080_PRIME_BYTES] =
     0xBF, 0x0B, 0x7D, 0x8B
 };
 
-// base16: FBE1022E23D213E8ACFA9AE8B9DFADA3EA6B7AC7A7B7E95AB5EB2DF858921FEADE95E6AC7BE7DE6ADBAB8A783E7AF7A7FA6A2B7BEB1E72EAE2B72F9FA2BFB2A2EFBEFAC868BADB3E828FA8BADFADA3E4CC1BE7E8AFE85E9698A783EB68FA07A77AB6AD7BEB618ACF9CA2897EB28A6189EFA07AB99A8A7FA9AE299EFA7BA66DEAFEFBEFBF0B7D8B
-// base10: 12745216229761186769575009943944198619149164746831579719941140425076456621824834322853258804883232842877311723249782818608677050956745409379781245497526069657222703636504651898833151008222772087491045206203033063108075098874712912417029101508315117935752962862335062591404043092163187352352197487303798807791605274487594646923
-
-static DH * g_dh;
+/*
+ * Global EVP_PKEY holding just the DH parameters (p and g).
+ * Used as a template to generate per-session keypairs.
+ */
+static EVP_PKEY *g_dh_params = NULL;
 
 int DH1080_Init(void)
 {
+    BIGNUM *p = NULL, *g = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    int ret = 0;
+
     initb64();
-    g_dh = DH_new();
-    if(g_dh) {
-        int codes = 0;
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x3000000L)
-        g_dh->p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
-        g_dh->g = BN_new(); BN_set_word(g_dh->g, 2);
-        return DH_check(g_dh, &codes) && codes == 0;
-#else
-        BIGNUM *p;
-        BIGNUM *g = BN_new();
-        p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
-        BN_set_word(g, 2);
-        DH_set0_pqg(g_dh, p, NULL, g);
-        return DH_check(g_dh, &codes) && codes == 0;
-#endif
-    }
-    return 0;
+
+    p = BN_bin2bn(prime1080, DH1080_PRIME_BYTES, NULL);
+    g = BN_new();
+    if (!p || !g)
+        goto fail;
+    BN_set_word(g, 2);
+
+    bld = OSSL_PARAM_BLD_new();
+    if (!bld)
+        goto fail;
+    if (!OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        goto fail;
+    if (!OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        goto fail;
+
+    params = OSSL_PARAM_BLD_to_param(bld);
+    if (!params)
+        goto fail;
+
+    ctx = EVP_PKEY_CTX_new_from_name(NULL, "DHX", NULL);
+    if (!ctx)
+        goto fail;
+    if (EVP_PKEY_fromdata_init(ctx) <= 0)
+        goto fail;
+    if (EVP_PKEY_fromdata(ctx, &g_dh_params, EVP_PKEY_KEY_PARAMETERS, params) <= 0)
+        goto fail;
+
+    ret = 1;
+
+fail:
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    BN_free(p);
+    BN_free(g);
+    return ret;
 }
 
 void DH1080_DeInit(void)
 {
-    DH_free(g_dh);
+    EVP_PKEY_free(g_dh_params);
+    g_dh_params = NULL;
 }
 
-// verify the Diffie-Hellman public key as described in RFC 2631
-int DH_verifyPubKey(BIGNUM * pk)
+/* Verify the DH public key: must satisfy 2 <= pk <= p-2 */
+static int DH_verifyPubKey(const BIGNUM *pk)
 {
-    int codes = 0;
-    return DH_check_pub_key(g_dh, pk, &codes) && codes == 0;
+    BIGNUM *p = NULL, *tmp = NULL;
+    int ret = 0;
+
+    if (!EVP_PKEY_get_bn_param(g_dh_params, OSSL_PKEY_PARAM_FFC_P, &p))
+        goto done;
+    tmp = BN_new();
+    if (!tmp)
+        goto done;
+
+    BN_set_word(tmp, 2);
+    if (BN_cmp(pk, tmp) < 0)   /* pk < 2 */
+        goto done;
+
+    BN_copy(tmp, p);
+    BN_sub_word(tmp, 2);
+    if (BN_cmp(pk, tmp) > 0)   /* pk > p-2 */
+        goto done;
+
+    ret = 1;
+done:
+    BN_free(p);
+    BN_free(tmp);
+    return ret;
 }
 
 // Input:  priv_key = buffer of 200 bytes
@@ -77,37 +125,85 @@ int DH_verifyPubKey(BIGNUM * pk)
 //         pub_key  = Your public key
 int DH1080_gen(char *priv_key, char *pub_key)
 {
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *keypair = NULL;
+    BIGNUM *pub = NULL, *priv = NULL;
     unsigned char w[DH1080_PRIME_BYTES];
-    int n;
+    int n, ret = 0;
 
-    DH * dh = DHparams_dup(g_dh);
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, g_dh_params, NULL);
+    if (!ctx)
+        goto fail;
+    if (EVP_PKEY_keygen_init(ctx) <= 0)
+        goto fail;
+    if (EVP_PKEY_keygen(ctx, &keypair) <= 0)
+        goto fail;
 
-    DH_generate_key(dh);
+    if (!EVP_PKEY_get_bn_param(keypair, OSSL_PKEY_PARAM_PRIV_KEY, &priv))
+        goto fail;
+    if (!EVP_PKEY_get_bn_param(keypair, OSSL_PKEY_PARAM_PUB_KEY, &pub))
+        goto fail;
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x3000000L)
     memset(w, 0, sizeof w);
-    n = BN_bn2bin(dh->priv_key, w);
+    n = BN_bn2bin(priv, w);
     htob64((char *)w, priv_key, n);
 
     memset(w, 0, sizeof w);
-    n = BN_bn2bin(dh->pub_key, w);
+    n = BN_bn2bin(pub, w);
     htob64((char *)w, pub_key, n);
-#else
-    const BIGNUM *pubkey, *privkey;
-    DH_get0_key(dh, &pubkey, &privkey);
 
-    memset(w, 0, sizeof w);
-    n = BN_bn2bin(privkey, w);
-    htob64((char *)w, priv_key, n);
+    ret = 1;
 
-    memset(w, 0, sizeof w);
-    n = BN_bn2bin(pubkey, w);
-    htob64((char *)w, pub_key, n);
-#endif
-
+fail:
     OPENSSL_cleanse(w, sizeof w);
-    DH_free(dh);
-    return 1;
+    BN_free(pub);
+    BN_clear_free(priv);
+    EVP_PKEY_free(keypair);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Helper: build an EVP_PKEY for DHX from BIGNUMs.
+ * selection = EVP_PKEY_PUBLIC_KEY or EVP_PKEY_KEYPAIR.
+ */
+static EVP_PKEY *build_dh_pkey(const BIGNUM *pub, const BIGNUM *priv,
+                                int selection)
+{
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    BIGNUM *p = NULL, *g = NULL;
+
+    EVP_PKEY_get_bn_param(g_dh_params, OSSL_PKEY_PARAM_FFC_P, &p);
+    EVP_PKEY_get_bn_param(g_dh_params, OSSL_PKEY_PARAM_FFC_G, &g);
+
+    bld = OSSL_PARAM_BLD_new();
+    if (!bld) goto fail;
+
+    OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p);
+    OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g);
+    OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub);
+    if (priv)
+        OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv);
+
+    params = OSSL_PARAM_BLD_to_param(bld);
+    if (!params) goto fail;
+
+    ctx = EVP_PKEY_CTX_new_from_name(NULL, "DHX", NULL);
+    if (!ctx) goto fail;
+    if (EVP_PKEY_fromdata_init(ctx) <= 0) goto fail;
+    if (EVP_PKEY_fromdata(ctx, &pkey, selection, params) <= 0)
+        pkey = NULL;
+
+fail:
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    BN_free(p);
+    BN_free(g);
+    return pkey;
 }
 
 // Input:  MyPrivKey = Your private key
@@ -119,8 +215,10 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
     unsigned char base64_tmp[512] = {0};
     int result = 0;
     int len;
-    BIGNUM * pk = NULL;
-    DH * dh = NULL;
+    BIGNUM *pk = NULL, *priv_bn = NULL, *pub_bn = NULL;
+    EVP_PKEY *their_key = NULL, *my_key = NULL;
+    EVP_PKEY_CTX *derive_ctx = NULL;
+    BN_CTX *bnctx = NULL;
 
     // Verify base64 strings
     if ((strspn(MyPrivKey, B64ABC) != strlen(MyPrivKey))
@@ -130,35 +228,65 @@ int DH1080_comp(char *MyPrivKey, char *HisPubKey)
         return 0;
     }
 
-    dh = DHparams_dup(g_dh);
-
+    // Decode and verify their public key
     len = b64toh(HisPubKey, (char *)base64_tmp);
     pk = BN_bin2bn(base64_tmp, len, NULL);
+    if (!pk || !DH_verifyPubKey(pk))
+        goto fail;
 
-    if( DH_verifyPubKey(pk) ) {
-        unsigned char shared_key[DH1080_PRIME_BYTES] = {0};
-        unsigned char sha256[32] = {0};
+    their_key = build_dh_pkey(pk, NULL, EVP_PKEY_PUBLIC_KEY);
+    if (!their_key)
+        goto fail;
 
-        len = b64toh(MyPrivKey, (char *)base64_tmp);
+    // Decode our private key and derive matching public key: pub = g^priv mod p
+    len = b64toh(MyPrivKey, (char *)base64_tmp);
+    priv_bn = BN_bin2bn(base64_tmp, len, NULL);
+    memset(MyPrivKey, 0x20, strlen(MyPrivKey));
+    if (!priv_bn)
+        goto fail;
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x3000000L)
-        dh->priv_key = BN_bin2bn(base64_tmp, len, NULL);
-#else
-        BIGNUM *temp_pub_key = BN_new();
-        BIGNUM *priv_key = BN_bin2bn(base64_tmp, len, NULL);
-        DH_set0_key(dh, temp_pub_key, priv_key);
-#endif
-        memset(MyPrivKey, 0x20, strlen(MyPrivKey));
-
-        len = DH_compute_key(shared_key, pk, dh);
-
-        SHA256(shared_key, len, sha256);
-        htob64((char *)sha256, HisPubKey, 32);
-        result = 1;
+    {
+        BIGNUM *p = NULL, *g = NULL;
+        EVP_PKEY_get_bn_param(g_dh_params, OSSL_PKEY_PARAM_FFC_P, &p);
+        EVP_PKEY_get_bn_param(g_dh_params, OSSL_PKEY_PARAM_FFC_G, &g);
+        pub_bn = BN_new();
+        bnctx = BN_CTX_new();
+        BN_mod_exp(pub_bn, g, priv_bn, p, bnctx);
+        BN_CTX_free(bnctx); bnctx = NULL;
+        BN_free(p);
+        BN_free(g);
     }
 
+    my_key = build_dh_pkey(pub_bn, priv_bn, EVP_PKEY_KEYPAIR);
+    if (!my_key)
+        goto fail;
+
+    // Derive shared secret, hash with SHA-256, encode to base64
+    {
+        unsigned char shared_key[DH1080_PRIME_BYTES] = {0};
+        unsigned char sha256[32] = {0};
+        size_t shared_len = sizeof(shared_key);
+
+        derive_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, my_key, NULL);
+        if (!derive_ctx) goto fail;
+        if (EVP_PKEY_derive_init(derive_ctx) <= 0) goto fail;
+        if (EVP_PKEY_derive_set_peer(derive_ctx, their_key) <= 0) goto fail;
+        if (EVP_PKEY_derive(derive_ctx, shared_key, &shared_len) <= 0) goto fail;
+
+        SHA256(shared_key, shared_len, sha256);
+        htob64((char *)sha256, HisPubKey, 32);
+        result = 1;
+
+        OPENSSL_cleanse(shared_key, sizeof shared_key);
+    }
+
+fail:
+    EVP_PKEY_CTX_free(derive_ctx);
+    EVP_PKEY_free(their_key);
+    EVP_PKEY_free(my_key);
     BN_free(pk);
-    DH_free(dh);
+    BN_clear_free(priv_bn);
+    BN_free(pub_bn);
     OPENSSL_cleanse(base64_tmp, sizeof base64_tmp);
     return result;
 }
