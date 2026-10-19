@@ -34,12 +34,10 @@ int b64toh(const char *b, char *d)
     l = strlen(b);
     if (l < 2)
         return 0;
-    for (i = l - 1; ; i--) {
-        if (b64buf[(int)(b[i])] == 0)
-            l--;
-        else
-            break;
-    }
+    // htob64 appends one 'A' when the bits fill the last character
+    // exactly; only that one is padding, other trailing 'A's are data
+    if (l % 4 == 1 && b[l - 1] == 'A')
+        l--;
 
     if (l < 2)
         return 0;
