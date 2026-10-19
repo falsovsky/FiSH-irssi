@@ -1436,7 +1436,7 @@ void setup_fish()
     command_bind("key", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("showkey", NULL, (SIGNAL_FUNC) cmd_key);
     command_bind("keyx", NULL, (SIGNAL_FUNC) cmd_keyx);
-    command_set_options("keyx", "-ecb -cbc");
+    command_set_options("keyx", "ecb cbc");
     command_bind("setinipw", NULL, (SIGNAL_FUNC) cmd_setinipw);
     command_bind("unsetinipw", NULL, (SIGNAL_FUNC) cmd_unsetinipw);
 
